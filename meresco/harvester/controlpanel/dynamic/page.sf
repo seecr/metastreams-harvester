@@ -38,7 +38,7 @@ def header(session, **kwargs):
     yield """<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
 <html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en" lang="en">
 <head>
-  <title>Meresco Harvester ({version})</title>
+  <title>Metastreams ({version})</title>
   <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
     <meta http-equiv="Pragma" content="no-cache"/>
     <meta http-equiv="Cache-Control" content="no-cache"/>
@@ -163,7 +163,7 @@ def layoutWithMenu(inner, **kwargs):
   </tr>
   <tr>
      <td align="right" valign="bottom">
-     <span style="font-size:75%; color:light-gray;">Meresco Harvester ({version})</span>
+     <span style="font-size:75%; color:light-gray;">Metastreams ({version})</span>
      </td>
   </tr>
 </table>""".format(version=VERSION)

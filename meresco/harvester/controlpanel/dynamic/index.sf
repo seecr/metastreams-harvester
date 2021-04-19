@@ -36,7 +36,7 @@ def main(**kwargs):
 def _contents(**kwargs):
     yield """
 
-<h1>Meresco-Harvester Web Control Panel</h1>
+<h1>Metastreams Web Control Panel</h1>
 <p>
 Welkom bij Meresco-Harvester, de Open Source OAI Harvester, een onderdeel van de Meresco Suite.  Hier kunt u de u toegekende domeinen beheren.<p>
 
