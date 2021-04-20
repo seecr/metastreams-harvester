@@ -65,6 +65,8 @@ from .filterfields import FilterFields
 from .fielddefinitions import loadDefinitions
 from .environment import createEnvironment
 
+from metastreams.users import GroupStorage, EnrichUser
+
 from time import localtime, strftime, time
 
 myPath = dirname(abspath(__file__))
@@ -97,6 +99,7 @@ def dna(reactor, port, dataPath, logPath, statePath, externalUrl, fieldDefinitio
     fieldDefinitions = loadDefinitions(fieldDefinitionsFile)
 
     passwordFile = PasswordFile(filename=passwordFilename)
+    groupStorage = GroupStorage(stateDir=join(dataPath, 'users'))
     basicHtmlLoginHelix = (BasicHtmlLoginForm(
         action="/login.action",
         loginPath="/login",
@@ -104,7 +107,10 @@ def dna(reactor, port, dataPath, logPath, statePath, externalUrl, fieldDefinitio
         rememberMeCookie=False,
         lang="nl"),
 
-        (passwordFile, )
+        (passwordFile, ),
+        (EnrichUser(),
+            (groupStorage,),
+        )
     )
 
     staticFilePaths = []
@@ -176,6 +182,7 @@ def dna(reactor, port, dataPath, logPath, statePath, externalUrl, fieldDefinitio
                                             (harvesterData,),
                                             (repositoryStatus,),
                                             userActionsHelix,
+                                            (groupStorage,),
                                         )
                                     )
                                 ),

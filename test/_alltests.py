@@ -72,5 +72,7 @@ from timeslottest import TimeslotTest
 from useractionstest import UserActionsTest
 from filterfieldstest import FilterFieldsTest
 
+from users.groupstoragetest import GroupStorageTest
+
 if __name__ == '__main__':
         unittest.main()
