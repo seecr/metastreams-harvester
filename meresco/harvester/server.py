@@ -48,7 +48,8 @@ from meresco.html import DynamicHtml
 from meresco.html.login import BasicHtmlLoginForm, PasswordFile, SecureZone
 from seecr.zulutime import ZuluTime
 
-from meresco.components.http import ApacheLogger, PathFilter, ObservableHttpServer, StringServer, BasicHttpHandler, SessionHandler, CookieMemoryStore, StaticFiles
+from meresco.components.log import LogCollector, ApacheLogWriter, HandleRequestLog
+from meresco.components.http import PathFilter, ObservableHttpServer, StringServer, BasicHttpHandler, SessionHandler, CookieMemoryStore, StaticFiles, Deproxy
 from meresco.components.http.utils import ContentTypePlainText, okPlainText
 
 from .__version__ import VERSION_STRING, VERSION
@@ -76,11 +77,12 @@ staticHtmlPath = join(usrSharePath, 'controlpanel')
 def dateSince(days):
     return strftime("%Y-%m-%d", localtime(time() - days * 3600 * 24))
 
-def dna(reactor, port, dataPath, logPath, statePath, externalUrl, fieldDefinitionsFile, customerLogoUrl, **ignored):
+def dna(reactor, port, dataPath, logPath, statePath, externalUrl, fieldDefinitionsFile, customerLogoUrl, deproxyIps=None, **ignored):
     passwordFilename = join(dataPath, 'users.txt')
     environment = createEnvironment(dataPath)
     harvesterData = environment.createHarvesterData()
     harvesterDataRetrieve = environment.createHarvesterDataRetrieve()
+    deproxy = Deproxy(deproxyForIps=deproxyIps)
     repositoryStatus = be(
         (RepositoryStatus(logPath, statePath),
             (harvesterData, )
@@ -123,68 +125,72 @@ def dna(reactor, port, dataPath, logPath, statePath, externalUrl, fieldDefinitio
     )
 
     return \
-        (Observable(),
-            (ObservableHttpServer(reactor, port),
-                (ApacheLogger(stdout),
-                    (BasicHttpHandler(),
-                        (SessionHandler(),
-                            (CookieMemoryStore(name="meresco-harvester", timeout=2*60*60), ),
-                            (PathFilter("/info/version"),
-                                (StringServer(VERSION_STRING, ContentTypePlainText), )
-                            ),
-                            (PathFilter("/info/config"),
-                                (StringServer(configDict.dumps(), ContentTypeJson), )
-                            ),
-                            (PathFilter('/login.action'),
-                                basicHtmlLoginHelix
-                            ),
-                            (PathFilter('/user.action'),
-                                userActionsHelix
-                            ),
-                            (staticFiles,),
-                            (PathFilter('/', excluding=['/info/version', '/info/config', '/action', '/login.action', '/user.action'] + harvesterDataRetrieve.paths + staticFilePaths),
-                                (SecureZone("/login", excluding="/index", defaultLanguage="nl"),
-                                    (DynamicHtml(
-                                            [dynamicHtmlPath],
-                                            reactor=reactor,
-                                            additionalGlobals={
-                                                'externalUrl': externalUrl,
-                                                'escapeXml': escapeXml,
-                                                'compose': compose,
-                                                'VERSION': VERSION,
-                                                'CONFIG': configDict,
-                                                'Timeslot': Timeslot,
-                                                'ThroughputAnalyser': ThroughputAnalyser,
-                                                'dateSince': dateSince,
-                                                'callable': callable,
-                                                'OnlineHarvest': OnlineHarvest,
-                                                'StringIO': StringIO,
-                                                'okPlainText': okPlainText,
-                                                'ZuluTime': ZuluTime,
-                                                'xpathFirst': xpathFirst,
-                                                'fieldDefinitions': fieldDefinitions,
-                                                'customerLogoUrl': customerLogoUrl,
-                                            },
-                                            indexPage="/index",
-                                        ),
-                                        basicHtmlLoginHelix,
-                                        (harvesterData,),
-                                        (repositoryStatus,),
-                                        userActionsHelix,
-                                    )
-                                )
-                            ),
-                            (PathFilter('/action'),
-                                (HarvesterDataActions(fieldDefinitions=fieldDefinitions),
-                                    (harvesterData,)
+    (Observable(),
+        (ObservableHttpServer(reactor, port),
+            (LogCollector(),
+                (ApacheLogWriter(stdout),),
+                (deproxy,
+                    (HandleRequestLog(),
+                        (BasicHttpHandler(),
+                            (SessionHandler(),
+                                (CookieMemoryStore(name="meresco-harvester", timeout=2*60*60), ),
+                                (PathFilter("/info/version"),
+                                    (StringServer(VERSION_STRING, ContentTypePlainText), )
                                 ),
-                            ),
-                            (PathFilter(harvesterDataRetrieve.paths),
-                                (harvesterDataRetrieve,
-                                    (FilterFields(fieldDefinitions),
-                                        (harvesterData,),
+                                (PathFilter("/info/config"),
+                                    (StringServer(configDict.dumps(), ContentTypeJson), )
+                                ),
+                                (PathFilter('/login.action'),
+                                    basicHtmlLoginHelix
+                                ),
+                                (PathFilter('/user.action'),
+                                    userActionsHelix
+                                ),
+                                (staticFiles,),
+                                (PathFilter('/', excluding=['/info/version', '/info/config', '/action', '/login.action', '/user.action'] + harvesterDataRetrieve.paths + staticFilePaths),
+                                    (SecureZone("/login", excluding="/index", defaultLanguage="nl"),
+                                        (DynamicHtml(
+                                                [dynamicHtmlPath],
+                                                reactor=reactor,
+                                                additionalGlobals={
+                                                    'externalUrl': externalUrl,
+                                                    'escapeXml': escapeXml,
+                                                    'compose': compose,
+                                                    'VERSION': VERSION,
+                                                    'CONFIG': configDict,
+                                                    'Timeslot': Timeslot,
+                                                    'ThroughputAnalyser': ThroughputAnalyser,
+                                                    'dateSince': dateSince,
+                                                    'callable': callable,
+                                                    'OnlineHarvest': OnlineHarvest,
+                                                    'StringIO': StringIO,
+                                                    'okPlainText': okPlainText,
+                                                    'ZuluTime': ZuluTime,
+                                                    'xpathFirst': xpathFirst,
+                                                    'fieldDefinitions': fieldDefinitions,
+                                                    'customerLogoUrl': customerLogoUrl,
+                                                },
+                                                indexPage="/index",
+                                            ),
+                                            basicHtmlLoginHelix,
+                                            (harvesterData,),
+                                            (repositoryStatus,),
+                                            userActionsHelix,
+                                        )
+                                    )
+                                ),
+                                (PathFilter('/action'),
+                                    (HarvesterDataActions(fieldDefinitions=fieldDefinitions),
+                                        (harvesterData,)
                                     ),
-                                    (repositoryStatus,),
+                                ),
+                                (PathFilter(harvesterDataRetrieve.paths),
+                                    (harvesterDataRetrieve,
+                                        (FilterFields(fieldDefinitions),
+                                            (harvesterData,),
+                                        ),
+                                        (repositoryStatus,),
+                                    )
                                 )
                             )
                         )
@@ -192,6 +198,7 @@ def dna(reactor, port, dataPath, logPath, statePath, externalUrl, fieldDefinitio
                 )
             )
         )
+    )
 
 def startServer(port, **kwargs):
     reactor = Reactor()
