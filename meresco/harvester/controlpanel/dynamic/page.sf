@@ -1,22 +1,21 @@
 ## begin license ##
 #
-# "Meresco Harvester" consists of two subsystems, namely an OAI-harvester and
-# a web-control panel.
-# "Meresco Harvester" is originally called "Sahara" and was developed for
-# SURFnet by:
-# Seek You Too B.V. (CQ2) http://www.cq2.nl
-#
-# Copyright (C) 2017, 2019-2020 Seecr (Seek You Too B.V.) https://seecr.nl
+# "Metastream is a fork of Meresco Harvester that demonstrates the
+# translation of traditional metadata into modern events streams. Traditional
+# metadata is hard to publish and maintain consistency while events streams do
+# nicely adapt to the public nature of the web.
+
+# Copyright (C) 2017, 2019-2021 Seecr (Seek You Too B.V.) https://seecr.nl
 # Copyright (C) 2019-2020 Stichting Kennisnet https://www.kennisnet.nl
 #
-# This file is part of "Meresco Harvester"
+# This file is part of "Seecr Metastreams"
 #
-# "Meresco Harvester" is free software; you can redistribute it and/or modify
+# "Seecr Metastreams" is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
 # the Free Software Foundation; either version 2 of the License, or
 # (at your option) any later version.
 #
-# "Meresco Harvester" is distributed in the hope that it will be useful,
+# "Seecr Metastreams" is distributed in the hope that it will be useful,
 # but WITHOUT ANY WARRANTY; without even the implied warranty of
 # MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 # GNU General Public License for more details.
@@ -119,11 +118,6 @@ def sitemap(session, tag, **kwargs):
                     <td class="button" style="color:red;">No domain</td>
                 </tr>"""
     yield """
-                <tr>
-                    <td class="button">
-                        <a href="http://meresco.sourceforge.net">About Meresco</a>
-                    </td>
-                </tr>
                 <tr>
                     <td>&nbsp;</td>
                 </tr>"""
