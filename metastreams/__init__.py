@@ -2,9 +2,7 @@
 #
 # "Seecr Metastreams" can gather, translate, index, search and provide metadata. It is based on "Meresco Harvester".
 #
-# Copyright (C) 2010-2011 Seek You Too (CQ2) http://www.cq2.nl
-# Copyright (C) 2010-2011 Stichting Kennisnet http://www.kennisnet.nl
-# Copyright (C) 2011-2013, 2021 Seecr (Seek You Too B.V.) https://seecr.nl
+# Copyright (C) 2021 Seecr (Seek You Too B.V.) https://seecr.nl
 #
 # This file is part of "Seecr Metastreams"
 #
@@ -24,23 +22,4 @@
 #
 ## end license ##
 
-source /usr/share/seecr-tools/functions.d/test
 
-set -e
-mydir=$(cd $(dirname $0); pwd)
-rm -rf tmp build
-
-definePythonVars
-$PYTHON setup.py install --root tmp
-removeDoNotDistribute tmp
-
-cp -r test tmp/test
-find tmp -type f -exec sed -r -e \
-    "s,^binDir.*$,binDir='$SEECRTEST_USR_BIN',;
-    s,^usrSharePath.*$,usrSharePath='$mydir/tmp/usr/share/metastreams',;
-    s,^examplesPath.*$,examplesPath='$mydir/examples'," -i {} \;
-
-echo $PYTHONPATH
-runtests "$@"
-
-rm -rf tmp build

@@ -68,7 +68,7 @@ from .environment import createEnvironment
 from time import localtime, strftime, time
 
 myPath = dirname(abspath(__file__))
-usrSharePath = '/usr/share/meresco-harvester'
+usrSharePath = '/usr/share/metastreams'
 usrSharePath = join(dirname(dirname(myPath)), 'usr-share') # DO_NOT_DISTRIBUTE
 dynamicHtmlPath = join(myPath, 'controlpanel', 'dynamic')
 staticHtmlPath = join(usrSharePath, 'controlpanel')
