@@ -72,8 +72,8 @@ setup(
     url='https://seecr.nl',
     author='Seecr',
     author_email='info@seecr.nl',
-    description='"Seecr Metastreams" can gather, translate, index, search and provide metadata.',
-    long_description='"Seecr Metastreams" can gather, translate, index, search and provide metadata.',
+    description='"Seecr Metastreams" demonstrates the translation of traditional metadata into modern events streams.',
+    long_description='"Seecr Metastreams" is a fork of Meresco Harvester that demonstrates the translation of traditional metadata into modern events streams.',
     license='GNU Public License',
     platforms='all',
 )
