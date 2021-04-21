@@ -44,7 +44,7 @@ class GroupActions(PostActions):
 
         yield response(True, identifier=group.identifier)
 
-    @check_and_parse('groupId', 'name')
+    @check_and_parse('groupId', 'username')
     def _addUser(self, data, **kwargs):
         group, message = self._group(data.groupId)
         if not group:

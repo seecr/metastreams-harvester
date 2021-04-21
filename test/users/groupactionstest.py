@@ -30,6 +30,11 @@ class GroupActionsTest(SeecrTestCase):
         self.assertEqual({"success": False, "message":"No name given"}, body)
         self.assertEqual(0, len(self.storage.listGroups()))
 
+    def testCreateWithNonAdminUser(self):
+        self.user.returnValues['isAdmin'] = False
+        body = self.do('createGroup', {'name': "Some nåme"})
+        self.assertEqual({"success": False, "message":"Not allowed"}, body)
+
     def testUpdate(self):
         g = self.storage.newGroup()
         body = self.do('updateGroup', {'identifier': g.identifier, 'name': "Some nåme"})
@@ -44,6 +49,19 @@ class GroupActionsTest(SeecrTestCase):
     def testUpdateDoesNotExist(self):
         body = self.do('updateGroup', {'identifier': 'ik wil deze', 'name': "Some nåme"})
         self.assertEqual({"success": False, "message":"Group not found"}, body)
+
+    def testUpdateNotAllowed(self):
+        self.user.returnValues['isAdmin'] = False
+        g = self.storage.newGroup()
+        body = self.do('updateGroup', {'identifier': g.identifier, 'name': "Some nåme"})
+        self.assertEqual({"success": False, "message":"Not allowed"}, body)
+
+    def testAddUsername(self):
+        g = self.storage.newGroup()
+        body = self.do('addUsername', {'groupId': g.identifier, 'username': "username"})
+        self.assertEqual({"success": True, "identifier": g.identifier}, body)
+        g = self.storage.getGroup(g.identifier)
+        self.assertEqual(['username'], g.usernames)
 
     def do(self, pathPart, dataDict):
         header, body = parseResponse(asBytes(self.actions.handleRequest(
