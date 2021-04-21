@@ -65,11 +65,13 @@ def render(func, session=None, user=None, showMenu=True, **kwargs):
                 if showMenu:
                     yield renderMenu(tag, user)
                 with tag('main'):
-                    with tag("div.alert.alert-danger.collapse", id_="message-box"):
+                    with tag("div.alert.alert-danger.alert-dismissible.collapse", role="alert", id_="message-box"):
                         with tag("svg.bi.bi-alert-triangle.text-success",
                             width="32", height="32",
                             viewBox="0 0 20 20", fill="currentColor",
                             xmlns="http://www.w3.org/2000/svg"): pass
+                        with tag("strong"): pass
+                        with tag("button.btn-close", type_='button', **{'data-bs-dismiss': 'alert', 'aria-label': 'Close'}): pass
                     yield func(**kwargs)
                 # with tag('footer'):
                 #
