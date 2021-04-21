@@ -25,6 +25,9 @@ class GroupActions(PostActions):
         self.registerAction('createGroup', self._createGroup)
         self.registerAction('updateGroup', self._updateGroup)
         self.registerAction('addUsername', self._addUser)
+        self.registerAction('removeUsername', self._removeUser)
+        self.registerAction('addDomain', self._addDomain)
+        self.registerAction('removeDomain', self._removeDomain)
 
     @check_and_parse('name')
     def _createGroup(self, data, **kwargs):
@@ -54,6 +57,38 @@ class GroupActions(PostActions):
             yield response(False, message='No username given')
             return
         group.addUsername(data.username)
+        yield response(True, identifier=group.identifier)
+
+    @check_and_parse('groupId', 'username')
+    def _removeUser(self, data, **kwargs):
+        group, message = self._group(data.groupId)
+        if not group:
+            yield response(False, message=message)
+            return
+        if data.username:
+            group.removeUsername(data.username)
+        yield response(True, identifier=group.identifier)
+
+    @check_and_parse('groupId', 'domainId')
+    def _addDomain(self, data, **kwargs):
+        group, message = self._group(data.groupId)
+        if not group:
+            yield response(False, message=message)
+            return
+        if not data.domainId:
+            yield response(False, message='No domainId given')
+            return
+        group.addDomainId(data.domainId)
+        yield response(True, identifier=group.identifier)
+
+    @check_and_parse('groupId', 'domainId')
+    def _removeDomain(self, data, **kwargs):
+        group, message = self._group(data.groupId)
+        if not group:
+            yield response(False, message=message)
+            return
+        if data.domainId:
+            group.removeDomainId(data.domainId)
         yield response(True, identifier=group.identifier)
 
     def _group(self, identifier):

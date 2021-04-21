@@ -63,6 +63,27 @@ class GroupActionsTest(SeecrTestCase):
         g = self.storage.getGroup(g.identifier)
         self.assertEqual(['username'], g.usernames)
 
+    def testRemoveUsername(self):
+        g = self.storage.newGroup().addUsername('username')
+        body = self.do('removeUsername', {'groupId': g.identifier, 'username': "username"})
+        self.assertEqual({"success": True, "identifier": g.identifier}, body)
+        g = self.storage.getGroup(g.identifier)
+        self.assertEqual([], g.usernames)
+
+    def testAddDomain(self):
+        g = self.storage.newGroup()
+        body = self.do('addDomain', {'groupId': g.identifier, 'domainId': "my_domain"})
+        self.assertEqual({"success": True, "identifier": g.identifier}, body)
+        g = self.storage.getGroup(g.identifier)
+        self.assertEqual(['my_domain'], g.domainIds)
+
+    def testRemoveDomain(self):
+        g = self.storage.newGroup().addDomainId('my_domain')
+        body = self.do('removeDomain', {'groupId': g.identifier, 'domainId': "my_domain"})
+        self.assertEqual({"success": True, "identifier": g.identifier}, body)
+        g = self.storage.getGroup(g.identifier)
+        self.assertEqual([], g.domainIds)
+
     def do(self, pathPart, dataDict):
         header, body = parseResponse(asBytes(self.actions.handleRequest(
             user=self.user,
