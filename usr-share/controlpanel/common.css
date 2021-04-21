@@ -1,0 +1,7 @@
+.clickable-row {
+    cursor: pointer;
+}
+
+html.wait, html.wait * {
+    cursor: wait !important;
+}

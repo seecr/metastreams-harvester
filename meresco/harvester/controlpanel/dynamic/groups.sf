@@ -1,0 +1,56 @@
+
+import page2
+
+def main(**kwargs):
+    user = kwargs['session'].get('user')
+    if not user or not user.isAdmin():
+        yield http.redirect('/')
+        return
+
+    table = page2.findPath("table", dict(groups=table_groups), **kwargs)
+    if not table is None:
+        yield table(**kwargs)
+        return
+
+    yield page2.render(
+        _contents,
+        additionalScripts=['/static/groups.js'],
+        **kwargs)
+
+def _contents(**kwargs):
+    tag = kwargs.get("tag")
+    with tag('div.container'):
+        yield page2.card("Groepen", card_groups, **kwargs)
+
+def card_groups(tag, **kwargs):
+    with tag("form.form-inline", id_="FrmCreateGroup"):
+        with tag("div.row"):
+            with tag("div.col-auto"):
+                with tag("label.col-form-label", for_="naam"): yield "Naam"
+            with tag("div.col-auto"):
+                with tag("input.form-control", id_="naam", type_="text", name="name"): pass
+            with tag("div.col-1"):
+                with tag("button.btn.btn-small.btn-primary", type_="submit", id_="BtnCreateGroup"):
+                    yield "Aanmaken"
+
+    with tag("div", id_="placeholder_groups"):
+        yield table_groups(tag)
+
+def table_groups(tag, **kwargs):
+    groups = sorted(observable.call.listGroups(), key=lambda group: group.name)
+    if len(groups) == 0:
+        with tag("span"):
+            yield "Nog geen groepen aangemaakt."
+            return
+
+    with tag("table.table.table-sm.table-hover"):
+        with tag("thead"):
+            for label in ['Naam']:
+                with tag("th"): yield label
+        with tag("tbody"):
+            for group in groups:
+                with tag("tr"):
+                    with tag("td.clickable-row", **{'data-id': group.identifier}):
+                        yield group.name
+
+

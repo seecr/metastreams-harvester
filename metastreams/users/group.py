@@ -7,9 +7,10 @@ from meresco.components.json import JsonDict
 from uuid import uuid4
 
 class GroupStorage(object):
-    def __init__(self, stateDir):
+    def __init__(self, stateDir, _newId=None):
         self._stateDir = stateDir
         isdir(self._stateDir) or makedirs(self._stateDir)
+        self._newId = (lambda: str(uuid4())) if _newId is None else _newId
 
     def listGroups(self):
         return [Group(self._stateDir, g[:-len(GROUP_EXT)]) for g in listdir(self._stateDir) if g.endswith(GROUP_EXT)]
@@ -21,7 +22,7 @@ class GroupStorage(object):
         return result
 
     def newGroup(self):
-        return Group(self._stateDir, str(uuid4())).save()
+        return Group(self._stateDir, self._newId()).save()
 
     def groupsForUser(self, username):
         return [g for g in self.listGroups()

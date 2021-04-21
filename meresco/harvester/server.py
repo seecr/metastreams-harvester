@@ -45,7 +45,7 @@ from meresco.components.json import JsonDict
 from meresco.core import Observable, Transparent
 
 from meresco.html import DynamicHtml
-from meresco.html.login import BasicHtmlLoginForm, PasswordFile, SecureZone
+from meresco.html.login import BasicHtmlLoginForm, SecureZone, UserFromSession
 from seecr.zulutime import ZuluTime
 
 from meresco.components.log import LogCollector, ApacheLogWriter, HandleRequestLog
@@ -60,12 +60,11 @@ from .timeslot import Timeslot
 from meresco.components.http.utils import ContentTypeJson
 from .throughputanalyser import ThroughputAnalyser
 from .onlineharvest import OnlineHarvest
-from .useractions import UserActions
 from .filterfields import FilterFields
 from .fielddefinitions import loadDefinitions
 from .environment import createEnvironment
 
-from metastreams.users import GroupStorage, EnrichUser
+from metastreams.users import initializeUserGroupManagement
 
 from time import localtime, strftime, time
 
@@ -80,7 +79,6 @@ def dateSince(days):
     return strftime("%Y-%m-%d", localtime(time() - days * 3600 * 24))
 
 def dna(reactor, port, dataPath, logPath, statePath, externalUrl, fieldDefinitionsFile, customerLogoUrl, deproxyIps=None, **ignored):
-    passwordFilename = join(dataPath, 'users.txt')
     environment = createEnvironment(dataPath)
     harvesterData = environment.createHarvesterData()
     harvesterDataRetrieve = environment.createHarvesterDataRetrieve()
@@ -98,8 +96,7 @@ def dna(reactor, port, dataPath, logPath, statePath, externalUrl, fieldDefinitio
     )
     fieldDefinitions = loadDefinitions(fieldDefinitionsFile)
 
-    passwordFile = PasswordFile(filename=passwordFilename)
-    groupStorage = GroupStorage(stateDir=join(dataPath, 'users'))
+    userGroup = initializeUserGroupManagement(join(statePath, 'users'))
     basicHtmlLoginHelix = (BasicHtmlLoginForm(
         action="/login.action",
         loginPath="/login",
@@ -107,10 +104,7 @@ def dna(reactor, port, dataPath, logPath, statePath, externalUrl, fieldDefinitio
         rememberMeCookie=False,
         lang="nl"),
 
-        (passwordFile, ),
-        (EnrichUser(),
-            (groupStorage,),
-        )
+        (userGroup.basicHtmlObserver,),
     )
 
     staticFilePaths = []
@@ -125,11 +119,6 @@ def dna(reactor, port, dataPath, logPath, statePath, externalUrl, fieldDefinitio
         staticFiles.addObserver(StaticFiles(libdir=libdir, path=path))
         staticFilePaths.append(path)
 
-    userActions = UserActions(dataDir=dataPath)
-    userActionsHelix = (userActions,
-        (passwordFile, )
-    )
-
     return \
     (Observable(),
         (ObservableHttpServer(reactor, port),
@@ -140,63 +129,64 @@ def dna(reactor, port, dataPath, logPath, statePath, externalUrl, fieldDefinitio
                         (BasicHttpHandler(),
                             (SessionHandler(),
                                 (CookieMemoryStore(name="meresco-harvester", timeout=2*60*60), ),
-                                (PathFilter("/info/version"),
-                                    (StringServer(VERSION_STRING, ContentTypePlainText), )
-                                ),
-                                (PathFilter("/info/config"),
-                                    (StringServer(configDict.dumps(), ContentTypeJson), )
-                                ),
-                                (PathFilter('/login.action'),
-                                    basicHtmlLoginHelix
-                                ),
-                                (PathFilter('/user.action'),
-                                    userActionsHelix
-                                ),
-                                (staticFiles,),
-                                (PathFilter('/', excluding=['/info/version', '/info/config', '/action', '/login.action', '/user.action'] + harvesterDataRetrieve.paths + staticFilePaths),
-                                    (SecureZone("/login", excluding="/index", defaultLanguage="nl"),
-                                        (DynamicHtml(
-                                                [dynamicHtmlPath],
-                                                reactor=reactor,
-                                                additionalGlobals={
-                                                    'externalUrl': externalUrl,
-                                                    'escapeXml': escapeXml,
-                                                    'compose': compose,
-                                                    'VERSION': VERSION,
-                                                    'CONFIG': configDict,
-                                                    'Timeslot': Timeslot,
-                                                    'ThroughputAnalyser': ThroughputAnalyser,
-                                                    'dateSince': dateSince,
-                                                    'callable': callable,
-                                                    'OnlineHarvest': OnlineHarvest,
-                                                    'StringIO': StringIO,
-                                                    'okPlainText': okPlainText,
-                                                    'ZuluTime': ZuluTime,
-                                                    'xpathFirst': xpathFirst,
-                                                    'fieldDefinitions': fieldDefinitions,
-                                                    'customerLogoUrl': customerLogoUrl,
-                                                },
-                                                indexPage="/index",
-                                            ),
-                                            basicHtmlLoginHelix,
-                                            (harvesterData,),
-                                            (repositoryStatus,),
-                                            userActionsHelix,
-                                            (groupStorage,),
-                                        )
-                                    )
-                                ),
-                                (PathFilter('/action'),
-                                    (HarvesterDataActions(fieldDefinitions=fieldDefinitions),
-                                        (harvesterData,)
+                                (UserFromSession(),
+                                    (PathFilter("/info/version"),
+                                        (StringServer(VERSION_STRING, ContentTypePlainText), )
                                     ),
-                                ),
-                                (PathFilter(harvesterDataRetrieve.paths),
-                                    (harvesterDataRetrieve,
-                                        (FilterFields(fieldDefinitions),
-                                            (harvesterData,),
+                                    (PathFilter("/info/config"),
+                                        (StringServer(configDict.dumps(), ContentTypeJson), )
+                                    ),
+                                    (PathFilter('/login.action'),
+                                        basicHtmlLoginHelix
+                                    ),
+                                    (staticFiles,),
+                                    (PathFilter('/', excluding=['/info/version', '/info/config', '/action', '/login.action'] + harvesterDataRetrieve.paths + staticFilePaths),
+                                        (SecureZone("/login", excluding="/index", defaultLanguage="nl"),
+                                            (PathFilter('/', excluding=userGroup.excludedPaths),
+                                                (DynamicHtml(
+                                                        [dynamicHtmlPath],
+                                                        reactor=reactor,
+                                                        additionalGlobals={
+                                                            'externalUrl': externalUrl,
+                                                            'escapeXml': escapeXml,
+                                                            'compose': compose,
+                                                            'VERSION': VERSION,
+                                                            'CONFIG': configDict,
+                                                            'Timeslot': Timeslot,
+                                                            'ThroughputAnalyser': ThroughputAnalyser,
+                                                            'dateSince': dateSince,
+                                                            'callable': callable,
+                                                            'OnlineHarvest': OnlineHarvest,
+                                                            'StringIO': StringIO,
+                                                            'okPlainText': okPlainText,
+                                                            'ZuluTime': ZuluTime,
+                                                            'xpathFirst': xpathFirst,
+                                                            'fieldDefinitions': fieldDefinitions,
+                                                            'customerLogoUrl': customerLogoUrl,
+                                                        },
+                                                        indexPage="/index",
+                                                    ),
+                                                    basicHtmlLoginHelix,
+                                                    (harvesterData,),
+                                                    (repositoryStatus,),
+                                                    (userGroup.dynamicHtmlObserver,),
+                                                )
+                                            ),
+                                            (userGroup.actions,),
                                         ),
-                                        (repositoryStatus,),
+                                    ),
+                                    (PathFilter('/action'),
+                                        (HarvesterDataActions(fieldDefinitions=fieldDefinitions),
+                                            (harvesterData,)
+                                        ),
+                                    ),
+                                    (PathFilter(harvesterDataRetrieve.paths),
+                                        (harvesterDataRetrieve,
+                                            (FilterFields(fieldDefinitions),
+                                                (harvesterData,),
+                                            ),
+                                            (repositoryStatus,),
+                                        )
                                     )
                                 )
                             )

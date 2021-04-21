@@ -69,10 +69,10 @@ from statetest import StateTest
 from throughputanalysertest import ThroughputAnalyserTest
 from timedprocesstest import TimedProcessTest
 from timeslottest import TimeslotTest
-from useractionstest import UserActionsTest
 from filterfieldstest import FilterFieldsTest
 
 from users.groupstoragetest import GroupStorageTest
+from users.groupactionstest import GroupActionsTest
 
 if __name__ == '__main__':
         unittest.main()

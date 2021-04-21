@@ -41,8 +41,8 @@ def _contents(arguments, session, **kwargs):
         yield '<span class="error">{}</span>'.format(error)
 
     yield _domainAdministration()
-    yield "<br/>"
-    yield _userAdministration(session)
+    # yield "<br/>"
+    # yield _userAdministration(session)
 
 
 def _domainAdministration():

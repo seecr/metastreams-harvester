@@ -1,0 +1,46 @@
+import page2
+
+def main(**kwargs):
+    user = kwargs['session'].get('user')
+    if not user or not user.isAdmin():
+        yield http.redirect('/')
+        return
+    yield page2.render(
+        _contents,
+        additionalScripts=['/static/groups.js'],
+        **kwargs)
+
+def _contents(tag, arguments, **kwargs):
+    groupId = arguments.get("id", [None])[0]
+    group = None if groupId is None else observable.call.getGroup(groupId)
+    if group is None:
+        with tag("span"):
+            yield "Groep niet gevonden"
+            return
+
+    with tag("div.row.row-cols-1.row-cols-md-3.g-4"):
+        with tag("div.col"):
+            yield page2.card("Groep", cardGroup, tag=tag, group=group, **kwargs)
+        with tag("div.col"):
+            yield page2.card("Domeinen", cardDomains, tag=tag, group=group, **kwargs)
+        with tag("div.col"):
+            yield page2.card("Users", cardUsers, tag=tag, group=group, **kwargs)
+
+def cardGroup(tag, group, **kwargs):
+    with tag("form.form-inline", id_="FrmUpdateGroup"):
+        with tag("input", type_="hidden", name="identifier", value=group.identifier): pass
+        with tag("div.row"):
+            with tag("div.col-auto"):
+                with tag("label.col-form-label", for_="naam"): yield "Naam"
+            with tag("div.col-auto"):
+                with tag("input.form-control", id_="naam", type_="text", name="name", value=group.name): pass
+            with tag("div.col-1"):
+                with tag("button.btn.btn-small.btn-primary", type_="submit", id_="BtnUpdateGroup"):
+                    yield "Aanpassen"
+
+def cardDomains(tag, group, **kwargs):
+    yield "Domains"
+
+def cardUsers(tag, group, **kwargs):
+    yield "Users"
+
