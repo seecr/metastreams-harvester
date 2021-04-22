@@ -38,7 +38,7 @@ from meresco.components.http.utils import redirectHttp, badRequestHtml, Ok
 from meresco.html import PostActions
 
 from meresco.harvester.timeslot import Timeslot
-from metastreams.users._actions import check_and_parse
+from metastreams.users._actions import check_and_parse, response
 
 class HarvesterDataActions(PostActions):
     def __init__(self, fieldDefinitions, **kwargs):
@@ -64,6 +64,7 @@ class HarvesterDataActions(PostActions):
     @check_and_parse('identifier', userCheck='admin')
     def _addDomain(self, data, **kwargs):
         self.call.addDomain(identifier=data.identifier)
+        yield response(True)
 
     def _updateDomain(self, identifier, arguments):
         self.call.updateDomain(

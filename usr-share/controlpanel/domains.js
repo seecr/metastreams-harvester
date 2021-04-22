@@ -1,7 +1,8 @@
-function init_table_groups() {
-    $("#TblDomains").find(".clickable-row").click(function(e) {
+function init_table_domains(placeholder) {
+    placeholder.find(".clickable-row").click(function(e) {
         e.preventDefault();
 
+        var _row = $(this);
         alert("Wanting to edit " + _row.data("id"));
     });
 }
@@ -18,13 +19,15 @@ $(document).ready(function() {
                     if (data['success'] == true) {
                         $.get("/domains/table/domains")
                             .done(function(data) {
-                                $("#placeholder_domains")
+                                var _placeholder = $("#placeholder_domains");
+                                _placeholder
                                     .empty()
                                     .append(data);
-                                init_table_domains();
+                                init_table_domains(placeholder);
                             })
                     }
                 })
         })
-    init_table_domains();
+
+    init_table_domains($("#placeholder_domains"));
 })

@@ -50,12 +50,12 @@ def cardDomains(tag, **kwargs):
                 with tag("label.form-label"):
                     yield "Naam"
             with tag("div.col"):
-                with tag("input.form-control", type_="text", name="domain"): pass
+                with tag("input.form-control", type_="text", name="identifier"): pass
             with tag("div.col-auto"):
                 with tag("button.btn.btn-small.btn-primary.float-end", type_="submit", id_="BtnCreateDomain"):
                     yield "Aanmaken"
 
-    with tag("div", id_=""):
+    with tag("div", id_="placeholder_domains"):
         yield table_domains(tag, **kwargs)
 
 def table_domains(tag, **kwargs):
@@ -65,8 +65,8 @@ def table_domains(tag, **kwargs):
             for label in ['', 'Naam']:
                 with tag("th"): yield label
         with tag("tbody"):
-            for each in sorted(allDomainIds):
-                with tag("tr"):
+            for each in sorted(allDomainIds, key=lambda each: each.lower()):
+                with tag("tr.clickable-row", **{'data-id': each}):
                     with tag("td.fit"):
                         with tag("form"):
                             with tag("input", type_="hidden", name="domainId", value=each): pass
@@ -75,7 +75,7 @@ def table_domains(tag, **kwargs):
                     with tag("td"):
                         yield each
 
-
+# ------- Old stuff below
 
 
 import page

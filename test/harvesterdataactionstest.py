@@ -79,12 +79,13 @@ class HarvesterDataActionsTest(SeecrTestCase):
             path="/actions/addDomain",
             Body=bytes(urlencode(dict(identifier="aap")), encoding="utf-8"),
             Method='Post')))
-        self.assertEqual(1, len(observable.calledMethods))
         self.assertEqual("200", header['StatusCode'])
         self.assertEqual("application/json", header['Headers']['Content-Type'])
         response = JsonDict.loads(body)
-        self.assertFalse(response['success'])
-        self.assertEqual("Not allowed", response['message'])
+        self.assertTrue(response['success'])
+        self.assertEqual(1, len(observable.calledMethods))
+        self.assertEqual("addDomain", observable.calledMethods[0].name)
+        self.assertEqual(dict(identifier='aap'), observable.calledMethods[0].kwargs)
 
     def testUpdateRepository(self):
         data = {
