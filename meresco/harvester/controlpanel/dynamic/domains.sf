@@ -22,19 +22,74 @@
 #
 ## end license ##
 
+import page2
+
+def main(**kwargs):
+    user = kwargs['session'].get('user')
+    if not user or not user.isAdmin():
+        yield http.redirect('/')
+        return
+
+    table = page2.findPath("table", dict(domains=table_domains), **kwargs)
+    if not table is None:
+        yield table(**kwargs)
+        return
+
+    yield page2.render(
+        _contents,
+        additionalScripts=['/static/domains.js'],
+        **kwargs)
+
+def _contents(tag, arguments, **kwargs):
+    yield page2.card("Domeinen", cardDomains, icon="collection", tag=tag, **kwargs)
+
+def cardDomains(tag, **kwargs):
+    with tag("form.form", id_="FrmCreateDomain"):
+        with tag("div.row"):
+            with tag("div.col-auto"):
+                with tag("label.form-label"):
+                    yield "Naam"
+            with tag("div.col"):
+                with tag("input.form-control", type_="text", name="domain"): pass
+            with tag("div.col-auto"):
+                with tag("button.btn.btn-small.btn-primary.float-end", type_="submit", id_="BtnCreateDomain"):
+                    yield "Aanmaken"
+
+    with tag("div", id_=""):
+        yield table_domains(tag, **kwargs)
+
+def table_domains(tag, **kwargs):
+    allDomainIds = observable.call.getDomainIds()
+    with tag("table.table.table-sm.table-hover", id_="TblDomains"):
+        with tag("thead"):
+            for label in ['', 'Naam']:
+                with tag("th"): yield label
+        with tag("tbody"):
+            for each in sorted(allDomainIds):
+                with tag("tr"):
+                    with tag("td.fit"):
+                        with tag("form"):
+                            with tag("input", type_="hidden", name="domainId", value=each): pass
+                            with tag("button.seecr-btn.deletable", title="Uit groep verwijderen"):
+                                with tag("i.bi-trash-fill"): pass
+                    with tag("td"):
+                        yield each
+
+
+
+
 import page
 import common
 
-
-def main(**kwargs):
+def old_main(**kwargs):
     user = kwargs.get('session', {}).get('user')
     if not user or not user.isAdmin():
         yield http.redirect("/login")
         return
-    yield page.layoutWithMenu(_contents, **kwargs)
+    yield page.layoutWithMenu(old_contents, **kwargs)
 
 
-def _contents(arguments, session, **kwargs):
+def old_contents(arguments, session, **kwargs):
     yield """<h1>Domains Administration</h1>"""
     error = arguments.get("error", [None])[0]
     if error:

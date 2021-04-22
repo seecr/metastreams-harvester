@@ -23,9 +23,20 @@
 #
 ## end license ##
 
-from .group import *
-from .enrichuser import *
-from ._utils import *
-from ._groupactions import *
-from ._useractions import *
-from ._userinfo import *
+from seecr.test import SeecrTestCase, CallTrace
+from seecr.test.io import stdout_replaced
+
+from metastreams.users import initializeUserGroupManagement
+
+class ManagementTest(SeecrTestCase):
+    def setUp(self):
+        SeecrTestCase.setUp(self)
+        harvesterData = CallTrace(returnValues={'getDomainIds':['d1', 'd2', 'd3', 'd4', 'd5']})
+        with stdout_replaced() as out:
+            self.result = initializeUserGroupManagement(self.tempdir, harvesterData)
+            self.sysout = out.getvalue()
+
+    def testNoEmptyPasswordFile(self):
+        self.assertEqual(['admin'], self.result.dynamicHtmlObserver.call.listUsernames())
+        pwd = self.sysout.strip().split()[-1]
+        self.assertTrue(self.result.basicHtmlObserver.call.validateUser(username='admin', password=pwd))

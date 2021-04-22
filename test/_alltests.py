@@ -73,6 +73,10 @@ from filterfieldstest import FilterFieldsTest
 
 from users.groupstoragetest import GroupStorageTest
 from users.groupactionstest import GroupActionsTest
+from users.useractionstest import UserActionsTest
+from users.passwordfile2test import PasswordFile2Test
+from users.managementtest import ManagementTest
+from users.enrichusertest import EnrichUserTest
 
 if __name__ == '__main__':
         unittest.main()

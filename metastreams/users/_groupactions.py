@@ -1,23 +1,31 @@
+## begin license ##
+#
+# "Seecr Metastreams" is a fork of Meresco Harvester that demonstrates
+# the translation of traditional metadata into modern events streams.
+#
+# Copyright (C) 2021 Seecr (Seek You Too B.V.) https://seecr.nl
+#
+# This file is part of "Seecr Metastreams"
+#
+# "Seecr Metastreams" is free software; you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation; either version 2 of the License, or
+# (at your option) any later version.
+#
+# "Seecr Metastreams" is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with "Seecr Metastreams"; if not, write to the Free Software
+# Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
+#
+## end license ##
 
 from meresco.html import PostActions
 
-from meresco.components import Bucket
-from meresco.components.json import JsonDict
-from meresco.components.http.utils import okJson
-from urllib.parse import parse_qs
-
-class check_and_parse(object):
-    def __init__(self, *wanted):
-        self.wanted = wanted
-
-    def __call__(self, f):
-        def wrapper(wrappedSelf, Body, user, **kwargs):
-            if not user.isAdmin():
-                yield response(False, message="Not allowed")
-                return
-            data = parse_arguments(Body, self.wanted)
-            yield f(wrappedSelf, Body=Body, user=user, data=data, **kwargs)
-        return wrapper
+from ._actions import check_and_parse, response
 
 class GroupActions(PostActions):
     def __init__(self, **kwargs):
@@ -29,7 +37,7 @@ class GroupActions(PostActions):
         self.registerAction('addDomain', self._addDomain)
         self.registerAction('removeDomain', self._removeDomain)
 
-    @check_and_parse('name')
+    @check_and_parse('name', userCheck='admin')
     def _createGroup(self, data, **kwargs):
         if not data.name:
             yield response(False, message="No name given")
@@ -37,7 +45,7 @@ class GroupActions(PostActions):
         newGroup = self.call.newGroup().setName(data.name)
         yield response(True, identifier=newGroup.identifier)
 
-    @check_and_parse('identifier', 'name')
+    @check_and_parse('identifier', 'name', userCheck='admin')
     def _updateGroup(self, data, **kwargs):
         group, message = self._group(data.identifier)
         if not group:
@@ -47,7 +55,7 @@ class GroupActions(PostActions):
 
         yield response(True, identifier=group.identifier)
 
-    @check_and_parse('groupId', 'username')
+    @check_and_parse('groupId', 'username', userCheck='admin')
     def _addUser(self, data, **kwargs):
         group, message = self._group(data.groupId)
         if not group:
@@ -59,7 +67,7 @@ class GroupActions(PostActions):
         group.addUsername(data.username)
         yield response(True, identifier=group.identifier)
 
-    @check_and_parse('groupId', 'username')
+    @check_and_parse('groupId', 'username', userCheck='admin')
     def _removeUser(self, data, **kwargs):
         group, message = self._group(data.groupId)
         if not group:
@@ -69,7 +77,7 @@ class GroupActions(PostActions):
             group.removeUsername(data.username)
         yield response(True, identifier=group.identifier)
 
-    @check_and_parse('groupId', 'domainId')
+    @check_and_parse('groupId', 'domainId', userCheck='admin')
     def _addDomain(self, data, **kwargs):
         group, message = self._group(data.groupId)
         if not group:
@@ -81,7 +89,7 @@ class GroupActions(PostActions):
         group.addDomainId(data.domainId)
         yield response(True, identifier=group.identifier)
 
-    @check_and_parse('groupId', 'domainId')
+    @check_and_parse('groupId', 'domainId', userCheck='admin')
     def _removeDomain(self, data, **kwargs):
         group, message = self._group(data.groupId)
         if not group:
@@ -98,13 +106,5 @@ class GroupActions(PostActions):
             return self.call.getGroup(identifier), None
         except KeyError:
             return None, "Group not found"
-
-def response(success, **kwargs):
-    yield bytes(okJson, encoding='utf-8')
-    yield bytes(JsonDict(success=success, **kwargs).dumps(), encoding='utf-8')
-
-def parse_arguments(Body, wanted):
-    data = parse_qs(str(Body, encoding='utf-8'))
-    return Bucket(**{key:data.get(key, [None])[0] for key in wanted})
 
 __all__ = ['GroupActions']

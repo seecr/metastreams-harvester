@@ -96,7 +96,7 @@ def dna(reactor, port, dataPath, logPath, statePath, externalUrl, fieldDefinitio
     )
     fieldDefinitions = loadDefinitions(fieldDefinitionsFile)
 
-    userGroup = initializeUserGroupManagement(join(statePath, 'users'))
+    userGroup = initializeUserGroupManagement(join(statePath, 'users'), harvesterData)
     basicHtmlLoginHelix = (BasicHtmlLoginForm(
         action="/login.action",
         loginPath="/login",

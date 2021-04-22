@@ -38,12 +38,12 @@ from meresco.components.http.utils import redirectHttp, badRequestHtml, Ok
 from meresco.html import PostActions
 
 from meresco.harvester.timeslot import Timeslot
-
+from metastreams.users._actions import check_and_parse
 
 class HarvesterDataActions(PostActions):
     def __init__(self, fieldDefinitions, **kwargs):
         PostActions.__init__(self, **kwargs)
-        self._registerFormAction('addDomain', self._addDomain)
+        self.registerAction('addDomain', self._addDomain)
         self._registerFormAction('updateDomain', self._updateDomain)
         self._registerFormAction('addRepositoryGroup', self._addRepositoryGroup)
         self._registerFormAction('deleteRepositoryGroup', self._deleteRepositoryGroup)
@@ -61,8 +61,9 @@ class HarvesterDataActions(PostActions):
         self.defaultAction(lambda path, **kwargs: badRequestHtml + "Invalid action: " + path)
         self._fieldDefinitions = fieldDefinitions
 
-    def _addDomain(self, identifier, arguments):
-        self.call.addDomain(identifier=identifier)
+    @check_and_parse('identifier', userCheck='admin')
+    def _addDomain(self, data, **kwargs):
+        self.call.addDomain(identifier=data.identifier)
 
     def _updateDomain(self, identifier, arguments):
         self.call.updateDomain(

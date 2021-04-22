@@ -30,10 +30,13 @@
 #
 ## end license ##
 
-from seecr.test import SeecrTestCase
+from seecr.test import SeecrTestCase, CallTrace
 from meresco.harvester.harvesterdataactions import HarvesterDataActions
 from meresco.harvester.harvesterdata import HarvesterData
-from weightless.core import consume
+from weightless.core import be, consume, asBytes
+from meresco.core import Observable
+from meresco.components.http.utils import parseResponse
+from meresco.components.json import JsonDict
 from urllib.parse import urlencode
 
 bUrlencode = lambda *args, **kwargs: urlencode(*args, **kwargs).encode()
@@ -49,6 +52,39 @@ class HarvesterDataActionsTest(SeecrTestCase):
                 {'name': 'name', 'label':'Label', 'type':'text', 'export': False},
             ]})
         self.hda.addObserver(self.hd)
+
+    def testAddDomain(self):
+        observable = CallTrace()
+        dna = be(
+            (Observable(),
+                (HarvesterDataActions(fieldDefinitions={}),
+                    (observable, )
+                )
+            )
+        )
+        header, body = parseResponse(asBytes(dna.all.handleRequest(
+            user=CallTrace(returnValues=dict(isAdmin=False)),
+            path="/actions/addDomain",
+            Body=bytes(urlencode(dict(identifier="aap")), encoding="utf-8"),
+            Method='Post')))
+        self.assertEqual(0, len(observable.calledMethods))
+        self.assertEqual("200", header['StatusCode'])
+        self.assertEqual("application/json", header['Headers']['Content-Type'])
+        response = JsonDict.loads(body)
+        self.assertFalse(response['success'])
+        self.assertEqual("Not allowed", response['message'])
+
+        header, body = parseResponse(asBytes(dna.all.handleRequest(
+            user=CallTrace(returnValues=dict(isAdmin=True)),
+            path="/actions/addDomain",
+            Body=bytes(urlencode(dict(identifier="aap")), encoding="utf-8"),
+            Method='Post')))
+        self.assertEqual(1, len(observable.calledMethods))
+        self.assertEqual("200", header['StatusCode'])
+        self.assertEqual("application/json", header['Headers']['Content-Type'])
+        response = JsonDict.loads(body)
+        self.assertFalse(response['success'])
+        self.assertEqual("Not allowed", response['message'])
 
     def testUpdateRepository(self):
         data = {

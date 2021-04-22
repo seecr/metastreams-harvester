@@ -23,9 +23,28 @@
 #
 ## end license ##
 
-from .group import *
-from .enrichuser import *
-from ._utils import *
-from ._groupactions import *
-from ._useractions import *
-from ._userinfo import *
+from meresco.components.json import JsonDict
+from os.path import isfile
+
+
+class UserInfo(object):
+    version = 1
+    def __init__(self, filepath):
+        self._filepath = filepath
+        if not isfile(self._filepath):
+            JsonDict(version=self.version, users={}).dump(self._filepath)
+
+    def setUserInfo(self, username, data):
+        _cur = JsonDict.load(self._filepath)
+        _cur['users'][username] = data
+        _cur.dump(self._filepath)
+
+    def addUserInfo(self, username, data):
+        newData = self.getUserInfo(username)
+        newData.update(data)
+        self.setUserInfo(username, newData)
+
+    def getUserInfo(self, username):
+        return JsonDict.load(self._filepath)['users'].get(username, {})
+
+__all__ = ['UserInfo']
