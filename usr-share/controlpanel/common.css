@@ -2,6 +2,20 @@
     cursor: pointer;
 }
 
+.seecr-btn {
+    border: 0;
+    background: transparent;
+}
+.seecr-btn:hover {
+    transform: scale(1.25);
+}
+
+.table td.fit,
+.table th.fit {
+    white-space: nowrap;
+    width: 1%;
+}
+
 html.wait, html.wait * {
     cursor: wait !important;
 }

@@ -5,9 +5,17 @@ def main(**kwargs):
     if not user or not user.isAdmin():
         yield http.redirect('/')
         return
+
+    card = page2.findPath("card", dict(
+        users=card_users,
+        domains=card_domains), **kwargs)
+    if not card is None:
+        yield card(**kwargs)
+        return
+
     yield page2.render(
         _contents,
-        additionalScripts=['/static/groups.js'],
+        additionalScripts=['/static/group.js'],
         **kwargs)
 
 def _contents(tag, arguments, **kwargs):
@@ -24,23 +32,113 @@ def _contents(tag, arguments, **kwargs):
         with tag("div.col"):
             yield page2.card("Domeinen", cardDomains, tag=tag, group=group, **kwargs)
         with tag("div.col"):
-            yield page2.card("Users", cardUsers, tag=tag, group=group, **kwargs)
+            yield page2.card("Gebruikers", cardUsers, tag=tag, group=group, **kwargs)
 
 def cardGroup(tag, group, **kwargs):
-    with tag("form.form-inline", id_="FrmUpdateGroup"):
+    with tag("form.form", id_="FrmUpdateGroup"):
         with tag("input", type_="hidden", name="identifier", value=group.identifier): pass
         with tag("div.row"):
             with tag("div.col-auto"):
                 with tag("label.col-form-label", for_="naam"): yield "Naam"
             with tag("div.col-auto"):
                 with tag("input.form-control", id_="naam", type_="text", name="name", value=group.name): pass
-            with tag("div.col-1"):
-                with tag("button.btn.btn-small.btn-primary", type_="submit", id_="BtnUpdateGroup"):
+        with tag("div.row"):
+            with tag("div.col"):
+                with tag("button.btn.btn-small.btn-primary.float-end", type_="submit", id_="BtnUpdateGroup"):
                     yield "Aanpassen"
 
+# ---------- Domains
 def cardDomains(tag, group, **kwargs):
-    yield "Domains"
+    with tag("div", id_='placeholder_domainscard'):
+        yield card_domains(tag, group, **kwargs)
 
+def card_domains(tag, group=None, **kwargs):
+    if group is None:
+        identifier = kwargs.get("arguments", {}).get("groupId", [None])[0]
+        group = observable.call.getGroup(identifier)
+
+    allDomainIds = observable.call.getDomainIds()
+    domainIdsNotInGroup = sorted([each for each in allDomainIds if not each in group.domainIds])
+    if len(domainIdsNotInGroup) > 0:
+        with tag("form.form", id_="FrmAddDomainIdToGroup"):
+            with tag("input", type_="hidden", name="groupId", value=group.identifier): pass
+            with tag("div.row"):
+                with tag("div.col"):
+                    with tag("select.form-select", name="domainId"):
+                        for each in domainIdsNotInGroup:
+                            with tag("option", value=each):
+                                yield each
+                with tag("div.col-auto"):
+                    with tag("button.btn.btn-small.btn-primary.float-end", type_="submit", id_="BtnAddDomainIdToGroup"):
+                        yield "Toevoegen"
+
+    if len(group.domainIds) == 0:
+        with tag("div.alert.alert-info.mt-3"):
+            with tag("i.bi-info-circle"): pass
+            with tag("span.ps-2"):
+                yield "Geen domeinen in deze groep."
+            return
+
+    with tag("table.table.table-sm.table-hover", id_="TblGroupDomains"):
+        with tag("thead"):
+            for label in ['', 'Naam']:
+                with tag("th"): yield label
+        with tag("tbody"):
+            for each in sorted(group.domainIds):
+                with tag("tr"):
+                    with tag("td.fit"):
+                        with tag("form"):
+                            with tag("input", type_="hidden", name="groupId", value=group.identifier): pass
+                            with tag("input", type_="hidden", name="domainId", value=each): pass
+                            with tag("button.seecr-btn.deletable", title="Uit groep verwijderen"):
+                                with tag("i.bi-trash-fill"): pass
+                    with tag("td"):
+                        yield each
+
+# ---------- Users
 def cardUsers(tag, group, **kwargs):
-    yield "Users"
+    with tag("div", id_='placeholder_userscard'):
+        yield card_users(tag, group, **kwargs)
 
+def card_users(tag, group=None, **kwargs):
+    if group is None:
+        identifier = kwargs.get("arguments", {}).get("groupId", [None])[0]
+        group = observable.call.getGroup(identifier)
+
+    allUsernames = observable.call.listUsernames()
+    usersNotInGroup = sorted([username for username in allUsernames if not username in group.usernames])
+    if len(usersNotInGroup) > 0:
+        with tag("form.form", id_="FrmAddUserToGroup"):
+            with tag("input", type_="hidden", name="groupId", value=group.identifier): pass
+            with tag("div.row"):
+                with tag("div.col"):
+                    with tag("select.form-select", name="username"):
+                        for each in usersNotInGroup:
+                            with tag("option", value=each):
+                                yield each
+                with tag("div.col-auto"):
+                    with tag("button.btn.btn-small.btn-primary.float-end", type_="submit", id_="BtnAddUserToGroup"):
+                        yield "Toevoegen"
+
+    if len(group.usernames) == 0:
+        with tag("div.alert.alert-info.mt-3"):
+            with tag("i.bi-info-circle"): pass
+            with tag("span.ps-2"):
+                yield "Geen gebruikers in deze groep."
+            return
+
+    with tag("table.table.table-sm.table-hover", id_='TblGroupUsers'):
+        with tag("thead"):
+            for label in ['', 'Naam']:
+                with tag("th"): yield label
+        with tag("tbody"):
+            for username in sorted(group.usernames):
+                with tag("tr"):
+                    with tag("td.fit"):
+                        with tag("form"):
+                            with tag("input", type_="hidden", name="groupId", value=group.identifier): pass
+                            with tag("input", type_="hidden", name="username", value=username): pass
+                            with tag("button.seecr-btn.deletable", title="Uit groep verwijderen"):
+                                with tag("i.bi-trash-fill"): pass
+                    with tag("td"):
+                        yield username
