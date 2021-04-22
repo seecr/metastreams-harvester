@@ -113,7 +113,42 @@ function init_domainscard(placeholder) {
         });
 }
 
+/* ---------- Group */
+function init_group(placeholder) {
+    var _updateButton = placeholder.find("#BtnUpdateGroup");
+	_updateButton.prop('disabled', true);
+
+	var _form = $("#FrmUpdateGroup");
+	_updateButton
+        .unbind("click")
+        .click(function(e) {
+            e.preventDefault();
+            $.post("/groups.action/updateGroup", _form.serialize())
+                .done(function(data) {
+                    if (data['success'] == false) {
+                        errorMessage(data['message']);
+                    } else {
+						_updateButton.prop('disabled', true);
+                        _form.find('.border-warning').each(function() {
+                            $(this).removeClass('border-warning');
+                        })
+					}
+                })
+        })
+	_form.find("input").keyup(function(e) {
+        var _input = $(this);
+        if (!_input.hasClass("border-warning")) {
+            _input.addClass("border-warning");
+        }
+        if (_updateButton.prop('disabled') == true) {
+            _updateButton.prop('disabled', false);
+        }
+
+	});
+}
+
 $(document).ready(function() {
+	init_group($("#placeholder_groupcard"));
     init_domainscard($("#placeholder_domainscard"));
     init_userscard($("#placeholder_userscard"));
 })
