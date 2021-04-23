@@ -29,10 +29,10 @@
 def header(session, **kwargs):
     user = session.get('user')
     domain = session.get('domain')
-    if user and not user.isAdmin() and domain is None:
-        userInfo = observable.call.getUserInfo(user.name)
-        if userInfo:
-            session['domain'] = userInfo.domain
+    # if user and not user.isAdmin() and domain is None:
+    #     userInfo = observable.call.getUserInfo(user.name)
+    #     if userInfo:
+    #         session['domain'] = userInfo.domain
 
     yield """<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
 <html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en" lang="en">

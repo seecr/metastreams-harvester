@@ -2,8 +2,8 @@
 import page2
 
 def main(**kwargs):
-    user = kwargs['session'].get('user')
-    if not user or not user.isAdmin():
+    user = kwargs['user']
+    if not user:
         yield http.redirect('/')
         return
 
@@ -34,10 +34,11 @@ def card_groups(tag, **kwargs):
                     yield "Aanmaken"
 
     with tag("div", id_="placeholder_groups"):
-        yield table_groups(tag)
+        yield table_groups(tag, **kwargs)
 
-def table_groups(tag, **kwargs):
-    groups = sorted(observable.call.listGroups(), key=lambda group: group.name)
+def table_groups(tag,  **kwargs):
+    user = kwargs['user']
+    groups = sorted(user.listAllGroups(), key=lambda group: group.name)
     if len(groups) == 0:
         with tag("span"):
             yield "Nog geen groepen aangemaakt."

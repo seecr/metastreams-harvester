@@ -47,7 +47,7 @@ def cardDomains(tag, **kwargs):
     with tag("form.form", id_="FrmCreateDomain"):
         with tag("div.row"):
             with tag("div.col-auto"):
-                with tag("label.form-label"):
+                with tag("label.col-form-label"):
                     yield "Naam"
             with tag("div.col"):
                 with tag("input.form-control", type_="text", name="identifier"): pass
@@ -58,7 +58,7 @@ def cardDomains(tag, **kwargs):
     with tag("div", id_="placeholder_domains"):
         yield table_domains(tag, **kwargs)
 
-def table_domains(tag, **kwargs):
+def table_domains(tag, user, **kwargs):
     allDomainIds = observable.call.getDomainIds()
     with tag("table.table.table-sm.table-hover", id_="TblDomains"):
         with tag("thead"):
@@ -70,7 +70,7 @@ def table_domains(tag, **kwargs):
                     with tag("td.fit"):
                         with tag("form"):
                             with tag("input", type_="hidden", name="domainId", value=each): pass
-                            with tag("button.seecr-btn.deletable", title="Uit groep verwijderen"):
+                            with tag("button.seecr-btn.deletable", title="Verwijderen"):
                                 with tag("i.bi-trash-fill"): pass
                     with tag("td"):
                         yield each

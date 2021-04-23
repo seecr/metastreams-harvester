@@ -23,8 +23,9 @@
 #
 ## end license ##
 
-def render(func, session=None, user=None, showMenu=True, **kwargs):
-    session = session or {}
+def render(func, showMenu=True, **kwargs):
+    session = kwargs.get("session", {})
+    user = kwargs.get("user", None)
     tag = kwargs.get("tag")
     scripts = [
         "/js/jquery/jquery.min.js",
@@ -97,7 +98,7 @@ def renderMenu(tag, user):
                             if user.isAdmin():
                                 with tag("a.nav-link", href="/domains"): yield 'Domeinen'
                                 with tag("a.nav-link", href="/groups"): yield 'Groepen'
-                                with tag("a.nav-link", href="/groups"): yield 'Accounts'
+                                with tag("a.nav-link", href="/users"): yield 'Gebruikers'
                             with tag("a.nav-link", href="#"): yield 'Mijn Account'
                             with tag("a.nav-link", href="/logout"): yield "Uitloggen"
 

@@ -70,10 +70,10 @@ def card_group(tag, group, **kwargs):
         with tag("div.row"):
             with tag("div.col-auto"):
                 with tag("label.col-form-label", for_="naam"): yield "Naam"
-            with tag("div.col-auto"):
+            with tag("div.col"):
                 with tag("input.form-control", id_="naam", type_="text", name="name", value=group.name): pass
         with tag("div.row"):
-            with tag("div.col"):
+            with tag("div.col.mt-3"):
                 with tag("button.btn.btn-small.btn-primary.float-end", type_="submit", id_="BtnUpdateGroup"):
                     yield "Aanpassen"
 
