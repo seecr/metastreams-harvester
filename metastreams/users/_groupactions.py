@@ -32,6 +32,7 @@ class GroupActions(PostActions):
         PostActions.__init__(self, **kwargs)
         self.registerAction('createGroup', self._createGroup)
         self.registerAction('updateGroup', self._updateGroup)
+        self.registerAction('updateGroupAdmin', self._updateGroupAdmin)
         self.registerAction('addUsername', self._addUser)
         self.registerAction('removeUsername', self._removeUser)
         self.registerAction('addDomain', self._addDomain)
@@ -45,13 +46,27 @@ class GroupActions(PostActions):
         newGroup = self.call.newGroup().setName(data.name)
         yield response(True, identifier=newGroup.identifier)
 
-    @check_and_parse('identifier', 'name', userCheck='admin')
-    def _updateGroup(self, data, **kwargs):
+    @check_and_parse('identifier', 'name', 'logoUrl', userCheck='user')
+    def _updateGroup(self, user, data, **kwargs):
         group, message = self._group(data.identifier)
         if not group:
             yield response(False, message=message)
             return
-        group.setName(data.name or '')
+        if not user.isAdmin() and user.name not in group.usernames:
+            yield response(False, message='Not allowed')
+            return
+        group.name = data.name or ''
+        group.logoUrl = data.logoUrl or ''
+
+        yield response(True, identifier=group.identifier)
+
+    @check_and_parse('identifier', 'adminCheckbox', userCheck='admin')
+    def _updateGroupAdmin(self, data, **kwargs):
+        group, message = self._group(data.identifier)
+        if not group:
+            yield response(False, message=message)
+            return
+        group.adminGroup = not data.adminCheckbox is None
 
         yield response(True, identifier=group.identifier)
 

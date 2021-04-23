@@ -52,6 +52,4 @@ def table_groups(tag,  **kwargs):
             for group in groups:
                 with tag("tr"):
                     with tag("td.clickable-row", **{'data-id': group.identifier}):
-                        yield group.name
-
-
+                        yield group.name or f'<{group.identifier[:8]}>'

@@ -119,3 +119,15 @@ def card(title, body, icon=None, **kwargs):
                     yield title
         with tag("div.card-body"):
             yield body(**kwargs)
+
+def renderModal(tag):
+    with tag("div.modal", tabindex="-1", role="dialog", id_="modal"):
+        with tag("div.modal-dialog"):
+            with tag("div.modal-content"):
+                with tag("div.modal-header"):
+                    with tag("h5.modal-title", id_="placeholder_modal-title"):
+                        yield ""
+                    with tag("button.btn-close", type_="button", **{"data-bs-dismiss": 'modal', 'aria-label': 'Close'}):
+                        pass
+                with tag("div.modal-body", id_="placeholder_modal-body"):
+                    pass

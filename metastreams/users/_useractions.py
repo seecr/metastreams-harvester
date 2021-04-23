@@ -35,7 +35,7 @@ class UserActions(PostActions):
         self.registerAction('removeUser', self._removeUser)
         self.registerAction('changePasswordFor', self._changePasswordFor)
         self.registerAction('changePassword', self._changePassword)
-        self.registerAction('setFullnameForUser', self._setFullname)
+        self.registerAction('updateUser', self._updateUser)
 
     @check_and_parse('username', 'password', userCheck='admin')
     def _createUser(self, data, **kwargs):
@@ -93,7 +93,7 @@ class UserActions(PostActions):
         yield response(True, username=user.name)
 
     @check_and_parse('username', 'fullname', userCheck='user')
-    def _setFullname(self, user, data, **kwargs):
+    def _updateUser(self, user, data, **kwargs):
         if not user.isAdmin() and user.name != data.username:
             yield response(False, message='Not allowed')
             return

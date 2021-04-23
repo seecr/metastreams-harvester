@@ -31,7 +31,8 @@
 #
 ## end license ##
 
-from os.path import join, abspath, dirname
+from os.path import join, abspath, dirname, isdir
+from os import makedirs
 from sys import stdout
 from xml.sax.saxutils import escape as escapeXml
 from io import StringIO
@@ -106,6 +107,8 @@ def dna(reactor, port, dataPath, logPath, statePath, externalUrl, fieldDefinitio
 
         (userGroup.basicHtmlObserver,),
     )
+    varWwwdataPath = join(statePath, 'www-data', 'var')
+    isdir(varWwwdataPath) or makedirs(varWwwdataPath)
 
     staticFilePaths = []
     staticFiles = Transparent()
@@ -115,6 +118,7 @@ def dna(reactor, port, dataPath, logPath, statePath, externalUrl, fieldDefinitio
             ('/css/jquery-tablesorter', '/usr/share/javascript/jquery-tablesorter/css'),
             ('/js/autosize', '/usr/share/javascript/autosize'),
             ('/static', staticHtmlPath),
+            ('/var', varWwwdataPath),
             ]:
         staticFiles.addObserver(StaticFiles(libdir=libdir, path=path))
         staticFilePaths.append(path)

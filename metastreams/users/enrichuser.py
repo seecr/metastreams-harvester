@@ -43,7 +43,7 @@ class EnrichedUser(object):
         user.getFullname = self.getFullname
 
     def isAdmin(self):
-        return self._name == 'admin'
+        return any(g.adminGroup for g in self.listMyGroups())
 
     def listMyGroups(self):
         return self._observer.call.groupsForUser(self._name)

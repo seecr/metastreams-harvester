@@ -97,7 +97,7 @@ class UserActionsTest(SeecrTestCase):
         self.assertFalse(chPwd(self.normalUser, 'doesnotmatch', 'new_password', 'new_password')['success'])
 
     def testFullname(self):
-        result = self.do('setFullnameForUser', {'username':'normal', 'fullname': "Very Normal"})
+        result = self.do('updateUser', {'username':'normal', 'fullname': "Very Normal"})
         self.assertEqual({'success': True, 'username': 'normal'}, result)
         self.assertEqual({'fullname': "Very Normal"}, self.info.getUserInfo('normal'))
 

@@ -62,16 +62,11 @@ def table_domains(tag, user, **kwargs):
     allDomainIds = observable.call.getDomainIds()
     with tag("table.table.table-sm.table-hover", id_="TblDomains"):
         with tag("thead"):
-            for label in ['', 'Naam']:
+            for label in ['Naam']:
                 with tag("th"): yield label
         with tag("tbody"):
             for each in sorted(allDomainIds, key=lambda each: each.lower()):
                 with tag("tr.clickable-row", **{'data-id': each}):
-                    with tag("td.fit"):
-                        with tag("form"):
-                            with tag("input", type_="hidden", name="domainId", value=each): pass
-                            with tag("button.seecr-btn.deletable", title="Verwijderen"):
-                                with tag("i.bi-trash-fill"): pass
                     with tag("td"):
                         yield each
 

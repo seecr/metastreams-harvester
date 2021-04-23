@@ -98,4 +98,19 @@ class GroupStorageTest(SeecrTestCase):
         self.assertEqual([g2.identifier], [each.identifier for each in gs.groupsForUser("Bert")])
         self.assertEqual(set([g.identifier, g2.identifier]), set([each.identifier for each in gs.groupsForUser("Harry")]))
 
+    def testMoreAttributes(self):
+        gs = GroupStorage(self.tempdir)
+        g = gs.newGroup()
+        self.assertEqual('', g.name)
+        self.assertEqual(False, g.adminGroup)
+        self.assertEqual(None, g.logoUrl)
+
+        g.name = 'New name'
+        g.adminGroup = True
+        g.logoUrl = '/var/seecr.png'
+
+        reloaded = gs.getGroup(g.identifier)
+        self.assertEqual(True, reloaded.adminGroup)
+        self.assertEqual('New name', reloaded.name)
+        self.assertEqual('/var/seecr.png', reloaded.logoUrl)
 

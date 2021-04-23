@@ -1,0 +1,103 @@
+## begin license ##
+#
+# "Seecr Metastreams" is a fork of Meresco Harvester that demonstrates the translation of traditional metadata into modern events streams.
+#
+# Copyright (C) 2017, 2021 Seecr (Seek You Too B.V.) https://seecr.nl
+#
+# This file is part of "Seecr Metastreams"
+#
+# "Seecr Metastreams" is free software; you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation; either version 2 of the License, or
+# (at your option) any later version.
+#
+# "Seecr Metastreams" is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with "Seecr Metastreams"; if not, write to the Free Software
+# Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
+#
+## end license ##
+
+import page2
+
+def main(**kwargs):
+    user = kwargs['session'].get('user')
+    if not user or not user.isAdmin():
+        yield http.redirect('/')
+        return
+
+    table = page2.findPath("table", dict(users=table_users), **kwargs)
+    if not table is None:
+        yield table(**kwargs)
+        return
+    
+    modal = page2.findPath("modal", dict(user=modal_user), **kwargs)
+    if not modal is None:
+        yield modal(**kwargs)
+        return
+
+    yield page2.render(
+        _contents,
+        additionalScripts=['/static/users.js'],
+        **kwargs)
+
+def _contents(tag, arguments, **kwargs):
+    yield page2.renderModal(tag)
+    yield page2.card("Gebruikers", cardusers, icon="person", tag=tag, **kwargs)
+
+def cardusers(tag, **kwargs):
+    with tag("form.form", id_="FrmCreateUser"):
+        with tag("div.row"):
+            with tag("div.col-auto"):
+                with tag("label.col-form-label"):
+                    yield "Naam"
+            with tag("div.col"):
+                with tag("input.form-control", type_="text", name="username"): pass
+            with tag("div.col-auto"):
+                with tag("label.col-form-label"):
+                    yield "Wachtwoord"
+            with tag("div.col"):
+                with tag("input.form-control", type_="password", name="password"): pass
+            with tag("div.col-auto"):
+                with tag("button.btn.btn-small.btn-primary.float-end", type_="submit", id_="BtnCreateUser"):
+                    yield "Aanmaken"
+
+    with tag("div", id_="placeholder_users"):
+        yield table_users(tag, **kwargs)
+
+def table_users(tag, user, **kwargs):
+    allUsernames = user.listAllUsernames()
+    with tag("table.table.table-sm.table-hover", id_="TblUsers"):
+        with tag("thead"):
+            for label in ['Naam']:
+                with tag("th"): yield label
+        with tag("tbody"):
+            for each in sorted(allUsernames, key=lambda each: each.lower()):
+                with tag("tr.clickable-row", **{'data-id': each}):
+                    with tag("td"):
+                        yield each
+
+def modal_user(tag, user, arguments, **kwargs):
+    username = arguments.get("username", [None])[0]
+    if username != user.name and not username in user.listAllUsernames():
+        with tag("span"):
+            yield "U mag deze gebruiker niet aanpassen."
+            return
+
+    userToEdit = user.getAllUserData()[username]
+
+    with tag("form.form", id_="FrmUpdateUser"):
+        with tag("input", type_="hidden", name="username", value=username): pass
+        with tag("div.row"):
+            with tag("div.col-4"):
+                with tag("label.col-form-label", for_="fullname"): yield "Volledige naam"
+            with tag("div.col-8"):
+                with tag("input.form-control", id_="fullname", type_="text", name="fullname", value=userToEdit.get("fullname")): pass
+        with tag("div.row.mt-3"):
+            with tag("div.col"):
+                with tag("button.btn.btn-small.btn-primary.float-end", type_="submit", id_="BtnUpdateUser"):
+                    yield "Aanpassen"

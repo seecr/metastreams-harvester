@@ -68,12 +68,17 @@ def card_group(tag, group, **kwargs):
     with tag("form.form", id_="FrmUpdateGroup"):
         with tag("input", type_="hidden", name="identifier", value=group.identifier): pass
         with tag("div.row"):
-            with tag("div.col-auto"):
+            with tag("div.col-3"):
                 with tag("label.col-form-label", for_="naam"): yield "Naam"
-            with tag("div.col"):
+            with tag("div.col-9"):
                 with tag("input.form-control", id_="naam", type_="text", name="name", value=group.name): pass
-        with tag("div.row"):
-            with tag("div.col.mt-3"):
+        with tag("div.row.mt-3"):
+            with tag("div.col-3"):
+                with tag("label.col-form-label", for_="logoUrl"): yield "URL Logo"
+            with tag("div.col-9"):
+                with tag("input.form-control", id_="logoUrl", type_="text", name="logoUrl", value=group.logoUrl): pass
+        with tag("div.row.mt-3"):
+            with tag("div.col"):
                 with tag("button.btn.btn-small.btn-primary.float-end", type_="submit", id_="BtnUpdateGroup"):
                     yield "Aanpassen"
 
@@ -121,7 +126,7 @@ def card_domains(tag, group=None, **kwargs):
                             with tag("input", type_="hidden", name="groupId", value=group.identifier): pass
                             with tag("input", type_="hidden", name="domainId", value=each): pass
                             with tag("button.seecr-btn.deletable", title="Uit groep verwijderen"):
-                                with tag("i.bi-trash-fill"): pass
+                                with tag("i.bi-x-square"): pass
                     with tag("td"):
                         yield each
 
@@ -169,6 +174,6 @@ def card_users(tag, group=None, **kwargs):
                             with tag("input", type_="hidden", name="groupId", value=group.identifier): pass
                             with tag("input", type_="hidden", name="username", value=username): pass
                             with tag("button.seecr-btn.deletable", title="Uit groep verwijderen"):
-                                with tag("i.bi-trash-fill"): pass
+                                with tag("i.bi-x-square"): pass
                     with tag("td"):
                         yield username

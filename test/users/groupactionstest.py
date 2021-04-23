@@ -42,6 +42,7 @@ class GroupActionsTest(SeecrTestCase):
         self.storage = GroupStorage(self.tempdir, _newId=newId)
         self.actions.addObserver(self.storage)
         self.user = CallTrace(returnValues={'isAdmin': True})
+        self.user.name = 'freddie'
 
     def testCreate(self):
         body = self.do('createGroup', {'name': "Some nåme"})
@@ -107,6 +108,44 @@ class GroupActionsTest(SeecrTestCase):
         self.assertEqual({"success": True, "identifier": g.identifier}, body)
         g = self.storage.getGroup(g.identifier)
         self.assertEqual([], g.domainIds)
+
+    def testSetAdminGroup(self):
+        g = self.storage.newGroup()
+        self.assertFalse(g.adminGroup)
+
+        body = self.do('updateGroup', {'identifier': g.identifier, 'name': "A name", 'logoUrl': '/seecr.png'})
+        self.assertEqual({"success": True, "identifier": g.identifier}, body)
+
+        body = self.do('updateGroupAdmin', {'identifier': g.identifier, 'adminCheckbox':'1'})
+        self.assertEqual({"success": True, "identifier": g.identifier}, body)
+
+        g = self.storage.getGroup(g.identifier)
+        self.assertTrue(g.adminGroup)
+        self.assertEqual('A name', g.name)
+        self.assertEqual('/seecr.png', g.logoUrl)
+
+    def testUnsetAdminGroup(self):
+        g = self.storage.newGroup()
+        g.adminGroup = True
+        self.assertTrue(g.adminGroup)
+
+        body = self.do('updateGroupAdmin', {'identifier': g.identifier})
+
+        self.assertEqual({"success": True, "identifier": g.identifier}, body)
+        g = self.storage.getGroup(g.identifier)
+        self.assertFalse(g.adminGroup)
+
+    def testUpdateGroupByUser(self):
+        self.user.returnValues['isAdmin'] = False
+        g = self.storage.newGroup().addUsername(self.user.name)
+        self.assertFalse(g.adminGroup)
+
+        body = self.do('updateGroup', {'identifier': g.identifier, 'name': "A name", 'logoUrl': '/seecr.png'})
+
+        g = self.storage.getGroup(g.identifier)
+        self.assertFalse(g.adminGroup)
+        self.assertEqual('A name', g.name)
+        self.assertEqual('/seecr.png', g.logoUrl)
 
     def do(self, pathPart, dataDict):
         header, body = parseResponse(asBytes(self.actions.handleRequest(

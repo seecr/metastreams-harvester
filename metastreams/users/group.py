@@ -64,13 +64,9 @@ class Group(object):
     def identifier(self):
         return self._data['identifier']
 
-    @property
-    def name(self):
-        return self._data.get('name', '')
-
-    def setName(self, name):
-        self._data['name'] = name
-        return self.save()
+    def save(self):
+        self._data.dump(self._filepath)
+        return self
 
     @property
     def usernames(self):
@@ -96,10 +92,33 @@ class Group(object):
         self._data['domainIds'] = [d for d in self.domainIds if d != domainId]
         return self.save()
 
-    def save(self):
-        self._data.dump(self._filepath)
+    @property
+    def groupInfo(self):
+        return self._data.get('info', {})
+
+    def updateGroupInfo(self, data):
+        cur = self.groupInfo
+        cur.update(data)
+        return self.setGroupInfo(cur)
+
+    def setGroupInfo(self, data):
+        self._data['info'] = data
+        return self.save()
+
+    def _groupInfo(name, default=None):
+        return lambda s: s.groupInfo.get(name, default)
+    def _setGroupInfo(name, fn=lambda x: x):
+        return lambda s, v: s.updateGroupInfo({name: fn(v)})
+
+    adminGroup = property(_groupInfo('adminGroup', False), _setGroupInfo('adminGroup', bool))
+    name = property(_groupInfo('name', ''), _setGroupInfo('name'))
+    logoUrl = property(_groupInfo('logoUrl'), _setGroupInfo('logoUrl'))
+
+    def setName(self, name):
+        self.name = name
         return self
 
+    # adminGroup = property(lambda self: self.groupInfo.get('adminGroup', False), lambda self, v: self.updateGroupInfo({'adminGroup': bool(v)}))
 
 GROUP_EXT = '.group'
 

@@ -48,12 +48,14 @@ def _initializeData(stateDir, harvesterData):
     adminGroup = None
     if not groupStorage.listGroups():
         adminGroup = groupStorage.newGroup().setName('Admin')
+        adminGroup.adminGroup = True
     if passwordFile.listUsernames() == []:
         pwd = ''.join(choice(string.digits + string.ascii_letters) for i in range(15))
         passwordFile.addUser('admin', pwd)
         print('Created user "admin" with password:', pwd)
         userInfo.setUserInfo('admin', {'fullname': 'Metastreams Administrator'})
         adminGroup.addUsername('admin')
+
     enrichUser = be((EnrichUser(),
         (passwordFile,),
         (groupStorage,),
