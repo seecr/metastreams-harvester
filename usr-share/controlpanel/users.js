@@ -3,10 +3,11 @@ function init_table_users(placeholder) {
         e.preventDefault();
 
         var _row = $(this);
-        $.get("/users/modal/user", "username=" + _row.data("id"))
+        var _username = _row.data("id");
+        $.get("/users/modal/user", "username=" + _username)
             .done(function(data) {
                 var _modal = $("#modal");
-                _modal.find("#placeholder_modal-title").html("Bewerken gebruiker");
+                _modal.find("#placeholder_modal-title").html("Bewerken gebruiker '" + _username + "'");
                 var _body_placeholder = _modal.find("#placeholder_modal-body");
                 _body_placeholder
                     .empty()
@@ -18,6 +19,9 @@ function init_table_users(placeholder) {
 }
 
 function init_modal_user(placeholder) {
+    /*
+     * General properties
+     */
     var _form = placeholder.find("#FrmUpdateUser");
     var _updateButton = placeholder.find("#BtnUpdateUser");
     _updateButton
@@ -29,23 +33,34 @@ function init_modal_user(placeholder) {
             $.post("/users.action/updateUser", _form.serialize())
                 .done(function(data) {
                     if (data['success'] == true) {
-						_updateButton.prop('disabled', true);
-                        _form.find('.border-warning').each(function() {
-                            $(this).removeClass('border-warning');
-                        })
+                        form_resetBordersAndDisabled(_form, _updateButton, false);
                     }
                 });
-        })
-	_form.find("input").keyup(function(e) {
-        var _input = $(this);
-        if (!_input.hasClass("border-warning")) {
-            _input.addClass("border-warning");
-        }
-        if (_updateButton.prop('disabled') == true) {
-            _updateButton.prop('disabled', false);
-        }
+        });
+    form_setBordersAndDisabled(_form, _updateButton);
 
-	});
+    /*
+     * Change Password
+     */
+    var _passwordForm = placeholder.find("#FrmChangePassword");
+    var _changeButton = placeholder.find("#BtnChangePassword");
+    _changeButton
+        .prop('disabled', 'true')
+        .unbind('click')
+        .click(function(e) {
+            e.preventDefault();
+
+            $.post('/users.action/changePasswordFor', _passwordForm.serialize())
+                .done(function(data) {
+                    if (data['success'] == true) {
+                        form_resetBordersAndDisabled(_passwordForm, _changeButton, true);
+                    } else {
+                        alert(data['message']);
+                        form_resetBordersAndDisabled(_passwordForm, _changeButton, true);
+                    }
+                });
+        });
+    form_setBordersAndDisabled(_passwordForm, _changeButton);
 }
 
 
