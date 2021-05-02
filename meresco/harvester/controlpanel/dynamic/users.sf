@@ -110,12 +110,12 @@ def modal_user(tag, user, arguments, **kwargs):
             with tag("div.col-4"):
                 with tag("label.col-form-label", for_="wachtwoord"): yield "Wachtwoord"
             with tag("div.col-8"):
-                with tag("input.form-control", id_="wachtwoord", type_="text", name="newPassword", value=""): pass
+                with tag("input.form-control", id_="wachtwoord", type_="password", name="newPassword", value=""): pass
         with tag("div.row.mt-3"):
             with tag("div.col-4"):
                 with tag("label.col-form-label", for_="wachtwoord_herhaal"): yield "Wachtwoord (herhaal)"
             with tag("div.col-8"):
-                with tag("input.form-control", id_="wachtwoord_herhaal", type_="text", name="retypedPassword", value=""): pass
+                with tag("input.form-control", id_="wachtwoord_herhaal", type_="password", name="retypedPassword", value=""): pass
         with tag("div.row.mt-3"):
             with tag("div.col"):
                 with tag("button.btn.btn-small.btn-primary.float-end", type_="submit", id_="BtnChangePassword"):
