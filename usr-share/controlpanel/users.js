@@ -91,6 +91,8 @@ $(document).ready(function() {
                                 })
                                 init_table_users(_placeholder);
                             })
+                        var _modal = $.find("#modal");
+
                     } else {
                         errorMessage(data['message']);
                     }

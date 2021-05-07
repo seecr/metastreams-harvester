@@ -24,7 +24,25 @@
 
 import page
 
-def main(**kwargs):
-    yield page.header(**kwargs)
-    yield observable.any.loginForm(**kwargs)
-    yield page.footer(**kwargs)
+def main(tag, **kwargs):
+    with tag("div.alert.alert-danger.collapse", role="alert", id_="login-message-box"):
+        with tag("i.bi-exclamation-triangle-fill"): pass
+        with tag("strong.ps-3"): pass
+    with tag("form.form", id_="FrmLogin"):
+        with tag("div.row"):
+            with tag("div.col-4"):
+                with tag("label.col-form-label"):
+                    yield "Gebruikersnaam"
+            with tag("div.col-8"):
+                with tag("input.form-control", type_="text", name="username"): pass
+        with tag("div.row.mt-3"):
+            with tag("div.col-4"):
+                with tag("label.col-form-label"):
+                    yield "Wachtwoord"
+            with tag("div.col-8"):
+                with tag("input.form-control", type_="password", name="password"): pass
+        with tag("div.row.mt-3"):
+            with tag("div.col"):
+                with tag("button.btn.btn-small.btn-primary.float-end", type_="submit", id_="BtnDoLogin"):
+                    yield "Inloggen"
+

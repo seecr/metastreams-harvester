@@ -46,7 +46,6 @@ def main(**kwargs):
         **kwargs)
 
 def _contents(tag, arguments, **kwargs):
-    yield page2.renderModal(tag)
     yield page2.card("Gebruikers", cardusers, icon="person", tag=tag, **kwargs)
 
 def cardusers(tag, **kwargs):
