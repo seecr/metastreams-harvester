@@ -22,9 +22,25 @@
 #
 ## end license ##
 
+
+import page2
+
+def main(user, **kwargs):
+    if not user:
+        yield http.redirect('/')
+        return
+
+    yield page2.render(_content, user=user, **kwargs)
+
+def _content(**kwargs):
+    yield page2.card("Account", _account, **kwargs)
+
+def _account(tag, user, **kwargs):
+    yield "Hello " + str(user.name)
+
 import page
 
-def main(**kwargs):
+def _main(**kwargs):
     if not kwargs['session'].get('user'):
         yield http.redirect('/')
         return

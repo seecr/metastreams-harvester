@@ -6,6 +6,13 @@ function errorMessage(txt) {
     }
 }
 
+function resetErrorMessage(txt) {
+    var _box = $("#message-box");
+    if (_box != undefined) {
+        _box.hide();
+    }
+}
+
 function form_setBordersAndDisabled(form, button) {
 	form.find("input").keyup(function(e) {
         var _input = $(this);

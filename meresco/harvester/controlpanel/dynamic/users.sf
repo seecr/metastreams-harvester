@@ -34,7 +34,7 @@ def main(**kwargs):
     if not table is None:
         yield table(**kwargs)
         return
-    
+
     modal = page2.findPath("modal", dict(user=modal_user), **kwargs)
     if not modal is None:
         yield modal(**kwargs)
@@ -51,10 +51,6 @@ def _contents(tag, arguments, **kwargs):
 
 def cardusers(tag, **kwargs):
     with tag("form.form", id_="FrmCreateUser"):
-        with tag("div.alert.alert-danger.mt-3.d-none"):
-            with tag("i.bi-exclamation-triangle"): pass
-            with tag("span.ps-2"):
-                yield ""
         with tag("div.row"):
             with tag("div.col-auto"):
                 with tag("label.col-form-label"):

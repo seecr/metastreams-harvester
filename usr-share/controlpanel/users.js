@@ -76,11 +76,8 @@ $(document).ready(function() {
 
             $.post("/users.action/createUser", _form.serialize())
                 .done(function(data) {
-                    var _alert = _form.find(".alert");
                     if (data['success'] == true) {
-                        if (!_alert.hasClass("d-none")) {
-                            _alert.addClass("d-none");
-                        }
+                        resetErrorMessage();
                         $.get("/users/table/users")
                             .done(function(data) {
                                 var _placeholder = $("#placeholder_users");
@@ -95,10 +92,7 @@ $(document).ready(function() {
                                 init_table_users(_placeholder);
                             })
                     } else {
-                        _alert.find("span")
-                            .empty()
-                            .append(data['message']);
-                        _alert.removeClass("d-none");
+                        errorMessage(data['message']);
                     }
                 })
         })

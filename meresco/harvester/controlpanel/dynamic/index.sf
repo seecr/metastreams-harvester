@@ -22,25 +22,23 @@
 #
 ## end license ##
 
-import page
-
+import page2
 
 def main(**kwargs):
-    yield page.layoutWithMenu(_contents, **kwargs)
-
+    yield page2.render(_contents, **kwargs)
 
 def _contents(**kwargs):
-    yield """
+    yield page2.card("Metastreams Web Control Panel", _card, **kwargs)
 
-<h1>Metastreams Web Control Panel</h1>
-<p>
-Welkom bij Meresco-Harvester, de Open Source OAI Harvester, een onderdeel van de Meresco Suite.  Hier kunt u de u toegekende domeinen beheren.<p>
-
-<p>
-Voor vragen en meer informatie over Meresco Harvester kunt u terecht op de <a href="http://meresco.seecr.nl">Meresco pagina</a>. Meresco-Harvester is initieel ontwikkeld voor SURFnet onder de naam Sahara.
-</p>
-
-<p>
-Succes gewenst!!<br/>
-Het Meresco Harvester Team
-</p>"""
+def _card(tag, **kwargs):
+    with tag("p"):
+        yield "Welkom bij Meresco-Harvester, de Open Source OAI Harvester, een onderdeel van de Meresco Suite.  Hier kunt u de u toegekende domeinen beheren."
+    with tag("p"):
+        yield "Voor vragen en meer informatie over Meresco Harvester kunt u terecht op de "
+        with tag("a", href="http://meresco.seecr.nl", target="_blank"):
+            yield "Meresco pagina"
+        yield ". Meresco-Harvester is initieel ontwikkeld voor SURFnet onder de naam Sahara."
+    with tag("p"):
+        yield "Succes gewenst!!"
+        with tag("br"): pass
+        yield "Het Meresco Harvester Team"
