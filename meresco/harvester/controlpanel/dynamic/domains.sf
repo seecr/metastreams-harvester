@@ -25,8 +25,8 @@
 import page2
 
 def main(**kwargs):
-    user = kwargs['session'].get('user')
-    if not user or not user.isAdmin():
+    user = kwargs.get('user', None)
+    if not user: # or not user.isAdmin():
         yield http.redirect('/')
         return
 
@@ -41,34 +41,47 @@ def main(**kwargs):
         **kwargs)
 
 def _contents(tag, arguments, **kwargs):
-    yield page2.card("Domeinen", cardDomains, icon="collection", tag=tag, **kwargs)
+    with tag("div.container"):
+        yield page2.card("Domeinen", cardDomains, icon="collection", tag=tag, **kwargs)
 
 def cardDomains(tag, **kwargs):
-    with tag("form.form", id_="FrmCreateDomain"):
-        with tag("div.row"):
-            with tag("div.col-auto"):
-                with tag("label.col-form-label"):
-                    yield "Naam"
-            with tag("div.col"):
-                with tag("input.form-control", type_="text", name="identifier"): pass
-            with tag("div.col-auto"):
-                with tag("button.btn.btn-small.btn-primary.float-end", type_="submit", id_="BtnCreateDomain"):
-                    yield "Aanmaken"
+    user = kwargs.get("user", None)
+    if user and user.isAdmin():
+        with tag("form.form", id_="FrmCreateDomain"):
+            with tag("div.row"):
+                with tag("div.col-auto"):
+                    with tag("label.col-form-label"):
+                        yield "Naam"
+                with tag("div.col"):
+                    with tag("input.form-control", type_="text", name="identifier"): pass
+                with tag("div.col-auto"):
+                    with tag("button.btn.btn-small.btn-primary.float-end", type_="submit", id_="BtnCreateDomain"):
+                        yield "Aanmaken"
 
     with tag("div", id_="placeholder_domains"):
         yield table_domains(tag, **kwargs)
 
 def table_domains(tag, user, **kwargs):
-    allDomainIds = observable.call.getDomainIds()
+    allDomainIds = user.listDomainIds(); #observable.call.getDomainIds()
     with tag("table.table.table-sm.table-hover", id_="TblDomains"):
         with tag("thead"):
-            for label in ['Naam']:
+            for label in ['','Naam', "Omschrijving"]:
                 with tag("th"): yield label
         with tag("tbody"):
             for each in sorted(allDomainIds, key=lambda each: each.lower()):
-                with tag("tr.clickable-row", **{'data-id': each}):
+                with tag("tr", **{'data-id': each}):
+                    with tag("td.fit"):
+                        # later; popup perhaps with domain fields to edit?
+                        #with tag("button.seecr-btn"):
+                        #    with tag("i.bi-pencil"): pass
+                        pass
+                    with tag("td.fit"):
+                        with tag("a", href=page2.url("/domain", identifier=each)):
+                            yield each
                     with tag("td"):
-                        yield each
+                        domainInfo = observable.call.getDomain(each)
+                        yield domainInfo.get("description", "")
+
 
 # ------- Old stuff below
 

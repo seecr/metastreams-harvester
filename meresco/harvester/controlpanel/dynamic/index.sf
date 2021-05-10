@@ -27,8 +27,9 @@ import page2
 def main(**kwargs):
     yield page2.render(_contents, **kwargs)
 
-def _contents(**kwargs):
-    yield page2.card("Metastreams Web Control Panel", _card, **kwargs)
+def _contents(tag, **kwargs):
+    with tag("div.container"):
+        yield page2.card("Metastreams Web Control Panel", _card, tag=tag, **kwargs)
 
 def _card(tag, **kwargs):
     with tag("p"):

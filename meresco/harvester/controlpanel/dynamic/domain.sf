@@ -30,10 +30,10 @@ import target
 
 
 def main(**kwargs):
-    user = kwargs.get('session', {}).get('user')
+    user = kwargs.get('user', None)
     domain = kwargs.get('session', {}).get('domain')
     domainId = kwargs.get('arguments', {}).get('identifier', [None])[0]
-    if not user or (not user.isAdmin() and domain != domainId):
+    if not user: # or (not user.isAdmin() and domain != domainId):
         yield http.redirect("/login")
         return
     yield page.layoutWithMenu(_content, **kwargs)
@@ -46,8 +46,8 @@ def _content(arguments, session, **kwargs):
     domainIdentifier = domain['identifier']
 
     isAdmin = user.isAdmin()
-    if not isAdmin and session.get('domain', '') != domainIdentifier:
-        raise Exception('Illegal use')
+    #if not isAdmin and session.get('domain', '') != domainIdentifier:
+    #    raise Exception('Illegal use')
 
     yield """
 <h1>Domain Administration</h1>"""

@@ -93,7 +93,7 @@ def renderMenu(tag, user):
                     "aria-expanded": "false",
                     "aria-label": "Toggle navigation",}):
                     with tag('span.navbar-toggler-icon'): pass
-                with tag('div.collapse.navbar-collapse.justify-content-end'):
+                with tag('div.collapse.navbar-collapse.justify-content-end', id_="navbarNavAltMarkup"):
                     with tag('div.navbar-nav'):
                         if user:
                             if user.isAdmin():
@@ -103,7 +103,7 @@ def renderMenu(tag, user):
                                         ('/users', 'Gebuikers')]:
                                     with tag("a.nav-link.pe-3", href=link): yield label
                             else:
-                                with tag("a.nav-link", href="#"): yield 'Domeinen'
+                                with tag("a.nav-link.pe3", href="/domains"): yield 'Domeinen'
                         else:
                             with tag("button.btn.nav-link", id_="BtnLogin"): yield "Inloggen"
                         if user:
@@ -122,6 +122,9 @@ def renderMenu(tag, user):
                                         with tag("li"):
                                             with tag("a.dropdown-item", href="/logout"):
                                                 yield "Uitloggen"
+
+def url(path, **kwargs):
+    return path if len(kwargs) == 0 else "{}?{}".format(path, urlencode(kwargs))
 
 def findPath(wantedPath, mapping, **kwargs):
     path = kwargs.get('path')
