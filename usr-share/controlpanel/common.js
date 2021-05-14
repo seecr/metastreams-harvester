@@ -70,11 +70,11 @@ function init_login_button() {
                     .done(function(data) {
                         var _modal = $("#modal");
                         var _body_placeholder = _modal.find("#placeholder_modal-body");
-                        var _form = _body_placeholder.find("#FrmLogin");
                         _modal.find("#placeholder_modal-title").html("Inloggen");
                         _body_placeholder
                             .empty()
                             .append(data);
+                        var _form = _body_placeholder.find("#FrmLogin");
                         _body_placeholder.find("#BtnDoLogin")
                             .unbind("click")
                             .click(function(e) {
