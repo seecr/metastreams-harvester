@@ -44,12 +44,12 @@ function init_login_button() {
                 $.get("/login")
                     .done(function(data) {
                         var _modal = $("#modal");
-                        _modal.find("#placeholder_modal-title").html("Inloggen");
                         var _body_placeholder = _modal.find("#placeholder_modal-body");
+                        var _form = _body_placeholder.find("#FrmLogin");
+                        _modal.find("#placeholder_modal-title").html("Inloggen");
                         _body_placeholder
                             .empty()
                             .append(data);
-                        var _form = _body_placeholder.find("#FrmLogin");
                         _body_placeholder.find("#BtnDoLogin")
                             .unbind("click")
                             .click(function(e) {
@@ -60,7 +60,6 @@ function init_login_button() {
                                     data: JSON.stringify(_form.serializeArray()),
                                     dataType: "json",
                                     success: function(loginResponse) {
-                                        console.log(loginResponse);
                                         if (loginResponse['success'] == true) {
                                             window.location = "/"
                                         } else {
