@@ -95,6 +95,7 @@ def dna(reactor, port, dataPath, logPath, statePath, externalUrl, fieldDefinitio
         externaUrl=externalUrl,
         dataPath=dataPath,
     )
+    print("Started Metastreams with configuration:\n" + configDict.pretty_print())
     fieldDefinitions = loadDefinitions(fieldDefinitionsFile)
 
     userGroup = initializeUserGroupManagement(join(statePath, 'users'), harvesterData)
