@@ -48,13 +48,14 @@ for path, dirs, files in walk('metastreams'):
         packages.append(packagename)
 
 package_data = {}
-for maindir in ['meresco', 'metastreams']:
+# use meresco/harvester because meresco is no part of this package.
+for maindir in ['meresco/harvester', 'metastreams']:
     for path, dirs, files in walk(maindir):
         suffix = '.sf'
         if any(f.endswith(suffix) for f in files):
             segments = path.split('/')
-            filepath = join(*(segments[1:] + ['*'+suffix]))
-            package_data.setdefault(maindir, []).append(filepath)
+            filepath = join(*(segments[len(maindir.split('/')):] + ['*'+suffix]))
+            package_data.setdefault(maindir.replace('/', '.'), []).append(filepath)
 
 scripts = []
 for path, dirs, files in walk('bin'):
