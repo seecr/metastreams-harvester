@@ -48,7 +48,7 @@ for path, dirs, files in walk('metastreams'):
         packages.append(packagename)
 
 package_data = {}
-for maindir in ['mereco', 'metastreams']:
+for maindir in ['meresco', 'metastreams']:
     for path, dirs, files in walk(maindir):
         suffix = '.sf'
         if any(f.endswith(suffix) for f in files):
