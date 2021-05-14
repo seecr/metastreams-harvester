@@ -135,7 +135,7 @@ function init_group(placeholder) {
 					}
                 })
         })
-	_form.find("input").keyup(function(e) {
+	_form.find("input").change(function(e) {
         var _input = $(this);
         if (!_input.hasClass("border-warning")) {
             _input.addClass("border-warning");

@@ -78,6 +78,13 @@ def card_group(tag, group, **kwargs):
             with tag("div.col-9"):
                 with tag("input.form-control", id_="logoUrl", type_="text", name="logoUrl", value=group.logoUrl): pass
         with tag("div.row.mt-3"):
+            with tag("div.col-3"):
+                with tag("label.col-form-label", for_="admin_group"): yield ""
+            with tag("div.col-9"):
+                with tag("div.form-check"):
+                    with tag("input.form-check-input", id_="admin_group", type_="checkbox", name="adminCheckbox", value="1", checked=group.adminGroup, disabled=True): pass
+                    with tag("label.form-check-label", for_="admin_group"): yield " Administrator Group"
+        with tag("div.row.mt-3"):
             with tag("div.col"):
                 with tag("button.btn.btn-small.btn-primary.float-end", type_="submit", id_="BtnUpdateGroup"):
                     yield "Aanpassen"
