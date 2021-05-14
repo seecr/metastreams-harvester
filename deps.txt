@@ -20,6 +20,6 @@ python3-gustos2.3-client
 libjs-jquery (>= 3.5.1)
 libjs-jquery (<< 3.6)
 libjs-jquery-tablesorter (>= 1:2.31.1+dfsg1)
-libjs-jquery-tablesorter (<< 12.32)
+libjs-jquery-tablesorter (<< 1:12.32)
 libjs-autosize (>= 4.0.2~dfsg1)
 libjs-autosize (<< 4.1)
