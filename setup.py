@@ -53,8 +53,8 @@ for maindir in ['meresco', 'metastreams']:
         suffix = '.sf'
         if any(f.endswith(suffix) for f in files):
             segments = path.split('/')
-            filepath = join(*(segments[2:] + ['*'+suffix]))
-            package_data.setdefault('metastreams', []).append(filepath)
+            filepath = join(*(segments[1:] + ['*'+suffix]))
+            package_data.setdefault(maindir, []).append(filepath)
 
 scripts = []
 for path, dirs, files in walk('bin'):
