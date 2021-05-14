@@ -1,0 +1,61 @@
+#!/usr/bin/env python3
+
+from seecrdeps import includeParentAndDeps       #DO_NOT_DISTRIBUTE
+includeParentAndDeps(__file__, scanForDeps=True) #DO_NOT_DISTRIBUTE
+
+from metastreams.users import PasswordFile2, passwordCheck
+from os.path import isfile
+from getpass import getpass
+
+def verify(pf, username):
+    pwd = getpass('To verify, please provide password: ')
+    if pf.validateUser(username, pwd):
+        print('✓')
+        return 0
+    else:
+        print('FAIL')
+        return 1
+
+def change(pf, username):
+    pwd = getpass(f'Please provide new password for "{username}": ')
+    pwd2 = getpass(f'Please repeat new password: ')
+    if pwd != pwd2:
+        print("Passwords do not match!")
+        return 1
+    try:
+        passwordCheck(pwd)
+    except ValueError as e:
+        print("Password invalid: " + str(e))
+        return 1
+    pf.setPassword(username, pwd)
+    print(f'Password changed for "{username}"')
+    return 0
+
+
+if __name__ == '__main__':
+    from argparse import ArgumentParser
+    parser = ArgumentParser()
+    parser.add_argument('--passwordFile', help='Password file', required=True)
+    parser.add_argument('--verify', default=False, action='store_true', help='Verify password')
+    parser.add_argument('--change', default=False, action='store_true', help='Change password')
+    parser.add_argument('username', help="Username to verify", nargs=1)
+
+    args = parser.parse_args()
+    username = args.username[0]
+
+    if args.verify and args.change:
+        parser.error("Choose --verify of --change")
+
+    if not isfile(args.passwordFile):
+        parser.error(f"Passwordfile '{args.passwordFile}' does not exist")
+
+    pf = PasswordFile2(args.passwordFile)
+
+    if args.verify:
+        exit(verify(pf, username))
+    elif args.change:
+        exit(change(pf, username))
+    else:
+        contains = 'contains' if pf.hasUser(username) else 'does not contain'
+        print(f"Passwordfile '{args.passwordFile}' {contains} user '{(username)}'")
+

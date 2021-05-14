@@ -29,3 +29,4 @@ from ._utils import *
 from ._groupactions import *
 from ._useractions import *
 from ._userinfo import *
+from .passwordfile2 import *

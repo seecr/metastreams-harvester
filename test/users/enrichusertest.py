@@ -33,7 +33,7 @@ class EnrichUserTest(SeecrTestCase):
     def setUp(self):
         SeecrTestCase.setUp(self)
         harvesterData = CallTrace(returnValues={'getDomainIds':['d1', 'd2', 'd3', 'd4', 'd5']})
-        self.grp, self.pwd, self.uinf, self.enrichUser = _initializeData(self.tempdir, harvesterData)
+        self.grp, self.pwd, self.uinf, self.userEnricher = _initializeData(self.tempdir, harvesterData)
         self.pwd.addUser('user1', 'password1')
         self.uinf.setUserInfo('user1', {'fullname':'Nr. 1.'})
         self.grp.newGroup().setName('Group 1').addUsername('user1').addDomainId('d1').addDomainId('d2')
@@ -42,7 +42,7 @@ class EnrichUserTest(SeecrTestCase):
 
     def testEnrichUserNormal(self):
         one = MyUser('user1')
-        self.enrichUser.enrichUser(one)
+        self.userEnricher.enrichUser(one)
         self.assertEqual(['Group 1', 'Group 2'], sorted([g.name for g in one.listMyGroups()]))
         self.assertEqual(['Group 1', 'Group 2'], sorted([g.name for g in one.listAllGroups()]))
         self.assertEqual(['user1'], one.listAllUsernames())
@@ -52,7 +52,7 @@ class EnrichUserTest(SeecrTestCase):
 
     def testChaningNameWontWork(self):
         one = MyUser('user1')
-        self.enrichUser.enrichUser(one)
+        self.userEnricher.enrichUser(one)
         self.assertFalse(one.isAdmin())
         self.assertEqual(['user1'], one.listAllUsernames())
         one.name = 'admin'
@@ -61,7 +61,7 @@ class EnrichUserTest(SeecrTestCase):
 
     def testUpdatesWillBeApplied(self):
         one = MyUser('user1')
-        self.enrichUser.enrichUser(one)
+        self.userEnricher.enrichUser(one)
         self.assertEqual(['Group 1', 'Group 2'], sorted([g.name for g in one.listMyGroups()]))
         g1 = [g for g in self.grp.listGroups() if g.name == 'Group 1'][0]
         g1.removeUsername('user1')
@@ -70,7 +70,7 @@ class EnrichUserTest(SeecrTestCase):
 
     def testEnrichUserAdmin(self):
         adm = MyUser('admin')
-        self.enrichUser.enrichUser(adm)
+        self.userEnricher.enrichUser(adm)
         self.assertEqual(['Admin'], sorted([g.name for g in adm.listMyGroups()]))
         self.assertEqual(['Admin', 'Group 1', 'Group 2', 'Group 3'], sorted([g.name for g in adm.listAllGroups()]))
         self.assertEqual(['admin', 'user1'], adm.listAllUsernames())
@@ -81,6 +81,16 @@ class EnrichUserTest(SeecrTestCase):
             'user1': {'fullname': 'Nr. 1.'},
             }, adm.getAllUserData())
         self.assertEqual(['d1', 'd2', 'd3', 'd4', 'd5'], adm.listDomainIds())
+
+    def testGroupChangedNowUserAdmin(self):
+        g1 = [g for g in self.grp.listGroups() if g.name == 'Group 1'][0]
+        g1.adminGroup = True
+
+        user1 = MyUser('user1')
+        self.userEnricher.enrichUser(user1)
+
+        self.assertTrue(user1.isAdmin())
+
 
 class MyUser(object):
     def __init__(self, name):

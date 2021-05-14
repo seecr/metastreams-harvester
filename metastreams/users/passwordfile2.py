@@ -110,5 +110,5 @@ class _Storage(object):
         rename(self._filepath+'~', self._filepath)
         chmod(self._filepath, S_IREAD | S_IWRITE)
 
-
+__all__ = ['PasswordFile2']
 

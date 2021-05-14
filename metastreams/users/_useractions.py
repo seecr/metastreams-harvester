@@ -43,7 +43,7 @@ class UserActions(PostActions):
         if usernameErrorMessage is not None:
             yield response(False, message=usernameErrorMessage)
             return
-        passwordErrorMessage = yield self.passwordCheck(data.password)
+        passwordErrorMessage = yield self._passwordCheck(data.password)
         if passwordErrorMessage is not None:
             yield response(False, message=passwordErrorMessage)
             return
@@ -67,7 +67,7 @@ class UserActions(PostActions):
         if not self.call.hasUser(username=data.username):
             yield response(False, message="User does not exist")
             return
-        passwordErrorMessage = yield self.passwordCheck(data.newPassword)
+        passwordErrorMessage = yield self._passwordCheck(data.newPassword)
         if passwordErrorMessage is not None:
             yield response(False, message=passwordErrorMessage)
             return
@@ -82,7 +82,7 @@ class UserActions(PostActions):
         if not self.call.validateUser(username=user.name, password=data.oldPassword):
             yield response(False, message='Oldpassword not correct.')
             return
-        passwordErrorMessage = yield self.passwordCheck(data.newPassword)
+        passwordErrorMessage = yield self._passwordCheck(data.newPassword)
         if passwordErrorMessage is not None:
             yield response(False, message=passwordErrorMessage)
             return
@@ -100,10 +100,11 @@ class UserActions(PostActions):
         self.do.addUserInfo(username=data.username, data={'fullname': data.fullname})
         yield response(True, username=data.username)
 
-    def passwordCheck(self, password):
-        result = password is not None and len(password) >= 8
-        if not result:
-            return "Password invalid, should be at least 8 characters"
+    def _passwordCheck(self, password):
+        try:
+            passwordCheck(password)
+        except ValueError as e:
+            return str(e)
         return None
         yield
 
@@ -113,4 +114,11 @@ class UserActions(PostActions):
         return None
         yield
 
+def passwordCheck(password):
+    result = password is not None and len(password) >= 8
+    if not result:
+        raise ValueError("Password invalid, should be at least 8 characters")
+
 USERNAME_RE = re.compile(r'^[A-Za-z](:?[A-Za-z_\-0-9]){2,}$')
+
+__all__ = ['UserActions', 'passwordCheck']
