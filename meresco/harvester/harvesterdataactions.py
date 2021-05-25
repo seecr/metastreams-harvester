@@ -135,12 +135,17 @@ class HarvesterDataActions(PostActions):
                 ))))
 
         extra = {}
+        converters = {
+            'text': str,
+            'bool': lambda value: value == "on"
+        }
         for definition in self._fieldDefinitions.get('repository_fields', []):
             fieldname = "extra_{}".format(definition['name'])
             if definition.get('type') == 'bool':
+                # checkboxes when not checked are not present in the form
                 extra[definition['name']] = fieldname in arguments
             elif fieldname in arguments:
-                extra[definition['name']] = arguments[fieldname][0]
+                extra[definition['name']] = converters.get(definition['type'], lambda x: x)(arguments[fieldname][0])
 
         self.call.updateRepository(
                 identifier=identifier,

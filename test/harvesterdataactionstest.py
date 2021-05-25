@@ -50,7 +50,8 @@ class HarvesterDataActionsTest(SeecrTestCase):
         self.hd.addRepository('repository', repositoryGroupId='group', domainId='domain')
         self.hda = HarvesterDataActions(fieldDefinitions={'repository_fields':[
                 {'name': 'name', 'label':'Label', 'type':'text', 'export': False},
-                {'name': 'showme', 'label':'Boolean', 'type':'bool', 'export': True},
+                {'name': 'choice_1', 'label':'Keuze', 'type':'bool', 'export': False},
+                {'name': 'choice_2', 'label':'Keuze', 'type':'bool', 'export': False},
             ]})
         self.hda.addObserver(self.hd)
 
@@ -106,7 +107,7 @@ class HarvesterDataActionsTest(SeecrTestCase):
             "repositoryAction": "clear",
             "numberOfTimeslots": "0",
             "extra_name": "Name for this object",
-            "extra_showme": "1",
+            "extra_choice_1": '1'
         }
         consume(self.hda.handleRequest(Method='POST', path='/somewhere/updateRepository', Body=bUrlencode(data, doseq=True)))
         repository = self.hd.getRepository('repository', 'domain')
@@ -124,7 +125,11 @@ class HarvesterDataActionsTest(SeecrTestCase):
         self.assertEqual(False, repository["use"])
         self.assertEqual("clear", repository["action"])
         self.assertEqual([], repository['shopclosed'])
-        self.assertEqual({"name": "Name for this object", "showme": True}, repository['extra'])
+        self.assertEqual({
+            "name": "Name for this object",
+            "choice_1": True,
+            "choice_2": False
+            }, repository['extra'])
 
     def testMinimalInfo(self):
         data = {
