@@ -29,17 +29,20 @@ def main(**kwargs):
 
 def _contents(tag, **kwargs):
     with tag("div.container"):
-        yield page2.card("Metastreams Web Control Panel", _card, tag=tag, **kwargs)
+        yield page2.card("Metastreams Web Control Panel", _inleiding, tag=tag, **kwargs)
+        yield page2.card("Meer weten?", _contact, tag=tag, **kwargs)
 
-def _card(tag, **kwargs):
+def _inleiding(tag, **kwargs):
     with tag("p"):
-        yield "Welkom bij Meresco-Harvester, de Open Source OAI Harvester, een onderdeel van de Meresco Suite.  Hier kunt u de u toegekende domeinen beheren."
+        yield "Welkom bij Seecr Metastreams. De startplek om uw metadata te laten stromen. "
+    with tag('p'):
+        yield "Hier kunt u de aan u toegekende domeinen beheren. "
+
+def _contact(tag, **kwargs):
     with tag("p"):
-        yield "Voor vragen en meer informatie over Meresco Harvester kunt u terecht op de "
-        with tag("a", href="http://meresco.seecr.nl", target="_blank"):
-            yield "Meresco pagina"
-        yield ". Meresco-Harvester is initieel ontwikkeld voor SURFnet onder de naam Sahara."
+        yield "Wilt u graag uw metadata verbinden, koppelen en doorzoeken, zodat u de kennis die erin zit eruithaalt en gebruikt?"
     with tag("p"):
-        yield "Succes gewenst!!"
-        with tag("br"): pass
-        yield "Het Meresco Harvester Team"
+        yield "Neem dan "
+        with tag("a", href="https://seecr.nl/#contact", target="_blank"):
+            yield "contact"
+        yield ' op met Seecr.'
