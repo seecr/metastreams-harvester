@@ -32,10 +32,7 @@ import page, common
 # from meresco.harvester.timeslot import Timeslot
 
 def main(**kwargs):
-    user = kwargs.get('session', {}).get('user')
-    domain = kwargs.get('session', {}).get('domain')
-    domainId = kwargs.get('arguments', {}).get('domainId', [None])[0]
-    if not user or (not user.isAdmin() and domain != domainId):
+    if not common.userAuthorized(**kwargs):
         yield http.redirect("/login")
         return
     yield page.layoutWithMenu(_contents, **kwargs)

@@ -25,6 +25,10 @@
 def main(**kwargs):
     yield "Nothing to see here"
 
+def userAuthorized(user, arguments, **kwargs):
+    domainId = arguments.get("domainId", [None])[0]
+    return user.isAdmin() or (user and domainId in user.listDomainIds())
+
 
 def showStatusFor(domainId, scope, **kwargs):
     def _arguments():
