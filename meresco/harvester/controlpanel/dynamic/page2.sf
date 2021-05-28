@@ -32,6 +32,7 @@ def render(func, showMenu=True, **kwargs):
         '/static/common.js',
     ]
     scripts.extend(kwargs.get('additionalScripts', []))
+    scriptsModules = kwargs.get('additionalScripts', [])
 
     csss = ["/static/common.css"]
     csss.extend(kwargs.get("additionalCss", []))

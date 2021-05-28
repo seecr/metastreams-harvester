@@ -35,6 +35,7 @@ def main(**kwargs):
 
 def _content(arguments, user, session, **kwargs):
     identifier = arguments.get('identifier', [None])[0]
+    domainId = arguments.get("domainId", [None])[0]
     group = observable.call.getRepositoryGroup(identifier=identifier, domainId=domainId)
 
     yield """<h1>Repositorygroup Administration</h1>"""

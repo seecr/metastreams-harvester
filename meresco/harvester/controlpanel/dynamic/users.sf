@@ -42,7 +42,10 @@ def main(**kwargs):
 
     yield page2.render(
         _contents,
-        additionalScripts=['/static/users.js'],
+        additionalScripts=[
+            '/static/user_functions.js',
+            '/static/users.js'
+        ],
         **kwargs)
 
 def _contents(tag, arguments, **kwargs):
@@ -69,28 +72,25 @@ def cardusers(tag, **kwargs):
         yield table_users(tag, **kwargs)
 
 def table_users(tag, user, **kwargs):
-    allUsernames = user.listAllUsernames()
+    allUserData = user.getAllUserData()
     with tag("table.table.table-sm.table-hover", id_="TblUsers"):
         with tag("thead"):
-            for label in ['Naam']:
+            for label in ['Naam', "Volledige naam"]:
                 with tag("th"): yield label
         with tag("tbody"):
-            for each in sorted(allUsernames, key=lambda each: each.lower()):
-                with tag("tr.clickable-row", **{'data-id': each}):
+            for each in sorted(allUserData.values(), key=lambda each: each['username'].lower()):
+                username = each['username']
+                with tag("tr.clickable-row", **{'data-id': username}):
                     with tag("td"):
-                        yield each
+                        yield username
+                    with tag("td"):
+                        yield each.get('fullname', '')
 
-def modal_user(tag, user, arguments, **kwargs):
-    username = arguments.get("username", [None])[0]
-    if username != user.name and not username in user.listAllUsernames():
-        with tag("span"):
-            yield "U mag deze gebruiker niet aanpassen."
-            return
-
-    userToEdit = user.getAllUserData()[username]
+def _form_userdetails(tag, editingUser, editedUsername):
+    userToEdit = editingUser.getAllUserData()[editedUsername]
 
     with tag("form.form", id_="FrmUpdateUser"):
-        with tag("input", type_="hidden", name="username", value=username): pass
+        with tag("input", type_="hidden", name="username", value=editedUsername): pass
         with tag("div.row"):
             with tag("div.col-4"):
                 with tag("label.col-form-label", for_="fullname"): yield "Volledige naam"
@@ -101,13 +101,24 @@ def modal_user(tag, user, arguments, **kwargs):
                 with tag("button.btn.btn-small.btn-primary.float-end", type_="submit", id_="BtnUpdateUser"):
                     yield "Aanpassen"
 
-    with tag("hr"): pass
+def _form_password(tag, user, username):
+    with tag("div.alert.collapse", id_="MsgChangePassword", role="alert"):
+        with tag("i"): pass
+        with tag("span.ps-2"):
+            pass
 
     with tag("form.form", id_="FrmChangePassword"):
         with tag("input", type_="hidden", name="username", value=username): pass
-        with tag("div.row"):
+        if not user.isAdmin():
+            with tag("div.row"):
+                with tag("div.col-4"):
+                    with tag("label.col-form-label", for_="wachtwoord_nu"): yield "Oud wachtwoord"
+                with tag("div.col-8"):
+                    with tag("input.form-control", id_="wachtwoord_nu", type_="password", name="oldPassword", value=""): pass
+
+        with tag("div.row", class_=['mt-3' if not user.isAdmin() else '']):
             with tag("div.col-4"):
-                with tag("label.col-form-label", for_="wachtwoord"): yield "Wachtwoord"
+                with tag("label.col-form-label", for_="wachtwoord"): yield "Nieuw wachtwoord"
             with tag("div.col-8"):
                 with tag("input.form-control", id_="wachtwoord", type_="password", name="newPassword", value=""): pass
         with tag("div.row.mt-3"):
@@ -120,3 +131,13 @@ def modal_user(tag, user, arguments, **kwargs):
                 with tag("button.btn.btn-small.btn-primary.float-end", type_="submit", id_="BtnChangePassword"):
                     yield "Wijzigen"
 
+def modal_user(tag, user, arguments, **kwargs):
+    username = arguments.get("username", [None])[0]
+    if username != user.name and not username in user.listAllUsernames():
+        with tag("span"):
+            yield "U mag deze gebruiker niet aanpassen."
+            return
+
+    yield _form_userdetails(tag, user, username)
+    with tag("hr"): pass
+    yield _form_password(tag, user, username)

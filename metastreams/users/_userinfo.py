@@ -45,6 +45,8 @@ class UserInfo(object):
         self.setUserInfo(username, newData)
 
     def getUserInfo(self, username):
-        return JsonDict.load(self._filepath)['users'].get(username, {})
+        result = JsonDict.load(self._filepath)['users'].get(username, {})
+        result['username'] = username
+        return result
 
 __all__ = ['UserInfo']

@@ -64,8 +64,6 @@ class EnrichedUser(object):
         return sorted(set(d for g in self.listAllGroups() for d in g.domainIds))
 
     def getAllUserData(self):
-        if not self.isAdmin():
-            raise ValueError('Not allowed')
         return {name:self._observer.call.getUserInfo(name) for name in self.listAllUsernames()}
 
     def getFullname(self):

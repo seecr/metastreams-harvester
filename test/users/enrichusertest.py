@@ -77,8 +77,8 @@ class EnrichUserTest(SeecrTestCase):
         self.assertEqual("Metastreams Administrator", adm.getFullname())
         self.assertTrue(adm.isAdmin())
         self.assertEqual({
-            'admin': {'fullname': 'Metastreams Administrator'},
-            'user1': {'fullname': 'Nr. 1.'},
+            'admin': {'username': 'admin', 'fullname': 'Metastreams Administrator'},
+            'user1': {'username': 'user1', 'fullname': 'Nr. 1.'},
             }, adm.getAllUserData())
         self.assertEqual(['d1', 'd2', 'd3', 'd4', 'd5'], adm.listDomainIds())
 

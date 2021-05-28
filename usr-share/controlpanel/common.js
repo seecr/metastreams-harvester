@@ -38,6 +38,40 @@ function resetErrorMessage(txt) {
     }
 }
 
+function _createElement(tag, attrs, text) {
+    var _elem = document.createElement(tag);
+    for(var key in attrs) {
+        _elem.setAttribute(key, attrs[key]);
+    }
+    _elem.textContent = text;
+    return _elem;
+}
+
+function msg_create(placeholder, alertClass, icon, text) {
+    var _box = _createElement("div", {
+        "class": 'alert alert-dismissible ' + alertClass,
+        "role": "alert"
+    });
+    _box.append(_createElement("i", {"class": icon}));
+    _box.append(_createElement("span", {"class": 'ps-2'}, text));
+    _box.append(_createElement("button", {
+        "type":"button",
+        "class":"btn-close",
+        "data-bs-dismiss": "alert",
+        "aria-label": "Close"
+    }));
+
+    placeholder.prepend($(_box));
+}
+
+
+function msg_Error(placeholder=undefined, id=undefined, text="") {
+    msg_create(placeholder, "alert-danger", "bi-emoji-frown", text);
+}
+function msg_Success(placeholder=undefined, id=undefined, text="") {
+    msg_create(placeholder, "alert-success", "bi-emoji-smile", text);
+}
+
 function form_setBordersAndDisabled(form, button) {
 	form.find("input").keyup(function(e) {
         var _input = $(this);

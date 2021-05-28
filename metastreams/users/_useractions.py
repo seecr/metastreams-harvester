@@ -33,7 +33,6 @@ class UserActions(PostActions):
         PostActions.__init__(self, **kwargs)
         self.registerAction('createUser', self._createUser)
         self.registerAction('removeUser', self._removeUser)
-        self.registerAction('changePasswordFor', self._changePasswordFor)
         self.registerAction('changePassword', self._changePassword)
         self.registerAction('updateUser', self._updateUser)
 
@@ -62,26 +61,22 @@ class UserActions(PostActions):
             self.do.removeUser(username=data.username)
         yield response(True)
 
-    @check_and_parse('username', 'newPassword', 'retypedPassword', userCheck='admin')
-    def _changePasswordFor(self, data, **kwargs):
-        if not self.call.hasUser(username=data.username):
-            yield response(False, message="User does not exist")
-            return
-        passwordErrorMessage = yield self._passwordCheck(data.newPassword)
-        if passwordErrorMessage is not None:
-            yield response(False, message=passwordErrorMessage)
-            return
-        if data.newPassword != data.retypedPassword:
-            yield response(False, message="Passwords do not match.")
-            return
-        self.do.setPassword(data.username, data.newPassword)
-        yield response(True, username=data.username)
-
-    @check_and_parse('oldPassword', 'newPassword', 'retypedPassword', userCheck='user')
+    @check_and_parse('username', 'oldPassword', 'newPassword', 'retypedPassword', userCheck='user')
     def _changePassword(self, user, data, **kwargs):
-        if not self.call.validateUser(username=user.name, password=data.oldPassword):
-            yield response(False, message='Oldpassword not correct.')
+        if not user.isAdmin() and user.name != data.username:
+            yield response(False, message='Not allowed.')
             return
+
+        if not user.isAdmin():
+            if not self.call.validateUser(username=data.username, password=data.oldPassword):
+                yield response(False, message='Oldpassword not correct.')
+                return
+
+        if user.isAdmin():
+            if not self.call.hasUser(username=data.username):
+                yield response(False, message="User does not exist")
+                return
+
         passwordErrorMessage = yield self._passwordCheck(data.newPassword)
         if passwordErrorMessage is not None:
             yield response(False, message=passwordErrorMessage)
@@ -89,8 +84,8 @@ class UserActions(PostActions):
         if data.newPassword != data.retypedPassword:
             yield response(False, message="Passwords do not match.")
             return
-        self.do.setPassword(username=user.name, password=data.newPassword)
-        yield response(True, username=user.name)
+        self.do.setPassword(username=data.username, password=data.newPassword)
+        yield response(True, username=data.username)
 
     @check_and_parse('username', 'fullname', userCheck='user')
     def _updateUser(self, user, data, **kwargs):

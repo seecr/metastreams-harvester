@@ -42,9 +42,9 @@ class UserActionsTest(SeecrTestCase):
         self.info = UserInfo(join(self.tempdir, 'info'))
         self.actions.addObserver(self.pwd)
         self.actions.addObserver(self.info)
-        self.user = CallTrace(returnValues={'isAdmin': True})
-        self.user.name = 'administrator'
-        self.pwd.addUser(self.user.name, 'very-secret')
+        self.adminUser = CallTrace(returnValues={'isAdmin': True})
+        self.adminUser.name = 'administrator'
+        self.pwd.addUser(self.adminUser.name, 'very-secret')
         self.normalUser = CallTrace(returnValues={'isAdmin': False})
         self.normalUser.name = 'normal'
         self.pwd.addUser(self.normalUser.name, 'normal-secret')
@@ -59,7 +59,7 @@ class UserActionsTest(SeecrTestCase):
         self.assertEqual({"success": False, "message": "Invalid username, must start with letter and can contain: letters, digits, _ and -"}, body)
 
     def testCreateWithNonAdminUser(self):
-        self.user.returnValues['isAdmin'] = False
+        self.adminUser.returnValues['isAdmin'] = False
         body = self.do('createUser', {'username': "username", 'password':'password'})
         self.assertEqual({"success": False, "message":"Not allowed"}, body)
 
@@ -74,36 +74,36 @@ class UserActionsTest(SeecrTestCase):
         body = self.do('removeUser', {'username': "administrator"})
         self.assertEqual({'success': False, 'message': 'Cannot remove self'}, body)
 
-    def testChangePasswordFor(self):
+    def testChangePasswordAsAdmin(self):
         self.pwd.addUser('username', 'old_password')
-        def chPwd(username, newPassword, retypedPassword):
-            return self.do('changePasswordFor', {'username':username, 'newPassword':newPassword, 'retypedPassword': retypedPassword})
-        self.assertEqual({"success": True, "username": "username"}, chPwd('username', 'new_password', 'new_password'))
+        def chPwd(user, username, newPassword, retypedPassword):
+            return self.do('changePassword', {'username':username, 'newPassword':newPassword, 'retypedPassword': retypedPassword}, user=user)
+        self.assertEqual({"success": True, "username": "username"}, chPwd(self.adminUser, 'username', 'new_password', 'new_password'))
         self.assertTrue(self.pwd.validateUser('username', 'new_password'))
-        self.assertFalse(chPwd('username', 'short', 'short')['success'])
-        self.assertFalse(chPwd('username', 'new_password', 'other_password')['success'])
-        self.assertFalse(chPwd('doesnotexist', 'new_password', 'new_password')['success'])
+        self.assertFalse(chPwd(self.adminUser, 'username', 'short', 'short')['success'])
+        self.assertFalse(chPwd(self.adminUser, 'username', 'new_password', 'other_password')['success'])
+        self.assertFalse(chPwd(self.adminUser, 'doesnotexist', 'new_password', 'new_password')['success'])
 
-    def testChangePassword(self):
-        def chPwd(user, oldPassword, newPassword, retypedPassword):
+    def testChangePasswordAsUser(self):
+        def chPwd(user, username, oldPassword, newPassword, retypedPassword):
             return self.do('changePassword',
-                    {'oldPassword':oldPassword, 'newPassword':newPassword, 'retypedPassword': retypedPassword},
+                    {'username': username, 'oldPassword':oldPassword, 'newPassword':newPassword, 'retypedPassword': retypedPassword},
                     user=user)
         self.assertEqual({"success": True, "username": "normal"},
-                chPwd(self.normalUser, 'normal-secret', 'new_password', 'new_password'))
+                chPwd(self.normalUser, self.normalUser.name, 'normal-secret', 'new_password', 'new_password'))
         self.assertTrue(self.pwd.validateUser('normal', 'new_password'))
-        self.assertFalse(chPwd(self.normalUser, 'new_password', 'short', 'short')['success'])
-        self.assertFalse(chPwd(self.normalUser, 'new_password', 'new_password', 'other_password')['success'])
-        self.assertFalse(chPwd(self.normalUser, 'doesnotmatch', 'new_password', 'new_password')['success'])
+        self.assertFalse(chPwd(self.normalUser, self.normalUser.name, 'new_password', 'short', 'short')['success'])
+        self.assertFalse(chPwd(self.normalUser, self.normalUser.name, 'new_password', 'new_password', 'other_password')['success'])
+        self.assertFalse(chPwd(self.normalUser, self.normalUser.name, 'doesnotmatch', 'new_password', 'new_password')['success'])
 
     def testFullname(self):
         result = self.do('updateUser', {'username':'normal', 'fullname': "Very Normal"})
         self.assertEqual({'success': True, 'username': 'normal'}, result)
-        self.assertEqual({'fullname': "Very Normal"}, self.info.getUserInfo('normal'))
+        self.assertEqual({'username': 'normal', 'fullname': "Very Normal"}, self.info.getUserInfo('normal'))
 
     def do(self, pathPart, dataDict, user=None):
         header, body = parseResponse(asBytes(self.actions.handleRequest(
-            user=user or self.user,
+            user=user or self.adminUser,
             path='/some/path/' + pathPart,
             Body=bytes(urlencode(dataDict), encoding='utf-8'),
             Headers={'Content-Type': 'application/x-www-form-urlencoded'},
