@@ -78,10 +78,10 @@ class Repository(SaharaObject):
         return reduce(lambda lhs, rhs: lhs or rhs, [x.areWeWithinTimeslot( dateTuple) for x in self.closedSlots()], False)
 
     def target(self):
-        return self._proxy.getTargetObject(self.targetId)
+        return self._proxy.getTargetObject(domainId=self.domainId, identifier=self.targetId)
 
     def mapping(self):
-        return self._proxy.getMappingObject(self.mappingId)
+        return self._proxy.getMappingObject(domainId=self.domainId, identifier=self.mappingId)
 
     def maxIgnore(self):
         return int(self.maximumIgnore) if self.maximumIgnore else 0

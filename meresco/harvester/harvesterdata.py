@@ -175,8 +175,8 @@ class HarvesterData(object):
         self._store.addData(id_combine(domainId, identifier), 'repository', repository, newId=False)
 
     #target
-    def getTarget(self, identifier, guid=None):
-        return self._store.getData(identifier, 'target', guid=guid)
+    def getTarget(self, domainId, identifier, guid=None):
+        return self._store.getData(f"{domainId}.{identifier}", 'target', guid=guid)
 
     def addTarget(self, name, domainId, targetType):
         domain = self.getDomain(domainId)
@@ -189,12 +189,12 @@ class HarvesterData(object):
                 targetType=targetType,
             )
         domain.setdefault('targetIds', []).append(identifier)
-        self._store.addData(identifier, 'target', target)
+        self._store.addData(f'{domainId}.{identifier}', 'target', target)
         self._store.addData(domainId, 'domain', domain)
         return identifier
 
-    def updateTarget(self, identifier, name, username, port, targetType, delegateIds, path, baseurl, oaiEnvelope):
-        target = self.getTarget(identifier)
+    def updateTarget(self, identifier, domainId, name, username, port, targetType, delegateIds, path, baseurl, oaiEnvelope):
+        target = self.getTarget(domainId=domainId, identifier=identifier)
         target['name'] = name
         target['username'] = username
         target['port'] = port
@@ -203,17 +203,17 @@ class HarvesterData(object):
         target['path'] = path
         target['baseurl'] = baseurl
         target['oaiEnvelope'] = oaiEnvelope
-        self._store.addData(identifier, 'target', target)
+        self._store.addData(f'{domainId}.{identifier}', 'target', target)
 
     def deleteTarget(self, identifier, domainId):
         domain = self.getDomain(domainId)
         domain['targetIds'].remove(identifier)
-        self._store.deleteData(identifier, 'target')
+        self._store.deleteData(f'{domainId}.{identifier}', 'target')
         self._store.addData(domainId, 'domain', domain)
 
     #mapping
-    def getMapping(self, identifier, guid=None):
-        return self._store.getData(identifier, 'mapping', guid=guid)
+    def getMapping(self, identifier, domainId, guid=None):
+        return self._store.getData(f'{domainId}.{identifier}', 'mapping', guid=guid)
 
     def addMapping(self, name, domainId):
         domain = self.getDomain(domainId)
@@ -255,12 +255,12 @@ upload.parts['meta'] = """<meta xmlns="http://meresco.org/namespace/harvester/me
 """,
             )
         domain.setdefault('mappingIds', []).append(identifier)
-        self._store.addData(identifier, 'mapping', mapping)
+        self._store.addData(f'{domainId}.{identifier}', 'mapping', mapping)
         self._store.addData(domainId, 'domain', domain)
         return identifier
 
-    def updateMapping(self, identifier, name, description, code):
-        mapping = self.getMapping(identifier)
+    def updateMapping(self, identifier, domainId, name, description, code):
+        mapping = self.getMapping(identifier, domainId)
         mapping['name'] = name
         mapping['description'] = description
         mapping['code'] = code
@@ -275,7 +275,7 @@ upload.parts['meta'] = """<meta xmlns="http://meresco.org/namespace/harvester/me
     def deleteMapping(self, identifier, domainId):
         domain = self.getDomain(domainId)
         domain['mappingIds'].remove(identifier)
-        self._store.deleteData(identifier, 'mapping')
+        self._store.deleteData(f'{domainId}.{identifier}', 'mapping')
         self._store.addData(domainId, 'domain', domain)
 
     def getPublicRecord(self, guid):

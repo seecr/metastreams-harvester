@@ -76,6 +76,19 @@ DATA = {
 }"""}
 
 class _HarvesterDataTest(SeecrTestCase):
+    def setUp(self):
+        SeecrTestCase.setUp(self)
+        for fname, data in DATA.items():
+            domainId, _ = fname.split(".", 1)
+            domainDir = join(self.tempdir, domainId)
+            isdir(domainDir) or makedirs(domainDir)
+            with open(join(self.tempdir, domainId, fname), "w") as fp:
+                fp.write(data)
+        self.n = 0
+        def mock_id():
+            self.n+=1
+            return 'mock-id: %s' % self.n
+        self.hd = self.createHarvesterData(mock_id)
 
     def testGetRepositoryGroupIds(self):
         self.assertEqual(["Group1", "Group2"], self.hd.getRepositoryGroupIds(domainId="adomain"))
@@ -224,7 +237,7 @@ class _HarvesterDataTest(SeecrTestCase):
         if self.with_id:
             self.assertEqual('mock-id: 2', d1.get('@id'))
             self.assertNotEqual(d0['@id'], d1['@id'])
-            self.assertTrue(isfile(join(self.tempdir, '_', 'adomain.domain.%s' % id0)))
+            self.assertTrue(isfile(join(self.tempdir, '_', 'adomain', 'adomain.domain.%s' % id0)))
             self.assertEqual('nono', self.hd.getDomain('adomain', guid=id0).get('description', 'nono'))
 
     def testAddRepositoryGroup(self):
@@ -462,7 +475,7 @@ class _HarvesterDataTest(SeecrTestCase):
             self.assertNotEqual(dId, self.hd.getDomain('adomain')['@id'])
         targetIds = self.hd.getDomain('adomain')['targetIds']
         self.assertEqual(2, len(targetIds))
-        target = self.hd.getTarget(targetId)
+        target = self.hd.getTarget(domainId='adomain', identifier=targetId)
         if self.with_id:
             self.assertEqual('mock-id: 3', target['@id'])
         self.assertEqual(targetId, targetIds[-1])
@@ -477,8 +490,9 @@ class _HarvesterDataTest(SeecrTestCase):
     def testUpdateTarget(self):
         targetId = self.hd.addTarget(name='new target', domainId='adomain', targetType='sruUpdate')
         if self.with_id:
-            tId = self.hd.getTarget(targetId)['@id']
+            tId = self.hd.getTarget(domainId='adomain', identifier=targetId)['@id']
         self.hd.updateTarget(identifier=targetId,
+                domainId='adomain',
                 name='updated target',
                 username='username',
                 port=1234,
@@ -488,7 +502,7 @@ class _HarvesterDataTest(SeecrTestCase):
                 baseurl='baseurl',
                 oaiEnvelope=False,
             )
-        target = self.hd.getTarget(targetId)
+        target = self.hd.getTarget(domainId='adomain', identifier=targetId)
         self.assertEqual('updated target', target['name'])
         self.assertEqual('username', target['username'])
         self.assertEqual(1234, target['port'])
@@ -499,33 +513,23 @@ class _HarvesterDataTest(SeecrTestCase):
         self.assertEqual(False, target['oaiEnvelope'])
         if self.with_id:
             self.assertNotEqual(tId, target['@id'])
-            self.assertEqual('new target', self.hd.getTarget(targetId, tId)['name'])
+            self.assertEqual('new target', self.hd.getTarget(domainId='adomain', identifier=targetId, guid=tId)['name'])
 
     def testDeleteTarget(self):
         targetId = self.hd.addTarget(name='new target', domainId='adomain', targetType='sruUpdate')
         if self.with_id:
-            tId = self.hd.getTarget(targetId)['@id']
+            tId = self.hd.getTarget(domainId='adomain', identifier=targetId)['@id']
             dId = self.hd.getDomain('adomain')['@id']
         self.assertEqual(['ignored TARGET', targetId], self.hd.getDomain('adomain')['targetIds'])
         self.hd.deleteTarget(targetId, domainId='adomain')
         self.assertEqual(['ignored TARGET'], self.hd.getDomain('adomain')['targetIds'])
-        self.assertRaises(ValueError, lambda: self.hd.getTarget(targetId))
+        self.assertRaises(ValueError, lambda: self.hd.getTarget(domainId='adomain', identifier=targetId))
         if self.with_id:
             self.assertNotEqual(dId, self.hd.getDomain('adomain')['@id'])
-            self.assertEqual(targetId, self.hd.getTarget(targetId, guid=tId)['identifier'])
+            self.assertEqual(targetId, self.hd.getTarget(domainId='adomain', identifier=targetId, guid=tId)['identifier'])
 
 class HarvesterDataTest(_HarvesterDataTest):
     with_id = True
-    def setUp(self):
-        SeecrTestCase.setUp(self)
-        for fname, data in DATA.items():
-            with open(join(self.tempdir, fname), "w") as fp:
-                fp.write(data)
-        self.n = 0
-        def mock_id():
-            self.n+=1
-            return 'mock-id: %s' % self.n
-        self.hd = self.createHarvesterData(mock_id)
 
     def createHarvesterData(self, id_fn):
         return HarvesterData(self.tempdir, id_fn=id_fn, datastore=DataStore(self.tempdir, id_fn=id_fn))
@@ -543,18 +547,5 @@ class HarvesterDataTest(_HarvesterDataTest):
 
 class HarvesterDataOldStyleTest(_HarvesterDataTest):
     with_id = False
-    def setUp(self):
-        SeecrTestCase.setUp(self)
-        for fname, data in DATA.items():
-            domainId, _ = fname.split(".", 1)
-            domainDir = join(self.tempdir, domainId)
-            isdir(domainDir) or makedirs(domainDir)
-            with open(join(self.tempdir, domainId, fname), "w") as fp:
-                fp.write(data)
-        self.n = 0
-        def mock_id():
-            self.n+=1
-            return 'mock-id: %s' % self.n
-        self.hd = self.createHarvesterData(mock_id)
     def createHarvesterData(self, id_fn):
         return HarvesterData(self.tempdir, id_fn=id_fn, datastore=OldDataStore(self.tempdir, id_fn=id_fn))

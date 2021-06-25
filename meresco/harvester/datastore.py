@@ -27,21 +27,39 @@
 #
 ## end license ##
 
-from os.path import join, isdir, isfile
+from os.path import join, isdir, isfile, dirname
 from os import makedirs, rename, listdir, remove
 from uuid import uuid4
 from meresco.components.json import JsonDict
 from shutil import copy
 
-class OldDataStore(object):
+class _DataStore(object):
     def __init__(self, dataPath, id_fn=lambda: str(uuid4())):
         self._dataPath = dataPath
         isdir(self._dataPath) or makedirs(self._dataPath)
         self.id_fn = id_fn
 
+    def getGuid(self, guid):
+        raise NotImplementedError()
+    
+    def listForDatatype(self, datatype):
+        ext = '.{}'.format(datatype)
+        domainDirs = [d for d in listdir(self._dataPath) if isdir(join(self._dataPath, d))]
+        result = []
+        for each in domainDirs:
+            result.extend([d.split(ext,1)[0] for d in listdir(join(self._dataPath, each)) if d.endswith(ext)])
+        return sorted(result)
+
+    def exists(self, identifier, datatype):
+        domainDir, filename = self._filename(identifier, datatype)
+        return isfile(join(self._dataPath, domainDir, filename))
+
     def _filename(self, identifier, datatype):
-        if datatype in ['mapping', 'target']:
-            return '', '{}.{}'.format(identifier, datatype)
+        if datatype in ['mapping', "target"]:
+            domainId = ""
+            if '.' in identifier:
+                domainId, identifier = identifier.split(".", 1)
+            return domainId, '{}.{}'.format(identifier, datatype)
 
         domainId = identifier
         if '.' in identifier:
@@ -51,6 +69,13 @@ class OldDataStore(object):
         if not isdir(domainDir):
             makedirs(domainDir)
         return domainId, '{}.{}'.format(identifier, datatype)
+
+
+
+class OldDataStore(_DataStore):
+    def __init__(self, dataPath, id_fn=lambda: str(uuid4())):
+        _DataStore.__init__(self, dataPath, id_fn=id_fn)
+        isdir(self._dataPath) or makedirs(self._dataPath)
 
     def addData(self, identifier, datatype, data, newId=True):
         domainDir, filename = self._filename(identifier, datatype)
@@ -68,49 +93,42 @@ class OldDataStore(object):
             raise ValueError(filename)
         return d
 
-    def listForDatatype(self, datatype):
-        ext = '.{}'.format(datatype)
-        domainDirs = [d for d in listdir(self._dataPath) if isdir(join(self._dataPath, d))]
-        result = []
-        for each in domainDirs:
-            result.extend([d.split(ext,1)[0] for d in listdir(join(self._dataPath, each)) if d.endswith(ext)])
-        return sorted(result)
-
-    def exists(self, identifier, datatype):
-        domainDir, filename = self._filename(identifier, datatype)
-        return isfile(join(self._dataPath, domainDir, filename))
-
     def deleteData(self, identifier, datatype):
         domainDir, filename = self._filename(identifier, datatype)
         fpath = join(self._dataPath, domainDir, filename)
         remove(fpath)
 
-    def getGuid(self, guid):
-        raise NotImplementedError()
 
-
-class DataStore(object):
+class DataStore(_DataStore):
     def __init__(self, dataPath, id_fn=lambda: str(uuid4())):
-        self._dataPath = dataPath
+        _DataStore.__init__(self, dataPath, id_fn=id_fn)
         self._dataIdPath = join(dataPath, '_')
         isdir(self._dataIdPath) or makedirs(self._dataIdPath)
-        self.id_fn = id_fn
 
     def addData(self, identifier, datatype, data, newId=True):
-        filename = '{}.{}'.format(identifier, datatype)
+        domainDir, filename = self._filename(identifier, datatype)
+        fpath = join(self._dataPath, domainDir, filename)
+
         if '@id' in data and newId:
-            copy(join(self._dataPath, filename), join(self._dataIdPath, filename) + '.' + data['@id'])
-            data['@base'] = data['@id']
-        with open(join(self._dataPath, filename), 'w') as f:
+            dId = data['@id']
+            fIdPath = join(self._dataIdPath, domainDir, f'{filename}.{dId}')
+            isdir(dirname(fIdPath)) or makedirs(dirname(fIdPath))
+
+            copy(fpath, fIdPath)
+            data['@base'] = dId
+
+        with open(fpath, 'w') as f:
             if newId:
                 data['@id'] = self.id_fn()
             JsonDict(data).dump(f, indent=4, sort_keys=True)
 
     def getData(self, identifier, datatype, guid=None):
-        filename = '{}.{}'.format(identifier, datatype)
-        fpath = join(self._dataPath, filename)
+
+        domainDir, filename = self._filename(identifier, datatype)
+        fpath = join(self._dataPath, domainDir, filename)
         if guid is not None:
-            fpath = join(self._dataIdPath, filename) + '.' + guid
+            fpath = join(self._dataIdPath, domainDir, f'{filename}.{guid}')
+
         try:
             d = JsonDict.load(fpath)
         except IOError:
@@ -123,19 +141,12 @@ class DataStore(object):
             self.addData(identifier, datatype, d)
         return d
 
-    def listForDatatype(self, datatype):
-        ext = '.{}'.format(datatype)
-        return sorted([d.split(ext,1)[0] for d in listdir(self._dataPath) if d.endswith(ext)])
-
-    def exists(self, identifier, datatype):
-        return isfile(join(self._dataPath, '{}.{}'.format(identifier, datatype)))
-
     def deleteData(self, identifier, datatype):
-        filename = '{}.{}'.format(identifier, datatype)
-        fpath = join(self._dataPath, filename)
+        domainDir, filename = self._filename(identifier, datatype)
+        fpath = join(self._dataPath, domainDir, filename)
         curId = JsonDict.load(fpath)['@id']
-        rename(fpath, join(self._dataIdPath, filename) + '.' + curId)
 
-    def getGuid(self, guid):
-        raise NotImplementedError()
+        fIdPath = join(self._dataIdPath, domainDir, f'{filename}.{curId}')
+        isdir(dirname(fIdPath)) or makedirs(dirname(fIdPath))
 
+        rename(fpath, fIdPath)

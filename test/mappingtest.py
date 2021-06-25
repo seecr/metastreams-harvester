@@ -151,5 +151,3 @@ skipRecord("Don't like it here.")
 
         self.assertEqual('value', upload.parts['name'])
         self.assertEqual('1', upload.parts['number'])
-
-

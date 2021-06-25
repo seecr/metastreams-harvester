@@ -60,20 +60,20 @@ class InternalServerProxy(object):
     def getRepositoryIds(self, domainId, repositoryGroupId=None):
         return self.urlJsonDict(verb='GetRepositoryIds', domainId=domainId, repositoryGroupId=repositoryGroupId)['response']['GetRepositoryIds']
 
-    def getTarget(self, identifier):
-        return self.urlJsonDict(verb='GetTarget', identifier=identifier)['response']['GetTarget']
+    def getTarget(self, domainId, identifier):
+        return self.urlJsonDict(verb='GetTarget', domainId=domainId, identifier=identifier)['response']['GetTarget']
 
-    def getTargetObject(self, identifier):
+    def getTargetObject(self, domainId, identifier):
         result = Target(identifier)
-        result.fill(self, self.getTarget(identifier=identifier))
+        result.fill(self, self.getTarget(domainId=domainId, identifier=identifier))
         return result
 
-    def getMapping(self, identifier):
-        return self.urlJsonDict(verb='GetMapping', identifier=identifier)['response']['GetMapping']
+    def getMapping(self, domainId, identifier):
+        return self.urlJsonDict(verb='GetMapping', domainId=domainId, identifier=identifier)['response']['GetMapping']
 
-    def getMappingObject(self, identifier):
+    def getMappingObject(self, domainId, identifier):
         result = Mapping(identifier)
-        result.fill(self, self.getMapping(identifier=identifier))
+        result.fill(self, self.getMapping(domainId=domainId, identifier=identifier))
         return result
 
     def getDomain(self, identifier):
