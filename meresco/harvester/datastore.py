@@ -39,14 +39,27 @@ class OldDataStore(object):
         isdir(self._dataPath) or makedirs(self._dataPath)
         self.id_fn = id_fn
 
+    def _filename(self, identifier, datatype):
+        if datatype in ['mapping', 'target']:
+            return '', '{}.{}'.format(identifier, datatype)
+
+        domainId = identifier
+        if '.' in identifier:
+            domainId, _ = identifier.split('.', 1)
+
+        domainDir = join(self._dataPath, domainId)
+        if not isdir(domainDir):
+            makedirs(domainDir)
+        return domainId, '{}.{}'.format(identifier, datatype)
+
     def addData(self, identifier, datatype, data, newId=True):
-        filename = '{}.{}'.format(identifier, datatype)
-        with open(join(self._dataPath, filename), 'w') as f:
+        domainDir, filename = self._filename(identifier, datatype)
+        with open(join(self._dataPath, domainDir, filename), 'w') as f:
             JsonDict(data).dump(f, indent=4, sort_keys=True)
 
     def getData(self, identifier, datatype, guid=None):
-        filename = '{}.{}'.format(identifier, datatype)
-        fpath = join(self._dataPath, filename)
+        domainDir, filename = self._filename(identifier, datatype)
+        fpath = join(self._dataPath, domainDir, filename)
         if guid is not None:
             raise NotImplementedError()
         try:
@@ -57,14 +70,19 @@ class OldDataStore(object):
 
     def listForDatatype(self, datatype):
         ext = '.{}'.format(datatype)
-        return sorted([d.split(ext,1)[0] for d in listdir(self._dataPath) if d.endswith(ext)])
+        domainDirs = [d for d in listdir(self._dataPath) if isdir(join(self._dataPath, d))]
+        result = []
+        for each in domainDirs:
+            result.extend([d.split(ext,1)[0] for d in listdir(join(self._dataPath, each)) if d.endswith(ext)])
+        return sorted(result)
 
     def exists(self, identifier, datatype):
-        return isfile(join(self._dataPath, '{}.{}'.format(identifier, datatype)))
+        domainDir, filename = self._filename(identifier, datatype)
+        return isfile(join(self._dataPath, domainDir, filename))
 
     def deleteData(self, identifier, datatype):
-        filename = '{}.{}'.format(identifier, datatype)
-        fpath = join(self._dataPath, filename)
+        domainDir, filename = self._filename(identifier, datatype)
+        fpath = join(self._dataPath, domainDir, filename)
         remove(fpath)
 
     def getGuid(self, guid):

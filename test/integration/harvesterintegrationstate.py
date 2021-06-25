@@ -33,7 +33,7 @@
 ## end license ##
 
 from os.path import join, abspath, dirname, isfile
-from os import listdir
+from os import listdir, walk
 
 from seecr.test.utils import getRequest
 from urllib.request import urlopen
@@ -63,9 +63,9 @@ class HarvesterIntegrationState(IntegrationState):
         self.harvesterStateDir = join(self.integrationTempdir, "state")
 
         copytree(join("integration-data", "data"), join(self.integrationTempdir, 'data'))
-        for f in listdir(join(self.integrationTempdir, "data")):
-            filepath = join(self.integrationTempdir, "data", f)
-            if isfile(filepath):
+        for dName, _, f in walk(join(self.integrationTempdir, "data")):
+            for each in f:
+                filepath = join(dName, each)
                 fileSubstVars(filepath, helperServerPortNumber=self.helperServerPortNumber, integrationTempdir=self.integrationTempdir)
 
     def binDir(self):

@@ -30,7 +30,8 @@
 #
 ## end license ##
 
-from os.path import join, isfile
+from os.path import join, isfile, isdir
+from os import makedirs
 from seecr.test import SeecrTestCase
 
 from meresco.harvester.harvesterdata import HarvesterData
@@ -75,16 +76,6 @@ DATA = {
 }"""}
 
 class _HarvesterDataTest(SeecrTestCase):
-    def setUp(self):
-        SeecrTestCase.setUp(self)
-        for fname, data in DATA.items():
-            with open(join(self.tempdir, fname), "w") as fp:
-                fp.write(data)
-        self.n = 0
-        def mock_id():
-            self.n+=1
-            return 'mock-id: %s' % self.n
-        self.hd = self.createHarvesterData(mock_id)
 
     def testGetRepositoryGroupIds(self):
         self.assertEqual(["Group1", "Group2"], self.hd.getRepositoryGroupIds(domainId="adomain"))
@@ -525,6 +516,17 @@ class _HarvesterDataTest(SeecrTestCase):
 
 class HarvesterDataTest(_HarvesterDataTest):
     with_id = True
+    def setUp(self):
+        SeecrTestCase.setUp(self)
+        for fname, data in DATA.items():
+            with open(join(self.tempdir, fname), "w") as fp:
+                fp.write(data)
+        self.n = 0
+        def mock_id():
+            self.n+=1
+            return 'mock-id: %s' % self.n
+        self.hd = self.createHarvesterData(mock_id)
+
     def createHarvesterData(self, id_fn):
         return HarvesterData(self.tempdir, id_fn=id_fn, datastore=DataStore(self.tempdir, id_fn=id_fn))
 
@@ -541,5 +543,18 @@ class HarvesterDataTest(_HarvesterDataTest):
 
 class HarvesterDataOldStyleTest(_HarvesterDataTest):
     with_id = False
+    def setUp(self):
+        SeecrTestCase.setUp(self)
+        for fname, data in DATA.items():
+            domainId, _ = fname.split(".", 1)
+            domainDir = join(self.tempdir, domainId)
+            isdir(domainDir) or makedirs(domainDir)
+            with open(join(self.tempdir, domainId, fname), "w") as fp:
+                fp.write(data)
+        self.n = 0
+        def mock_id():
+            self.n+=1
+            return 'mock-id: %s' % self.n
+        self.hd = self.createHarvesterData(mock_id)
     def createHarvesterData(self, id_fn):
         return HarvesterData(self.tempdir, id_fn=id_fn, datastore=OldDataStore(self.tempdir, id_fn=id_fn))

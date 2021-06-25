@@ -29,6 +29,8 @@
 
 from seecr.test import SeecrTestCase
 
+from os.path import isdir, isfile, join
+
 from meresco.harvester.datastore import DataStore, OldDataStore
 
 class DataStoreTest(SeecrTestCase):
@@ -51,6 +53,14 @@ class DataStoreTest(SeecrTestCase):
         self.store.deleteData('mijnidentifier', 'datatype')
         self.assertRaises(ValueError, lambda: self.store.getData('mijnidentifier', 'datatype'))
         self.assertEqual({'mijn': 'andere data', '@id': 'mock:2', '@base': 'mock:1'}, self.store.getData('mijnidentifier', 'datatype', 'mock:2'))
+
+    def testOldStoreInDirectory(self):
+        store = OldDataStore(self.tempdir)
+        store.addData('mijnidentifier', 'datatype', {'mijn':'data'})
+        self.assertTrue(store.exists('mijnidentifier', 'datatype'))
+        self.assertTrue(isdir(join(self.tempdir, 'mijnidentifier')))
+        self.assertTrue(isfile(join(self.tempdir, 'mijnidentifier', '{}.{}'.format('mijnidentifier', 'datatype'))))
+
 
     def testListData(self):
         self.store.addData('nr:1', 'datatype', {'mijn':'data'})
