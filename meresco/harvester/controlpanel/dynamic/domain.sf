@@ -151,7 +151,7 @@ def _content(arguments, session, **kwargs):
   <table width="100%" border="0" cellspacing="0" cellpadding="0">"""
 
     for targetId in domain.get('targetIds', []):
-        name = observable.call.getTarget(targetId).get('name', '')
+        name = observable.call.getTarget(domainId=domainIdentifier, identifier=targetId).get('name', '')
         yield """
    <tr class="table_row">
     <td width="60%">{name}</td>
@@ -206,7 +206,7 @@ def _content(arguments, session, **kwargs):
   <table width="100%" border="0" cellspacing="4" cellpadding="0">"""
 
     for mappingId in domain.get('mappingIds', []):
-        name = observable.call.getMapping(mappingId).get('name', '')
+        name = observable.call.getMapping(domainId=domainIdentifier, identifier=mappingId).get('name', '')
         yield """
    <tr class="table_row">
     <td width="60%">{name}</td>

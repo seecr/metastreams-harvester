@@ -24,7 +24,10 @@
 
 import page
 
-def main(tag, **kwargs):
+def main(tag, arguments, **kwargs):
+    if not 'login' in arguments:
+        yield http.redirect('/')
+        return
     with tag("div.alert.alert-danger.collapse", role="alert", id_="login-message-box"):
         with tag("i.bi-exclamation-triangle-fill"): pass
         with tag("strong.ps-3"): pass

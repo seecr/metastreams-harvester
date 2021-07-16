@@ -157,6 +157,7 @@ class HarvesterDataActions(PostActions):
     def _updateMapping(self, identifier, arguments):
         self.call.updateMapping(
                 identifier=identifier,
+                domainId=arguments.get('domainId', [''])[0],
                 name=arguments.get('name', [''])[0],
                 description=arguments.get('description', [''])[0],
                 code=arguments.get('code', [''])[0].replace('\r', ''),
@@ -178,6 +179,7 @@ class HarvesterDataActions(PostActions):
     def _updateTarget(self, identifier, arguments):
         self.call.updateTarget(
                 identifier=identifier,
+                domainId=arguments.get('domainId', [''])[0],
                 name=arguments.get('name', [''])[0],
                 username=arguments.get('username', [''])[0],
                 port=int(arguments.get('port', [''])[0] or '0'),

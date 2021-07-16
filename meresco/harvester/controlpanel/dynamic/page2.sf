@@ -29,12 +29,12 @@ def render(func, showMenu=True, **kwargs):
     tag = kwargs.get("tag")
     scripts = [
         "/js/jquery/jquery.min.js",
-        '/static/common.js',
+        f'/static/common.js?version={VERSION}',
     ]
     scripts.extend(kwargs.get('additionalScripts', []))
     scriptsModules = kwargs.get('additionalScripts', [])
 
-    csss = ["/static/common.css"]
+    csss = [f"/static/common.css?version={VERSION}"]
     csss.extend(kwargs.get("additionalCss", []))
     bodyClasses = []
     bodyClasses.extend(kwargs.get("bodyClasses", []))

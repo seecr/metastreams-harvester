@@ -47,7 +47,7 @@ def _contents(arguments, session, **kwargs):
     domainId = arguments.get('referrerDomain', [None])[0]
 
     user = session.get('user')
-    target = observable.call.getTarget(identifier)
+    target = observable.call.getTarget(domainId=domainId, identifier=identifier)
 
     yield """<h1>Target Administration</h1>"""
     yield common.showErrorMessage(arguments)
@@ -126,6 +126,7 @@ def _adminView(target, domainId):
         <input type="hidden" name="redirectUri" value="{targetEditLink}">
         <table>
             <input type="hidden" name="identifier" value="{identifier}">
+            <input type="hidden" name="domainId" value="{domainId}">
             <input type="hidden" name="targetType" value="{targetType}">
             <tr>
                 <td>Name:</td>
@@ -137,6 +138,7 @@ def _adminView(target, domainId):
             </tr>""".format(
         targetEditLink="/target?{}".format(urlencode(dict(referrerDomain=domainId))),
         identifier=target.get('identifier'),
+        domainId=domainId,
         targetType=targetType,
         targetTypeName=TYPES.get(targetType, ''),
         name=target.get('name') or '')
