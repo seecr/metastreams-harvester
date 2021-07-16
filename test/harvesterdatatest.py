@@ -428,7 +428,7 @@ class _HarvesterDataTest(SeecrTestCase):
         if self.with_id:
             self.assertNotEqual(dId, self.hd.getDomain('adomain')['@id'])
         self.assertEqual(2, len(mappingIds))
-        mapping = self.hd.getMapping(mappingId)
+        mapping = self.hd.getMapping(domainId='adomain', identifier=mappingId)
         self.assertEqual(mappingId, mappingIds[-1])
         self.assertEqual('newMapping', mapping['name'])
         self.assertEqual('This mapping is what has become the default mapping for most Meresco based projects.\n', mapping['description'])
@@ -442,29 +442,29 @@ class _HarvesterDataTest(SeecrTestCase):
 
     def testUpdateMapping(self):
         mappingId = self.hd.addMapping(name='newMapping', domainId='adomain')
-        mapping = self.hd.getMapping(mappingId)
+        mapping = self.hd.getMapping(domainId='adomain', identifier=mappingId)
         self.assertEqual(mappingId, mapping["identifier"])
         if self.with_id:
             mId = mapping['@id']
-        self.assertRaises(ValueError, lambda: self.hd.updateMapping(mappingId, name='newName', description="a description", code="new code"))
-        self.assertEqual('newName', self.hd.getMapping(mappingId)['name'])
-        self.assertEqual('a description', self.hd.getMapping(mappingId)['description'])
-        self.assertEqual('new code', self.hd.getMapping(mappingId)['code'])
+        self.assertRaises(ValueError, lambda: self.hd.updateMapping(domainId='adomain', identifier=mappingId, name='newName', description="a description", code="new code"))
+        self.assertEqual('newName', self.hd.getMapping(domainId='adomain', identifier=mappingId)['name'])
+        self.assertEqual('a description', self.hd.getMapping(domainId='adomain', identifier=mappingId)['description'])
+        self.assertEqual('new code', self.hd.getMapping(domainId='adomain', identifier=mappingId)['code'])
         if self.with_id:
-            self.assertNotEqual(mId, self.hd.getMapping(mappingId)['@id'])
+            self.assertNotEqual(mId, self.hd.getMapping(domainId='adomain', identifier=mappingId)['@id'])
 
     def testDeleteMapping(self):
         mappingId = self.hd.addMapping(name='newMapping', domainId='adomain')
         if self.with_id:
-            mId = self.hd.getMapping(mappingId)['@id']
+            mId = self.hd.getMapping(domainId='adomain', identifier=mappingId)['@id']
             dId = self.hd.getDomain('adomain')['@id']
         self.assertEqual(['ignored MAPPING', mappingId], self.hd.getDomain('adomain')['mappingIds'])
         self.hd.deleteMapping(identifier=mappingId, domainId='adomain')
         self.assertEqual(['ignored MAPPING'], self.hd.getDomain('adomain')['mappingIds'])
-        self.assertRaises(ValueError, lambda: self.hd.getMapping(mappingId))
+        self.assertRaises(ValueError, lambda: self.hd.getMapping(domainId='adomain', identifier=mappingId))
         if self.with_id:
             self.assertNotEqual(dId, self.hd.getDomain('adomain')['@id'])
-            self.assertEqual('newMapping', self.hd.getMapping(mappingId, mId)['name'])
+            self.assertEqual('newMapping', self.hd.getMapping(domainId='adomain', identifier=mappingId, guid=mId)['name'])
 
     def testAddTarget(self):
         if self.with_id:

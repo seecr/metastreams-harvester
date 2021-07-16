@@ -41,7 +41,7 @@ class _DataStore(object):
 
     def getGuid(self, guid):
         raise NotImplementedError()
-    
+
     def listForDatatype(self, datatype):
         ext = '.{}'.format(datatype)
         domainDirs = [d for d in listdir(self._dataPath) if isdir(join(self._dataPath, d))]

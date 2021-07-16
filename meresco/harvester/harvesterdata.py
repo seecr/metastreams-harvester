@@ -189,7 +189,7 @@ class HarvesterData(object):
                 targetType=targetType,
             )
         domain.setdefault('targetIds', []).append(identifier)
-        self._store.addData(f'{domainId}.{identifier}', 'target', target)
+        self._store.addData(id_combine(domainId, identifier), 'target', target)
         self._store.addData(domainId, 'domain', domain)
         return identifier
 
@@ -203,17 +203,17 @@ class HarvesterData(object):
         target['path'] = path
         target['baseurl'] = baseurl
         target['oaiEnvelope'] = oaiEnvelope
-        self._store.addData(f'{domainId}.{identifier}', 'target', target)
+        self._store.addData(id_combine(domainId, identifier), 'target', target)
 
     def deleteTarget(self, identifier, domainId):
         domain = self.getDomain(domainId)
         domain['targetIds'].remove(identifier)
-        self._store.deleteData(f'{domainId}.{identifier}', 'target')
+        self._store.deleteData(id_combine(domainId, identifier), 'target')
         self._store.addData(domainId, 'domain', domain)
 
     #mapping
     def getMapping(self, identifier, domainId, guid=None):
-        return self._store.getData(f'{domainId}.{identifier}', 'mapping', guid=guid)
+        return self._store.getData(id_combine(domainId, identifier), 'mapping', guid=guid)
 
     def addMapping(self, name, domainId):
         domain = self.getDomain(domainId)
@@ -255,7 +255,7 @@ upload.parts['meta'] = """<meta xmlns="http://meresco.org/namespace/harvester/me
 """,
             )
         domain.setdefault('mappingIds', []).append(identifier)
-        self._store.addData(f'{domainId}.{identifier}', 'mapping', mapping)
+        self._store.addData(id_combine(domainId, identifier), 'mapping', mapping)
         self._store.addData(domainId, 'domain', domain)
         return identifier
 
@@ -264,7 +264,7 @@ upload.parts['meta'] = """<meta xmlns="http://meresco.org/namespace/harvester/me
         mapping['name'] = name
         mapping['description'] = description
         mapping['code'] = code
-        self._store.addData(identifier, 'mapping', mapping)
+        self._store.addData(id_combine(domainId, identifier), 'mapping', mapping)
         mapping = Mapping(identifier)
         mapping.setCode(code)
         try:
@@ -275,7 +275,7 @@ upload.parts['meta'] = """<meta xmlns="http://meresco.org/namespace/harvester/me
     def deleteMapping(self, identifier, domainId):
         domain = self.getDomain(domainId)
         domain['mappingIds'].remove(identifier)
-        self._store.deleteData(f'{domainId}.{identifier}', 'mapping')
+        self._store.deleteData(id_combine(domainId, identifier), 'mapping')
         self._store.addData(domainId, 'domain', domain)
 
     def getPublicRecord(self, guid):
