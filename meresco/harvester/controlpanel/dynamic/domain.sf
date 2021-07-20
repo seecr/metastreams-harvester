@@ -40,6 +40,10 @@ def main(**kwargs):
 
 
 def _content(arguments, session, **kwargs):
+    yield """
+<h1>Domain Administration</h1>"""
+    yield common.showErrorMessage(arguments)
+
     domainIdentifier = arguments.get("identifier", [None])[0]
     user = session['user']
     domain = observable.call.getDomain(domainIdentifier)
@@ -49,9 +53,6 @@ def _content(arguments, session, **kwargs):
     #if not isAdmin and session.get('domain', '') != domainIdentifier:
     #    raise Exception('Illegal use')
 
-    yield """
-<h1>Domain Administration</h1>"""
-    yield common.showErrorMessage(arguments)
 
     yield """
 
@@ -59,6 +60,7 @@ def _content(arguments, session, **kwargs):
     <h3>Domain: {domainIdentifier}</h3>
     <form method="post" action="/actions/updateDomain">
         <input type="hidden" name="redirectUri" value="{domainEditLink}"/>
+        <input type="hidden" name="referer" value="{referer}"/>
         <table width="320" border="0" cellspacing="0" cellpadding="0">
             <tr>
                 <td>Id:</td>
@@ -78,6 +80,7 @@ def _content(arguments, session, **kwargs):
     <form action='/actions/addRepositoryGroup' method='post'>
         <input type="hidden" name="redirectUri" value="{repositoryGroupLink}"/>
         <input type="hidden" name="domainId" value="{domainIdentifier}"/>
+        <input type="hidden" name="referer" value="{referer}"/>
         <table width="320" border="0" cellspacing="0" cellpadding="0">
             <tr>
                 <td width="60">Name:</td>
@@ -90,6 +93,7 @@ def _content(arguments, session, **kwargs):
     <table width="100%" border="0" cellspacing="0" cellpadding="0">""".format(
         domainIdentifier=domainIdentifier,
         domainDescription=domain.get("description") or "",
+        referer='/domain?'+urlencode({'identifier':domainIdentifier}),
         domainEditLink="/domain?{}".format(urlencode(dict(domainId=domainIdentifier))),
         repositoryGroupLink="/repositoryGroup?{}".format(urlencode(dict(domainId=domainIdentifier))))
 
@@ -105,6 +109,7 @@ def _content(arguments, session, **kwargs):
                 <form method='post' action='/actions/deleteRepositoryGroup' name="{deleteFormName}">
                     <input type="hidden" name="redirectUri" value="{domainEditLink}"/>
                     <input type="hidden" name="domainId" value="{domainIdentifier}"/>
+                    <input type="hidden" name="referer" value="/domain"/>
                     <input type="hidden" name="identifier" value="{groupId}"/>
                     <a onclick="if(confirm('Weet u het zeker?')) {{ document.{deleteFormName}.submit();}}; return false;">Delete</a>
                 </form>
@@ -128,6 +133,7 @@ def _content(arguments, session, **kwargs):
         yield """
  <form action='/actions/addTarget' method='post'>
    <input type="hidden" name="redirectUri" value="{targetEditLink}"/>
+   <input type="hidden" name="referer" value="{referer}"/>
    <input type="hidden" name="domainId" value="{domainIdentifier}"/>
    <table width="320" border="0" cellspacing="0" cellpadding="0">
     <tr>
@@ -136,6 +142,7 @@ def _content(arguments, session, **kwargs):
      <td width="60">Type:</td>
      <td>""".format(
          targetEditLink="/target?{}".format(urlencode(dict(referrerDomain=domainIdentifier))),
+         referer='/domain?'+urlencode({'identifier':domainIdentifier}),
          domainIdentifier=domainIdentifier,
     )
 
@@ -165,6 +172,7 @@ def _content(arguments, session, **kwargs):
             yield """
     <td>
      <form method='post' action='/actions/deleteTarget' name="{formName}">
+        <input type="hidden" name="referer" value="/domain"/>
         <input type="hidden" name="redirectUri" value="{domainEditLink}"/>
         <input type="hidden" name="domainId" value="{domainIdentifier}"/>
         <input type="hidden" name="identifier" value="{targetId}"/>
@@ -189,6 +197,7 @@ def _content(arguments, session, **kwargs):
     if isAdmin:
         yield """
  <form action='/actions/addMapping' method='post'>
+   <input type="hidden" name="referer" value="{referer}"/>
    <input type="hidden" name="redirectUri" value="{mappingEditLink}"/>
    <input type="hidden" name="domainId" value="{domainIdentifier}"/>
    <table width="320" border="0" cellspacing="0" cellpadding="0">
@@ -200,6 +209,7 @@ def _content(arguments, session, **kwargs):
    </table>
  </form>""".format(
          mappingEditLink="/mapping?{}".format(urlencode(dict(referrerDomain=domainIdentifier))),
+         referer='/domain?'+urlencode({'identifier':domainIdentifier}),
          domainIdentifier=domainIdentifier,
          )
     yield """
@@ -219,6 +229,7 @@ def _content(arguments, session, **kwargs):
             yield """
     <td>
       <form method='post' action='/actions/deleteMapping' name="{formName}">
+        <input type="hidden" name="referer" value="/domain"/>
         <input type="hidden" name="redirectUri" value="{domainEditLink}"/>
         <input type="hidden" name="domainId" value="{domainIdentifier}"/>
         <input type="hidden" name="identifier" value="{mappingId}"/>

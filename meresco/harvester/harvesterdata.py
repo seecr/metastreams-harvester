@@ -84,7 +84,7 @@ class HarvesterData(object):
 
     def addRepositoryGroup(self, identifier, domainId):
         domain = self.getDomain(domainId)
-        if identifier == '':
+        if identifier is None or identifier.strip() == '':
             raise ValueError('No name given.')
         elif not checkName(identifier):
             raise ValueError('Name is not valid. Only use alphanumeric characters.')

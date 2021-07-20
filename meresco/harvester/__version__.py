@@ -24,6 +24,6 @@
 #
 ## end license ##
 
-VERSION = '$Version: 10.0.x$'[9:-1].strip()
+VERSION = '$Version: 10.1.x$'[9:-1].strip()
 VERSION_STRING = """This is Metastreams version %s.""" % VERSION
 

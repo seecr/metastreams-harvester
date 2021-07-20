@@ -274,6 +274,11 @@ class _HarvesterDataTest(SeecrTestCase):
             self.fail()
         except ValueError as e:
             self.assertEqual('No name given.', str(e))
+        try:
+            self.hd.addRepositoryGroup(identifier=None, domainId='adomain')
+            self.fail()
+        except ValueError as e:
+            self.assertEqual('No name given.', str(e))
 
     def testUpdateRepositoryGroup(self):
         groep1 = self.hd.getRepositoryGroup('Group1', 'adomain')
