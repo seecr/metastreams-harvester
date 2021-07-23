@@ -1,0 +1,69 @@
+#!/usr/bin/python3
+## begin license ##
+#
+# "Seecr Metastreams" is a fork of Meresco Harvester that demonstrates
+# the translation of traditional metadata into modern events streams.
+#
+# Copyright (C) 2021 Seecr (Seek You Too B.V.) https://seecr.nl
+#
+# This file is part of "Seecr Metastreams"
+#
+# "Seecr Metastreams" is free software; you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation; either version 2 of the License, or
+# (at your option) any later version.
+#
+# "Seecr Metastreams" is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with "Seecr Metastreams"; if not, write to the Free Software
+# Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
+#
+## end license ##
+
+from seecrdeps import includeParentAndDeps       #DO_NOT_DISTRIBUTE
+includeParentAndDeps(__file__, scanForDeps=True) #DO_NOT_DISTRIBUTE
+
+from argparse import ArgumentParser
+from metastreams.tools import syncDomains
+from getpass import getpass
+
+
+if __name__ == '__main__':
+    parser = ArgumentParser(description='Copy repository information between Metastream Services')
+    parser.add_argument('--url', dest='src_url', help='Source url, default https://metastreams.nl', default='https://metastreams.nl')
+    parser.add_argument('--srcId', dest='src_identifier', help='Source domainId', required=True)
+    parser.add_argument('--destId', dest='dest_identifier', help='Destination domainId', required=True)
+    parser.add_argument('--destUrl', dest='dest_url', help='Destination Metastreams url, default the same as url', default=None)
+    parser.add_argument('--destUser', dest='dest_username', help='Username used to change data (Password will be prompted)', default=None)
+    parser.add_argument('--destCredential', dest='dest_credentials', help='Credential file, alternative for prompting password', default=None)
+    parser.add_argument('--quiet', dest='verbose', default=True, action='store_false', help='Be less verbose')
+
+    args = parser.parse_args()
+
+    username, password = args.dest_username, None
+
+    if args.dest_credentials:
+        with open(args.dest_credentials) as fp:
+            data = fp.read().strip()
+            username, password = data.split(':',1)
+
+    if not username:
+        print("\033[31mMissing username\033[0m")
+        parser.print_help()
+        exit(1)
+    if not password:
+        password = getpass(f'Password for "{username}": ')
+
+    src = dict(baseurl=args.src_url, identifier=args.src_identifier)
+    dest = dict(baseurl=args.dest_url or args.src_url,
+            identifier=args.dest_identifier,
+            username=username,
+            password=password)
+
+    syncDomains(src, dest, args.verbose)
+
+

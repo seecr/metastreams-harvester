@@ -78,5 +78,8 @@ from users.passwordfile2test import PasswordFile2Test
 from users.managementtest import ManagementTest
 from users.enrichusertest import EnrichUserTest
 
+from tools.domainapitest import DomainApiTest
+from tools.syncdomainstest import SyncDomainsTest
+
 if __name__ == '__main__':
         unittest.main()
