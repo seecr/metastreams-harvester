@@ -37,18 +37,21 @@ class SyncDomainsTest(SeecrTestCase):
                 'collection': 'coll_ection',
                 'complete': True,
                 'continuous': 7200,
-                'identifier': 'sharekit_ahk',
+                'identifier': 'repo_id',
                 'mappingId': 'c7a9bfe9-a1d9-4e0d-a7d4-a848570e95aa',
                 'maximumIgnore': 0,
                 'metadataPrefix': 'didl_mods',
-                'repositoryGroupId': 'ahk',
-                'set': '58f0a049-3c3a-4984-9e48-40c08485b73c',
+                'repositoryGroupId': 'groupId',
+                'set': 'some_set',
                 'shopclosed': [],
                 'targetId': '34e93586-d28f-4968-9191-260b2fc3df00',
                 'use': True,
                 'userAgent': 'Seecr Metastreams Harvester'}
-        dest = {'identifier': 'sharekit_ahk',
-                'repositoryGroupId': 'ahk'}
+        dest = {'identifier': 'repo_id',
+                'repositoryGroupId': 'groupId',
+                'targetId': 'myTargetId',
+                'mappingId': 'myMappingId',
+                }
 
         new_repo, changed = copyRepository(src, dest)
 
@@ -59,14 +62,70 @@ class SyncDomainsTest(SeecrTestCase):
                 'collection': 'coll_ection',
                 'complete': True,
                 'continuous': 7200,
-                'identifier': 'sharekit_ahk',
+                'identifier': 'repo_id',
                 'maximumIgnore': 0,
                 'metadataPrefix': 'didl_mods',
-                'repositoryGroupId': 'ahk',
-                'set': '58f0a049-3c3a-4984-9e48-40c08485b73c',
+                'repositoryGroupId': 'groupId',
+                'set': 'some_set',
                 'shopclosed': [],
                 'use': False,
+                'targetId': 'myTargetId',
+                'mappingId': 'myMappingId',
                 'userAgent': 'Seecr Metastreams Harvester'}
 
         self.assertTrue(changed)
         self.assertEqual(expected, new_repo)
+
+    def testCopyRepositoryExtra(self):
+        src = { 'identifier': 'repo_id',
+                'repositoryGroupId': 'groupId',
+                'extra': {
+                    'value1': 'one',
+                    'value2': 'two',
+                }
+              }
+        dest = {'identifier': 'repo_id',
+                'repositoryGroupId': 'groupId',
+                'extra': {
+                    'value2': 'TWO',
+                    'value3': 'THREE',
+                }
+               }
+        new_repo, changed = copyRepository(src, dest)
+        self.assertTrue(changed)
+        self.assertEqual({
+                'value1': 'one',
+                'value2': 'two',
+                'value3': 'THREE',
+            }, new_repo['extra'])
+
+    def testCopyRepositoryDoesNotChangeUseAndAction(self):
+        src = { 'identifier': 'repo_id',
+                'repositoryGroupId': 'groupId',
+                'use': False,
+                'action': 'clean',
+              }
+        dest = {'identifier': 'repo_id',
+                'repositoryGroupId': 'groupId',
+                'use': True,
+                'action': 'refresh',
+               }
+        new_repo, changed = copyRepository(src, dest)
+        self.assertFalse(changed)
+        for k in ['use', 'action']:
+            self.assertEqual(dest[k], new_repo[k])
+
+    def testCopyRepositoryWithSpecifiedTargetMapping(self):
+        src = { 'identifier': 'repo_id',
+                'repositoryGroupId': 'groupId',
+                'mappingId': 'src_mapping',
+                'targetId': 'src_target',
+              }
+        dest = {'identifier': 'repo_id',
+                'repositoryGroupId': 'groupId',
+                'targetId': 'dest_target',
+               }
+        new_repo, changed = copyRepository(src, dest, targetId='new_target', mappingId='new_mapping')
+        self.assertTrue(changed)
+        self.assertEqual('new_target', new_repo['targetId'])
+        self.assertEqual('new_mapping', new_repo['mappingId'])

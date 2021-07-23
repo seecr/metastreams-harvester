@@ -29,4 +29,48 @@ from metastreams.tools.domainapi import DomainApi
 
 class DomainApiTest(SeecrTestCase):
     def testRepoKwargs(self):
-        self.fail()
+        repo = {
+                'action': None,
+                'authorizationKey': 'let-me-in',
+                'baseurl': 'https://oai.example.org',
+                'collection': 'coll_ection',
+                'complete': True,
+                'continuous': 7200,
+                'identifier': 'repo_id',
+                'maximumIgnore': 0,
+                'metadataPrefix': 'didl_mods',
+                'repositoryGroupId': 'group_id',
+                'set': 'some_set',
+                'shopclosed': [],
+                'use': False,
+                'targetId': 'myTargetId',
+                'mappingId': 'myMappingId',
+                'userAgent': 'Seecr Metastreams Harvester',
+                'extra': {
+                    'name': 'Somevalue'
+                }}
+        self.assertEqual({
+                'authorizationKey': 'let-me-in',
+                'baseurl': 'https://oai.example.org',
+                'collection': 'coll_ection',
+                'complete': '1',
+                'continuous': 7200,
+                'identifier': 'repo_id',
+                'maximumIgnore': 0,
+                'metadataPrefix': 'didl_mods',
+                'repositoryGroupId': 'group_id',
+                'set': 'some_set',
+                'targetId': 'myTargetId',
+                'mappingId': 'myMappingId',
+                'userAgent': 'Seecr Metastreams Harvester',
+                'extra_name': 'Somevalue',
+            }, DomainApi.createUpdateRepositoryKwargs(repo))
+
+    def testTimeslot(self):
+        self.assertEqual({
+        }, DomainApi.createUpdateRepositoryKwargs({'shopclosed': []}))
+        self.assertEqual({
+            'numberOfTimeslots': '1',
+            'shopclosedBegin_1': '0',
+            'shopclosedEnd_1': '6',
+        }, DomainApi.createUpdateRepositoryKwargs({'shopclosed': ['*:*:0:0-*:*:6:0']}))

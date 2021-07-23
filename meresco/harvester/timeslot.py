@@ -85,7 +85,7 @@ _r = re.compile('(\d{1,2}|\*):(\d|\*):(\d{1,2}):(\d{1,2})')
 def _parse(txt):
 	match = _r.match(txt)
 	if not match:
-		raise ParseException('Illegal timeslot definition (should be "W[W]*|:D|*:HH:MM"), where W is weeknumber, D is day of week (monday = 0), HH is hours in 24 format, MM is minutes.  Week and weekday can be * (wildcard).')
+            raise ParseException(f'Illegal timeslot definition (should be "W[W]*|:D|*:HH:MM"), but was "{txt}". -- W is weeknumber, D is day of week (monday = 0), HH is hours in 24 format, MM is minutes.  Week and weekday can be * (wildcard).')
 	return tuple(map(_parseField, match.groups()))
 
 def format(date):

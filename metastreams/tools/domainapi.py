@@ -24,6 +24,7 @@
 ## end license ##
 
 from urllib.parse import urlparse
+from meresco.harvester.timeslot import Timeslot
 
 class DomainApi(object):
     def __init__(self, session, baseurl, identifier, **_):
@@ -91,13 +92,33 @@ class DomainApi(object):
                 'en_name': en_name,
             })
 
-    async def updateRepository(self, identifier, updateDict):
+    async def updateRepository(self, identifier, repoDict):
+        updateDict = self.createUpdateRepositoryKwargs(repoDict)
         await self._post('updateRepository',
                 dict(updateDict, domainId=self._identifier, identifier=identifier))
 
     @staticmethod
     def createUpdateRepositoryKwargs(repo_dict):
-        repo_kwargs = {}
-        for k in ['mappingId', 'targetId', 'action', 'use']:
-            pass
-        return updated_repo
+        repo_kwargs = {k:v for k, v in repo_dict.items() if not v is None}
+        extra = repo_kwargs.pop('extra', {})
+        shopclosed = repo_kwargs.pop('shopclosed', [])
+        for booleankey in ['use', 'complete']:
+            if repo_kwargs.pop(booleankey, False):
+                repo_kwargs[booleankey] = '1'
+        for k,v in extra.items():
+            repo_kwargs[f'extra_{k}'] = v
+        for nr, closinghours in enumerate(shopclosed, start=1):
+            t = Timeslot(closinghours)
+            for k, v in [
+                    (f'shopclosedWeek_{nr}', t.beginweek),
+                    (f'shopclosedWeekDay_{nr}', t.beginday),
+                    (f'shopclosedBegin_{nr}', t.beginhour),
+                    (f'shopclosedEnd_{nr}', t.endhour),
+                ]:
+                if v != '*':
+                    print(f'Huh {k}: {v}')
+                    repo_kwargs[k] = v
+        if shopclosed:
+            repo_kwargs['numberOfTimeslots'] = str(len(shopclosed))
+        return repo_kwargs
+

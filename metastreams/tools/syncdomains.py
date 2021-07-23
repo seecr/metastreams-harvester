@@ -26,6 +26,7 @@
 import aiohttp
 import asyncio
 from .domainapi import DomainApi
+from pprint import pprint
 
 
 class Sync(object):
@@ -69,45 +70,50 @@ class Sync(object):
             self._log(f'Creating repository "{identifier}" for group "{repositoryGroupId}"')
             await self._dest.createRepository(repositoryGroupId=repositoryGroupId, identifier=identifier)
         dest_repo = await self._dest.getRepository(identifier=identifier)
-        print(src_repo)
-        print(dest_repo)
         new_repo, changed = self._copyRepository(src_repo, dest_repo)
         if changed:
-            DomainApi.createUpdateRepositoryKwargs(new_repo)
+            self._log(f'Updating repository "{identifier}" for group "{repositoryGroupId}"')
+            if new_repo.get('shopclosed'):
+                pprint(new_repo)
+            await self._dest.updateRepository(identifier, new_repo)
 
 
     def _copyRepository(self, src_repo, dest_repo):
         return copyRepository(src_repo, dest_repo, targetId=self._targetId, mappingId=self._mappingId)
 
 def copyRepository(src_repo, dest_repo, targetId=None, mappingId=None):
-    new_repo = {
-            'identifier': dest_repo['identifier'],
-            }
-
-            'targetId': targetId or dest_repo.get('targetId'),
-            'mappingId': mappingId or dest_repo.get('mappingId'),
+    new_repo = {'identifier': dest_repo['identifier'], 'repositoryGroupId': dest_repo['repositoryGroupId']}
     changed = False
-    dont_change = [
-        'mappingId',
-        'targetId',
-        'use',
-        'action',
-    ]
-    to_copy = [
-        'baseurl',
-        'set',
-        'metadataPrefix',
-        'collection',
-        'maximumIgnore',
-        'complete',
-        'continuous',
-        'userAgent',
-        'authorizationKey',
-        'shopclosed',
-    ]
-    to_copy_sub = [
-        'extra',
-    ]
+    new_repo['use'] = dest_repo.get('use', False)
+    new_repo['action'] = dest_repo.get('action')
+    for k, v in [('targetId', targetId or dest_repo.get('targetId')),
+                 ('mappingId', mappingId or dest_repo.get('mappingId'))]:
+        changed = changed or v != dest_repo.get('targetId')
+        new_repo[k] = v
+    for k in [
+            'baseurl',
+            'set',
+            'metadataPrefix',
+            'collection',
+            'maximumIgnore',
+            'complete',
+            'continuous',
+            'userAgent',
+            'authorizationKey',
+            'shopclosed',
+        ]:
+        cur_v = dest_repo.get(k)
+        new_v = src_repo.get(k)
+        changed = changed or new_v != cur_v
+        new_repo[k] = new_v
+    if 'extra' in src_repo or 'extra' in dest_repo:
+        extra = new_repo['extra'] = {}
+        for k,v in dest_repo.get('extra', {}).items():
+            extra[k] = v
+        for k,new_v in src_repo.get('extra', {}).items():
+            cur_v = extra.get(k)
+            changed = changed or new_v != cur_v
+            extra[k] = new_v
     return new_repo, changed
 
 
