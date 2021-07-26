@@ -116,7 +116,6 @@ class DomainApi(object):
                     (f'shopclosedEnd_{nr}', t.endhour),
                 ]:
                 if v != '*':
-                    print(f'Huh {k}: {v}')
                     repo_kwargs[k] = v
         if shopclosed:
             repo_kwargs['numberOfTimeslots'] = str(len(shopclosed))
