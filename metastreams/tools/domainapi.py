@@ -28,10 +28,13 @@ from meresco.harvester.timeslot import Timeslot
 
 class DomainApi(object):
     def __init__(self, session, baseurl, identifier, **_):
-        hostname = urlparse(baseurl).hostname
-        self._geturl = f'https://{hostname}/get'
-        self._actiourl = f'https://{hostname}/actions/'
-        self._loginurl = f'https://{hostname}/login.action'
+        parsed = urlparse(baseurl)
+        hostname = parsed.hostname
+        scheme = parsed.scheme or 'https'
+
+        self._geturl = f'{scheme}://{hostname}/get'
+        self._actiourl = f'{scheme}://{hostname}/actions/'
+        self._loginurl = f'{scheme}://{hostname}/login.action'
         self._session = session
         self._identifier = identifier
 

@@ -40,6 +40,8 @@ if __name__ == '__main__':
     parser.add_argument('--destUrl', dest='dest_url', help='Destination Metastreams url, default the same as url', default=None)
     parser.add_argument('--destUser', dest='dest_username', help='Username used to change data (Password will be prompted)', default=None)
     parser.add_argument('--destCredential', dest='dest_credentials', help='Credential file, alternative for prompting password', default=None)
+    parser.add_argument('--destTargetId', dest='dest_targetId', help='TargetId for destination, default leaves targetId untouched.', default=None)
+    parser.add_argument('--destMappingId', dest='dest_mappingId', help='MappingId for destination, default leaves mappingId untouched.', default=None)
     parser.add_argument('--quiet', dest='verbose', default=True, action='store_false', help='Be less verbose')
 
     args = parser.parse_args()
@@ -61,6 +63,8 @@ if __name__ == '__main__':
     src = dict(baseurl=args.src_url, identifier=args.src_identifier)
     dest = dict(baseurl=args.dest_url or args.src_url,
             identifier=args.dest_identifier,
+            targetId=args.dest_targetId,
+            mappingId=args.dest_mappingId,
             username=username,
             password=password)
 

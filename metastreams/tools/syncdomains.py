@@ -53,8 +53,8 @@ class Sync(object):
                 self._log(f'Creating {groupId}')
                 await self._dest.createRepositoryGroup(groupId)
             destGroup = await self._dest.getRepositoryGroup(groupId)
-            src_nl_name = group.get('name', {}).get('nl', '')
-            src_en_name = group.get('name', {}).get('en', '')
+            src_nl_name = group.get('name', {}).get('nl', '') or ''
+            src_en_name = group.get('name', {}).get('en', '') or ''
             dest_nl_name = destGroup.get('name', {}).get('nl', '')
             dest_en_name = destGroup.get('name', {}).get('en', '')
             if src_nl_name != dest_nl_name or src_en_name != dest_en_name:
