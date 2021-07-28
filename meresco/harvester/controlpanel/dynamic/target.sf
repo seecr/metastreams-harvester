@@ -100,7 +100,7 @@ def _adminView(target, domainId):
         targetId = target.get('identifier')
         delegateIds = target.get('delegateIds', [])
         targetIds = [each for each in observable.call.getDomain(domainId).get('targetIds', []) if each != targetId]
-        options = [(each, observable.call.getTarget(each).get('name') or '') for each in targetIds]
+        options = [(each, observable.call.getTarget(identifier=each, domainId=domainId).get('name') or '') for each in targetIds]
 
         yield """
             <tr>
@@ -182,7 +182,7 @@ def _userView(target, domainId):
             <td></td>
         </tr>"""
         for id in target.get('delegateIds', []):
-            targetName = observable.call.getTarget(id).get('name') or ''
+            targetName = observable.call.getTarget(identifier=id, domainId=domainId).get('name') or ''
             yield """
         <tr>
             <td>{targetName}</td>
