@@ -100,6 +100,11 @@ class DomainApi(object):
         await self._post('updateRepository',
                 dict(updateDict, domainId=self._identifier, identifier=identifier))
 
+    async def updateRepositoryAttribute(self, identifier, name, value):
+        currentDict = await self.getRepository(identifier)
+        currentDict[name] = value
+        return await self.updateRepository(identifier, currentDict)
+
     @staticmethod
     def createUpdateRepositoryKwargs(repo_dict):
         repo_kwargs = {k:v for k, v in repo_dict.items() if not v is None}
