@@ -1,6 +1,5 @@
 python3-lxml
 python3-argon2
-python3-asyncio
 python3-aiohttp
 python3-escaping (>= 0.2)
 python3-escaping (<< 0.3)
