@@ -63,8 +63,8 @@ def textinput(tag, name, value):
 
 def _repository(tag, domain, repository):
     domainId = domain.get('identifier')
-    mappings = [(mappingId, observable.call.getMapping(mappingId).get('name', '')) for mappingId in domain.get('mappingIds', [])]
-    targets = [(targetId, observable.call.getTarget(targetId).get('name', '')) for targetId in domain.get('targetIds', [])]
+    mappings = [(mappingId, observable.call.getMapping(identifier=mappingId, domainId=domainId).get('name', '')) for mappingId in domain.get('mappingIds', [])]
+    targets = [(targetId, observable.call.getTarget(identifier=targetId, domainId=domainId).get('name', '')) for targetId in domain.get('targetIds', [])]
 
     yield """
     <div>
