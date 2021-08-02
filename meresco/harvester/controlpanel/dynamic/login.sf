@@ -22,12 +22,27 @@
 #
 ## end license ##
 
-import page
+import page2 as page
 
-def main(tag, arguments, **kwargs):
-    if not 'login' in arguments:
-        yield http.redirect('/')
+def main(**kwargs):
+    dialog = page.findPath("dialog", dict(show=dialog_login), **kwargs)
+    if dialog is None:
+        yield page.render(
+            login, 
+            additionalScripts=[
+                '/static/common.js', 
+                '/static/login.js'],
+            **kwargs)
         return
+    yield dialog(**kwargs)
+
+def login(tag, **kwargs):
+    with tag("div.container", id_="placeholder_Login"):
+        with tag("div.row.justify-content-center.align-items-center"):
+            with tag("div.col-4"):
+                yield dialog_login(tag, **kwargs)
+
+def dialog_login(tag, **kwargs):
     with tag("div.alert.alert-danger.collapse", role="alert", id_="login-message-box"):
         with tag("i.bi-exclamation-triangle-fill"): pass
         with tag("strong.ps-3"): pass
