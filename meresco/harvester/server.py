@@ -68,6 +68,7 @@ from .environment import createEnvironment
 from metastreams.users import initializeUserGroupManagement
 
 from time import localtime, strftime, time
+from uuid import uuid4
 
 myPath = dirname(abspath(__file__))
 usrSharePath = '/usr/share/metastreams'
@@ -168,6 +169,7 @@ def dna(reactor, port, dataPath, logPath, statePath, externalUrl, fieldDefinitio
                                                             'xpathFirst': xpathFirst,
                                                             'fieldDefinitions': fieldDefinitions,
                                                             'customerLogoUrl': customerLogoUrl,
+                                                            'uuid': lambda: str(uuid4()),
                                                         },
                                                         indexPage="/index",
                                                     ),
