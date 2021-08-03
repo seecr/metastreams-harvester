@@ -44,9 +44,9 @@ class HarvesterDataActions(PostActions):
     def __init__(self, fieldDefinitions, **kwargs):
         PostActions.__init__(self, **kwargs)
         self.registerAction('addDomain', self._addDomain)
-        self._registerFormAction('updateDomain', self._updateDomain)
-        self._registerFormAction('addRepositoryGroup', self._addRepositoryGroup)
-        self._registerFormAction('deleteRepositoryGroup', self._deleteRepositoryGroup)
+        self.registerAction('updateDomain', self._updateDomain)
+        self.registerAction('addRepositoryGroup', self._addRepositoryGroup)
+        self.registerAction('deleteRepositoryGroup', self._deleteRepositoryGroup)
         self._registerFormAction('updateRepositoryGroup', self._updateRepositoryGroup)
         self._registerFormAction('addRepository', self._addRepository)
         self._registerFormAction('deleteRepository', self._deleteRepository)
@@ -66,17 +66,26 @@ class HarvesterDataActions(PostActions):
         self.call.addDomain(identifier=data.identifier)
         yield response(True)
 
-    def _updateDomain(self, identifier, arguments):
+    @check_and_parse('identifier', 'description', userCheck='user')
+    def _updateDomain(self, data, **kwargs):
         self.call.updateDomain(
-                identifier=identifier,
-                description=arguments.get('description', [''])[0],
-            )
+            identifier=data.identifier,
+            description=data.description
+        )
+        yield response(True)
 
-    def _addRepositoryGroup(self, identifier, arguments):
-        self.call.addRepositoryGroup(
-                identifier=identifier,
-                domainId=arguments.get('domainId', [''])[0],
+    @check_and_parse('identifier', 'domainId', userCheck='user')
+    def _addRepositoryGroup(self, data, **kwargs):
+        try:
+            self.call.addRepositoryGroup(
+                identifier=data.identifier,
+                domainId=data.domainId
             )
+        except Exception as e:
+            yield response(False, message=str(e))
+            return
+
+        yield response(True)
 
     def _updateRepositoryGroup(self, identifier, arguments):
         self.call.updateRepositoryGroup(
@@ -88,11 +97,17 @@ class HarvesterDataActions(PostActions):
                 },
             )
 
-    def _deleteRepositoryGroup(self, identifier, arguments):
-        self.call.deleteRepositoryGroup(
-                identifier=identifier,
-                domainId=arguments.get('domainId', [''])[0],
+    @check_and_parse('identifier', 'domainId', userCheck='user')
+    def _deleteRepositoryGroup(self, data, **kwargs):
+        try:
+            self.call.deleteRepositoryGroup(
+                identifier=data.identifier,
+                domainId=data.domainId
             )
+        except Exception as e:
+            yield response(False, message=str(e))
+            return
+        yield response(True)
 
     def _addRepository(self, identifier, arguments):
         self.call.addRepository(

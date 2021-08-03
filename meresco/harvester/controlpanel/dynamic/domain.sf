@@ -26,6 +26,18 @@
 import page2
 
 def main(**kwargs):
+    sub = page2.findPath(
+        "table",
+        dict(
+            repositoryGroup=table_repositoryGroups,
+        ),
+        **kwargs)
+    if not sub is None:
+        yield sub(**kwargs)
+        return
+
+
+
     yield page2.render(
         _content,
         additionalScripts=[
@@ -48,12 +60,12 @@ def card_domainAttributes(tag, domain, **kwargs):
     domainId = domain.get("identifier")
     uniqueId = uuid()
     with tag("form.form", id_="FrmDomainAttributes"):
-        with tag("input", type_="hidden", name="domainId", value=domainId): pass
+        with tag("input", type_="hidden", name="identifier", value=domainId): pass
         with tag("div.row"):
             with tag("div.col-3"):
                 with tag("label.col-form-label", for_=uniqueId): yield "Omschrijving"
             with tag("div.col-9"):
-                with tag("input.form-control", id_=uniqueId, type_="text", name="name", value=domain.get("description") or ""): pass
+                with tag("input.form-control", id_=uniqueId, type_="text", name="description", value=domain.get("description")): pass
 
         with tag("div.row.mt-3"):
             with tag("div.col"):
@@ -64,31 +76,52 @@ def card_domainAttributes(tag, domain, **kwargs):
 def card_domainRepositoryGroups(tag, domain, **kwargs):
     domainId = domain.get("identifier")
     uniqueId = uuid()
-    with tag("form.form", id_="FrmCreateRepositoryGroup"):
-        with tag("input", type_="hidden", name="domainId", value=domainId): pass
-        with tag("div.row"):
-            with tag("div.col-3"):
-                with tag("label.col-form-label", for_=uniqueId): yield "Identifier"
-            with tag("div.col-9"):
-                with tag("input.form-control", id_=uniqueId, type_="text", name="name", value=""): pass
+    with tag("div", id_="placeholder_FrmCreateRepositoryGroup"):
+        with tag("form.form", id_="FrmCreateRepositoryGroup", **{'data-domainId': domainId}):
+            with tag("input", type_="hidden", name="domainId", value=domainId): pass
+            with tag("div.row"):
+                with tag("div.col-3"):
+                    with tag("label.col-form-label", for_=uniqueId): yield "Identifier"
+                with tag("div.col-9"):
+                    with tag("input.form-control", id_=uniqueId, type_="text", name="identifier", value=""): pass
 
-        with tag("div.row.mt-3"):
-            with tag("div.col"):
-                with tag("button.btn.btn-small.btn-primary.float-end", type_="submit", id_="BtnCreateRepositoryGroup"):
-                    yield "Aanmaken"
+            with tag("div.row.mt-3"):
+                with tag("div.col"):
+                    with tag("button.btn.btn-small.btn-primary.float-end", type_="submit", id_="BtnCreateRepositoryGroup"):
+                        yield "Aanmaken"
+
+    with tag("div", id_="placeholder_table_repositorygroups"):
+        yield table_repositoryGroups(tag, domain=domain, **kwargs)
+
+
+def table_repositoryGroups(tag, domain=None, **kwargs):
+    if domain is None:
+        domainId = kwargs.get("arguments", {}).get("identifier", [None])[0]
+        domain = observable.call.getDomain(domainId)
+    else:
+        domainId = domain.get("identifier")
 
     with tag("table.table.table-sm.table-hover"):
         with tag("thead"):
             with tag("tr"):
+                with tag("th"): yield ""
+                with tag("th"): yield "Identifier"
                 with tag("th"): yield "Naam"
         with tag("tbody"):
 
             for groupId in sorted(domain.get('repositoryGroupIds', []), key=lambda x:str(x).lower()):
                 repositoryGroup = observable.call.getRepositoryGroup(identifier=groupId, domainId=domainId)
                 with tag("tr"):
+                    with tag("td.fit"):
+                        with tag("button.seecr-btn.deletable", **{'data-domainId': domainId, 'data-groupId': groupId}):
+                            with tag("i.bi-trash"): pass
                     with tag("td"):
-                        with tag("a", href=page2.url("/repositoryGroup", identifier=repositoryGroup['identifier'])):
-                            yield repositoryGroup.get("name", {}).get("nl")
+                        with tag("a", href=page2.url("/repositoryGroup", 
+                            identifier=repositoryGroup['identifier'],
+                            domainId=domainId)):
+                            yield repositoryGroup.get('identifier')
+                    with tag("td"):
+                        yield repositoryGroup.get("name", {}).get("nl", '')
 
 
 def card_domainTargets(tag, domain, **kwargs):
@@ -110,11 +143,17 @@ def card_domainTargets(tag, domain, **kwargs):
     with tag("table.table.table-sm.table-hover"):
         with tag("thead"):
             with tag("tr"):
+                with tag("th"): yield ""
                 with tag("th"): yield "Naam"
         with tag("tbody"):
             targets = [observable.call.getTarget(identifier=each, domainId=domainId) for each in domain['targetIds']]
             for target in sorted(targets, key=lambda x:x['name'].lower()):
                 with tag("tr"):
+                    with tag("td.fit"):
+                        with tag("button.seecr-btn.deletable", **{
+                                'data-domainId': domainId, 
+                                'data-targetId': target.get('identifier')}):
+                            with tag("i.bi-trash"): pass
                     with tag("td"):
                         with tag("a", href=page2.url("/target", identifier=target['identifier'])):
                             yield target.get('name')
