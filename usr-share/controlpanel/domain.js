@@ -133,11 +133,51 @@ function init_cardTarget() {
 function init_cardMapping() {
     var _frm = $("#FrmCreateMapping");
     var _btn = $("#BtnCreateMapping");
+    
+    function _load_table_mappings(domainId) {
+        var _placeholder = $("#placeholder_table_mappings");
+        $.get("/domain/table/mappings", $.param({identifier: domainId}))
+            .done(function(page) {
+                _placeholder
+                    .empty()
+                    .append(page);
+                init_table_mappings();
+            });
+    }
+
+    function init_table_mappings() {
+        var _placeholder = $("#placeholder_table_mappings");
+        _placeholder.find("button.deletable.seecr-btn")
+            .unbind("click")
+            .click(function(e) {
+                var _btn = $(this);
+                var _domainId = _btn.data('domainid');
+                e.preventDefault();
+                $.post("/actions/deleteMapping", $.param({identifier: _btn.data('mappingid'), domainId: _domainId}))
+                    .done(function(data) {
+                        if (data['success'] == true) {
+                            _load_table_mappings(_domainId);
+                        } else {
+                            console.log(data);
+                        }
+                    })
+
+            })
+    }
+    init_table_mappings();
     _btn
         .unbind("click")
         .click(function(e) {
             e.preventDefault();
-            alert("CreateMapping");
+            $.post("/actions/addMapping", _frm.serialize())
+                .done(function(data) {
+                    if (data['success'] == true) {
+                        form_resetBordersAndDisabled(_frm, _btn, true);
+                        _load_table_mappings(_frm.data("domainid"));
+                    } else {
+                        msg_Error(placeholder=$("#placeholder_FrmCreateMapping"), identifier=undefined, text=data['message']);
+                    }
+                })
         })
     form_setBordersAndDisabled(_frm, _btn);
     form_resetBordersAndDisabled(_frm, _btn);

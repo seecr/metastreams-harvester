@@ -156,3 +156,9 @@ def renderModal(tag):
                         pass
                 with tag("div.modal-body", id_="placeholder_modal-body"):
                     pass
+
+def thead(tag, ths):
+    with tag("thead"):
+        with tag("tr"):
+            for each in ths:
+                with tag("th"): yield each

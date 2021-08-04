@@ -53,9 +53,9 @@ class HarvesterDataActions(PostActions):
         self._registerFormAction('deleteRepository', self._deleteRepository)
         self._registerFormAction('updateRepository', self._updateRepository)
 
-        self._registerFormAction('addMapping', self._addMapping)
+        self.registerAction('addMapping', self._addMapping)
         self._registerFormAction('updateMapping', self._updateMapping)
-        self._registerFormAction('deleteMapping', self._deleteMapping)
+        self.registerAction('deleteMapping', self._deleteMapping)
 
         self.registerAction('addTarget', self._addTarget)
         self._registerFormAction('updateTarget', self._updateTarget)
@@ -166,11 +166,18 @@ class HarvesterDataActions(PostActions):
                 repositoryGroupId=arguments.get('repositoryGroupId', [''])[0],
             )
 
-    def _addMapping(self, arguments, **ignored):
-        return self.call.addMapping(
-                name=arguments.get('name', [''])[0],
-                domainId=arguments.get('domainId', [''])[0],
+    @check_and_parse('name', 'domainId', userCheck='user')
+    def _addMapping(self, data, **kwargs):
+        try:
+            self.call.addMapping(
+                name=data.name,
+                domainId=data.domainId,
             )
+        except Exception as e:
+            yield response(False, message=str(e))
+            raise
+            return
+        yield response(True)
 
     def _updateMapping(self, identifier, arguments):
         self.call.updateMapping(
@@ -181,11 +188,17 @@ class HarvesterDataActions(PostActions):
                 code=arguments.get('code', [''])[0].replace('\r', ''),
             )
 
-    def _deleteMapping(self, identifier, arguments):
-        self.call.deleteMapping(
-                identifier=identifier,
-                domainId=arguments.get('domainId', [''])[0],
+    @check_and_parse('identifier', 'domainId', userCheck='user')
+    def _deleteMapping(self, data, **kwargs):
+        try:
+            self.call.deleteMapping(
+                identifier=data.identifier,
+                domainId=data.domainId
             )
+        except Exception as e:
+            yield response(False, message=str(e))
+            return
+        yield response(True)
 
     @check_and_parse('name', 'domainId', 'targetType', userCheck='user')
     def _addTarget(self, data, **kwargs):
