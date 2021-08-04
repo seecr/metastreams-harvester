@@ -48,15 +48,18 @@ class HarvesterDataActions(PostActions):
         self.registerAction('addRepositoryGroup', self._addRepositoryGroup)
         self.registerAction('deleteRepositoryGroup', self._deleteRepositoryGroup)
         self._registerFormAction('updateRepositoryGroup', self._updateRepositoryGroup)
+
         self._registerFormAction('addRepository', self._addRepository)
         self._registerFormAction('deleteRepository', self._deleteRepository)
         self._registerFormAction('updateRepository', self._updateRepository)
+
         self._registerFormAction('addMapping', self._addMapping)
         self._registerFormAction('updateMapping', self._updateMapping)
         self._registerFormAction('deleteMapping', self._deleteMapping)
-        self._registerFormAction('addTarget', self._addTarget)
+
+        self.registerAction('addTarget', self._addTarget)
         self._registerFormAction('updateTarget', self._updateTarget)
-        self._registerFormAction('deleteTarget', self._deleteTarget)
+        self.registerAction('deleteTarget', self._deleteTarget)
         self.registerAction('repositoryDone', self._repositoryDone)
         self.defaultAction(lambda path, **kwargs: badRequestHtml + "Invalid action: " + path)
         self._fieldDefinitions = fieldDefinitions
@@ -184,12 +187,18 @@ class HarvesterDataActions(PostActions):
                 domainId=arguments.get('domainId', [''])[0],
             )
 
-    def _addTarget(self, arguments, **ignored):
-        return self.call.addTarget(
-                name=arguments.get('name', [''])[0],
-                domainId=arguments.get('domainId', [''])[0],
-                targetType=arguments.get('targetType', [''])[0],
+    @check_and_parse('name', 'domainId', 'targetType', userCheck='user')
+    def _addTarget(self, data, **kwargs):
+        try:
+            self.call.addTarget(
+                name=data.name,
+                domainId=data.domainId,
+                targetType=data.targetType
             )
+        except Exception as e:
+            yield response(False, message=str(e))
+            return
+        yield response(True)
 
     def _updateTarget(self, identifier, arguments):
         self.call.updateTarget(
@@ -205,11 +214,17 @@ class HarvesterDataActions(PostActions):
                 delegateIds=arguments.get('delegate',[]),
             )
 
-    def _deleteTarget(self, identifier, arguments):
-        self.call.deleteTarget(
-                identifier=identifier,
-                domainId=arguments.get('domainId', [''])[0],
+    @check_and_parse('identifier', 'domainId', userCheck='user')
+    def _deleteTarget(self, data, **kwargs):
+        try:
+            self.call.deleteTarget(
+                identifier=data.identifier,
+                domainId=data.domainId
             )
+        except Exception as e:
+            yield response(False, message=str(e))
+            return
+        yield response(True)
 
     def _repositoryDone(self, Body, **kwargs):
         arguments = parse_qs(str(Body, encoding='utf-8'))

@@ -55,6 +55,7 @@ function init_cardRepositoryGroup() {
             })
     }
     init_table_repositoryGroups();
+
     _btn
         .prop("disabled", true)
         .unbind("click")
@@ -64,7 +65,7 @@ function init_cardRepositoryGroup() {
                 .done(function(data) {
                     if (data['success'] == true) {
                         form_resetBordersAndDisabled(_frm, _btn, true);
-                        _load_table_repositoryGroups(_frm.data("domainId"));
+                        _load_table_repositoryGroups(_frm.data("domainid"));
                     } else {
                         msg_Error(placeholder=$("#placeholder_FrmCreateRepositoryGroup"), identifier=undefined, text=data['message']);
                     }
@@ -77,11 +78,53 @@ function init_cardRepositoryGroup() {
 function init_cardTarget() {
     var _frm = $("#FrmCreateTarget");
     var _btn = $("#BtnCreateTarget");
+
+
+    function _load_table_targets(domainId) {
+        var _placeholder = $("#placeholder_table_targets");
+        $.get("/domain/table/targets", $.param({identifier: domainId}))
+            .done(function(page) {
+                _placeholder
+                    .empty()
+                    .append(page);
+                init_table_targets();
+            });
+    }
+
+    function init_table_targets() {
+        var _placeholder = $("#placeholder_table_targets");
+        _placeholder.find("button.deletable.seecr-btn")
+            .unbind("click")
+            .click(function(e) {
+                var _btn = $(this);
+                var _domainId = _btn.data('domainid');
+                e.preventDefault();
+                $.post("/actions/deleteTarget", $.param({identifier: _btn.data('targetid'), domainId: _domainId}))
+                    .done(function(data) {
+                        if (data['success'] == true) {
+                            _load_table_targets(_domainId);
+                        } else {
+                            console.log(data);
+                        }
+                    })
+
+            })
+    }
+    init_table_targets();
+
     _btn
         .unbind("click")
         .click(function(e) {
             e.preventDefault();
-            alert("CreateTarget");
+            $.post("/actions/addTarget", _frm.serialize())
+                .done(function(data) {
+                    if (data['success'] == true) {
+                        form_resetBordersAndDisabled(_frm, _btn, true);
+                        _load_table_targets(_frm.data("domainid"));
+                    } else {
+                        msg_Error(placeholder=$("#placeholder_FrmCreateTarget"), identifier=undefined, text=data['message']);
+                    }
+                })
         });
     form_setBordersAndDisabled(_frm, _btn);
     form_resetBordersAndDisabled(_frm, _btn);

@@ -30,6 +30,8 @@ def main(**kwargs):
         "table",
         dict(
             repositoryGroup=table_repositoryGroups,
+            targets=table_targets,
+            mappings=table_mappings,
         ),
         **kwargs)
     if not sub is None:
@@ -116,7 +118,7 @@ def table_repositoryGroups(tag, domain=None, **kwargs):
                         with tag("button.seecr-btn.deletable", **{'data-domainId': domainId, 'data-groupId': groupId}):
                             with tag("i.bi-trash"): pass
                     with tag("td"):
-                        with tag("a", href=page2.url("/repositoryGroup", 
+                        with tag("a", href=page2.url("/repositoryGroup",
                             identifier=repositoryGroup['identifier'],
                             domainId=domainId)):
                             yield repositoryGroup.get('identifier')
@@ -126,66 +128,103 @@ def table_repositoryGroups(tag, domain=None, **kwargs):
 
 def card_domainTargets(tag, domain, **kwargs):
     domainId = domain.get("identifier")
-    uniqueId = uuid()
-    with tag("form.form", id_="FrmCreateTarget"):
-        with tag("input", type_="hidden", name="domainId", value=domainId): pass
-        with tag("div.row"):
-            with tag("div.col-3"):
-                with tag("label.col-form-label", for_=uniqueId): yield "Naam"
-            with tag("div.col-9"):
-                with tag("input.form-control", id_=uniqueId, type_="text", name="name", value=""): pass
+    with tag("div", id_="placeholder_FrmCreateTarget"):
+        with tag("form.form", id_="FrmCreateTarget", **{'data-domainId': domainId}):
+            with tag("input", type_="hidden", name="domainId", value=domainId): pass
+            with tag("div.row"):
+                uniqueId = uuid()
+                with tag("div.col-2"):
+                    with tag("label.col-form-label", for_=uniqueId): yield "Naam"
+                with tag("div.col-4"):
+                    with tag("input.form-control", id_=uniqueId, type_="text", name="name", value=""): pass
 
-        with tag("div.row.mt-3"):
-            with tag("div.col"):
-                with tag("button.btn.btn-small.btn-primary.float-end", type_="submit", id_="BtnCreateTarget"):
-                    yield "Aanmaken"
+                uniqueId = uuid()
+                with tag("div.col-2"):
+                    with tag("label.col-form-label", for_=uniqueId): yield "Type"
+                with tag("div.col-4"):
+                    with tag("select.form-control", name="targetType"):
+                        for key in sorted(TARGET_TYPES.keys()):
+                            with tag("option", value=key):
+                                yield TARGET_TYPES[key]
 
+            with tag("div.row.mt-3"):
+                with tag("div.col"):
+                    with tag("button.btn.btn-small.btn-primary.float-end", type_="submit", id_="BtnCreateTarget"):
+                        yield "Aanmaken"
+
+    with tag("div", id_="placeholder_table_targets"):
+        yield table_targets(tag, domain=domain, **kwargs)
+
+def table_targets(tag, domain=None, **kwargs):
+    if domain is None:
+        domainId = kwargs.get("arguments", {}).get("identifier", [None])[0]
+        domain = observable.call.getDomain(domainId)
+    else:
+        domainId = domain.get("identifier")
     with tag("table.table.table-sm.table-hover"):
         with tag("thead"):
             with tag("tr"):
-                with tag("th"): yield ""
-                with tag("th"): yield "Naam"
+                for each in ["", "Naam", "Type"]:
+                    with tag("th"): yield each
         with tag("tbody"):
             targets = [observable.call.getTarget(identifier=each, domainId=domainId) for each in domain['targetIds']]
             for target in sorted(targets, key=lambda x:x['name'].lower()):
                 with tag("tr"):
                     with tag("td.fit"):
                         with tag("button.seecr-btn.deletable", **{
-                                'data-domainId': domainId, 
-                                'data-targetId': target.get('identifier')}):
+                                'data-domainid': domainId,
+                                'data-targetid': target.get('identifier')}):
                             with tag("i.bi-trash"): pass
                     with tag("td"):
                         with tag("a", href=page2.url("/target", identifier=target['identifier'])):
                             yield target.get('name')
+                    with tag("td"):
+                        yield TARGET_TYPES.get(target.get('targetType'), "--")
+
+TARGET_TYPES = dict(
+    sruUpdate="SRU Update Target",
+    filesystem="File System",
+    composite="Multiple Targets",
+)
 
 def card_domainMappings(tag, domain, **kwargs):
     domainId = domain.get("identifier")
-    uniqueId = uuid()
-    with tag("form.form", id_="FrmCreateMapping"):
-        with tag("input", type_="hidden", name="domainId", value=domainId): pass
-        with tag("div.row"):
-            with tag("div.col-3"):
-                with tag("label.col-form-label", for_=uniqueId): yield "Naam"
-            with tag("div.col-9"):
-                with tag("input.form-control", id_=uniqueId, type_="text", name="name", value=""): pass
+    with tag("div", id_="placeholder_FrmCreateMapping"):
+        with tag("form.form", id_="FrmCreateMapping", **{'data-domainId': domainId}):
+            with tag("input", type_="hidden", name="domainId", value=domainId): pass
+            with tag("div.row"):
+                uniqueId = uuid()
+                with tag("div.col-2"):
+                    with tag("label.col-form-label", for_=uniqueId): yield "Naam"
+                with tag("div.col-4"):
+                    with tag("input.form-control", id_=uniqueId, type_="text", name="name", value=""): pass
 
-        with tag("div.row.mt-3"):
-            with tag("div.col"):
-                with tag("button.btn.btn-small.btn-primary.float-end", type_="submit", id_="BtnCreateMapping"):
-                    yield "Aanmaken"
 
+            with tag("div.row.mt-3"):
+                with tag("div.col"):
+                    with tag("button.btn.btn-small.btn-primary.float-end", type_="submit", id_="BtnCreateMapping"):
+                        yield "Aanmaken"
+
+    with tag("div", id_="placeholder_table_mappings"):
+        yield table_mappings(tag, domain=domain, **kwargs)
+
+def table_mappings(tag, domain=None, **kwargs):
+    if domain is None:
+        domainId = kwargs.get("arguments", {}).get("identifier", [None])[0]
+        domain = observable.call.getDomain(domainId)
+    else:
+        domainId = domain.get("identifier")
     with tag("table.table.table-sm.table-hover"):
         with tag("thead"):
             with tag("tr"):
                 with tag("th"): yield "Naam"
         with tag("tbody"):
-            targets = [observable.call.getTarget(identifier=each, domainId=domainId) for each in domain['targetIds']]
-            for target in sorted(targets, key=lambda x:x['name'].lower()):
+            mappings = [observable.call.getMapping(identifier=each, domainId=domainId) for each in domain['mappingIds']]
+            for mapping in sorted(mappings, key=lambda x:x['name'].lower()):
                 with tag("tr"):
                     with tag("td"):
-                        with tag("a", href=page2.url("/target", identifier=target['identifier'])):
-                            yield target.get('name')
-    pass
+                        with tag("a", href=page2.url("/mapping", identifier=mapping['identifier'])):
+                            yield mapping.get('name')
 
 
 def old():
