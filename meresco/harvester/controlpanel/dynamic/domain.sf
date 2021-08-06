@@ -25,20 +25,31 @@
 
 import page2
 
+TARGET_TYPES = dict(
+    sruUpdate="SRU Update Target",
+    filesystem="File System",
+    composite="Multiple Targets",
+)
+
 def main(**kwargs):
     sub = page2.findPath(
-        "table",
-        dict(
+        "table", dict(
             repositoryGroup=table_repositoryGroups,
             targets=table_targets,
-            mappings=table_mappings,
-        ),
+            mappings=table_mappings,),
         **kwargs)
     if not sub is None:
         yield sub(**kwargs)
         return
 
-
+    sub = page2.findPath(
+        "popup", dict(
+            target=popup_target,
+            mapping=popup_mapping,),
+        **kwargs)
+    if not sub is None:
+        yield sub(**kwargs)
+        return
 
     yield page2.render(
         _content,
@@ -54,25 +65,29 @@ def _content(tag, arguments, **kwargs):
 
     yield page2.card(f"Domein Gegevens - {domainId}", card_domainAttributes, tag=tag, domain=domain, **kwargs)
     yield page2.card("Repository Groepen", card_domainRepositoryGroups, tag=tag, domain=domain, **kwargs)
-    yield page2.card("Targets", card_domainTargets, tag=tag, domain=domain, **kwargs)
-    yield page2.card("Mappings", card_domainMappings, tag=tag, domain=domain, **kwargs)
+    with tag("div.row"):
+        with tag("div.col"):
+            yield page2.card("Targets", card_domainTargets, tag=tag, domain=domain, **kwargs)
+        with tag("div.col"):
+            yield page2.card("Mappings", card_domainMappings, tag=tag, domain=domain, **kwargs)
 
 
 def card_domainAttributes(tag, domain, **kwargs):
     domainId = domain.get("identifier")
     uniqueId = uuid()
-    with tag("form.form", id_="FrmDomainAttributes"):
-        with tag("input", type_="hidden", name="identifier", value=domainId): pass
-        with tag("div.row"):
-            with tag("div.col-3"):
-                with tag("label.col-form-label", for_=uniqueId): yield "Omschrijving"
-            with tag("div.col-9"):
-                with tag("input.form-control", id_=uniqueId, type_="text", name="description", value=domain.get("description")): pass
+    with tag("div", id_="placeholder_FrmDomainAttributes"):
+        with tag("form.form", id_="FrmDomainAttributes"):
+            with tag("input", type_="hidden", name="identifier", value=domainId): pass
+            with tag("div.row"):
+                with tag("div.col-3"):
+                    with tag("label.col-form-label", for_=uniqueId): yield "Omschrijving"
+                with tag("div.col-9"):
+                    with tag("input.form-control", id_=uniqueId, type_="text", name="description", value=domain.get("description")): pass
 
-        with tag("div.row.mt-3"):
-            with tag("div.col"):
-                with tag("button.btn.btn-small.btn-primary.float-end", type_="submit", id_="BtnDomainAttributes"):
-                    yield "Aanpassen"
+            with tag("div.row.mt-3"):
+                with tag("div.col"):
+                    with tag("button.btn.btn-small.btn-primary.float-end", type_="submit", id_="BtnDomainAttributes"):
+                        yield "Aanpassen"
 
 
 def card_domainRepositoryGroups(tag, domain, **kwargs):
@@ -156,31 +171,108 @@ def table_targets(tag, domain=None, **kwargs):
         domain = observable.call.getDomain(domainId)
     else:
         domainId = domain.get("identifier")
+
     with tag("table.table.table-sm.table-hover"):
         yield page2.thead(tag, ["", "Naam", "Type"])
         with tag("tbody"):
             targets = [observable.call.getTarget(identifier=each, domainId=domainId) for each in domain['targetIds']]
             for target in sorted(targets, key=lambda x:x['name'].lower()):
-                with tag("tr"):
+                with tag("tr.clickable-row", **{'data-domainid': domainId, 'data-targetid': target.get('identifier')}):
                     with tag("td.fit"):
                         with tag("button.seecr-btn.deletable", **{
                                 'data-domainid': domainId,
                                 'data-targetid': target.get('identifier')}):
                             with tag("i.bi-trash"): pass
                     with tag("td"):
-                        with tag("a", href=page2.url("/target",
-                                identifier=target['identifier'],
-                                domainId=domainId,
-                                referrerDomain=domainId)):
-                            yield target.get('name')
+                        yield target.get('name')
                     with tag("td"):
                         yield TARGET_TYPES.get(target.get('targetType'), "--")
 
-TARGET_TYPES = dict(
-    sruUpdate="SRU Update Target",
-    filesystem="File System",
-    composite="Multiple Targets",
-)
+def popup_target(tag, arguments, **kwargs):
+    domainId = arguments.get("domainId", [None])[0]
+    targetId = arguments.get("identifier", [None])[0]
+    target = observable.call.getTarget(identifier=targetId, domainId=domainId)
+    domain = observable.call.getDomain(domainId)
+
+    def targetType_sruUpdate(tag, target, domain):
+        with tag("div.row.mt-3"):
+            with tag("div.col-3"):
+                with tag("label.col-form-label"): yield "Hostname"
+            with tag("div.col"):
+                with tag("input.form-control", type_="text", name="baseurl", value=target.get("baseurl", "")): pass
+        with tag("div.row.mt-3"):
+            with tag("div.col-3"):
+                with tag("label.col-form-label"): yield "Port"
+            with tag("div.col"):
+                with tag("input.form-control", type_="text", name="port", value=target.get("port", "")): pass
+        with tag("div.row.mt-3"):
+            with tag("div.col-3"):
+                with tag("label.col-form-label"): yield "Path"
+            with tag("div.col"):
+                with tag("input.form-control", type_="text", name="path", value=target.get("path", "")): pass
+
+    def targetType_filesystem(tag, target, domain):
+        with tag("div.row.mt-3"):
+            with tag("div.col-3"):
+                with tag("label.col-form-label"): yield "Path"
+            with tag("div.col"):
+                with tag("input.form-control", type_="text", name="path", value=target.get("path", "")): pass
+        with tag("div.row.mt-3"):
+            with tag("div.col-3"):
+                with tag("label.col-form-label"): yield "OAI Envelope"
+            with tag("div.col.d-flex.align-items-center"):
+                with tag("div.form-check.form-switch"):
+                    with tag("input.form-check-input",
+                        type_="checkbox",
+                        name="oaiEnvelope",
+                        checked="checked" if target.get("oaiEnvelope", False) is True else ""): pass
+
+    def targetType_composite(tag, target,  domain):
+        otherTargets = [observable.call.getTarget(identifier=each, domainId=domain.get('identifier')) for each in domain.get('targetIds') if each != target.get('identifier')]
+
+        with tag("div.row.mt-3"):
+            with tag("div.col-3"):
+                with tag("label.col-form-label"): yield "Target"
+            with tag("div.col"):
+                with tag("select.form-select", multiple="multiple", size="3", name="delegate"):
+                    selectedTargets = target.get('delegateIds', [])
+                    for each in otherTargets:
+                        targetId = each.get("identifier")
+                        with tag("option", value=targetId, selected="selected" if targetId in selectedTargets else ""):
+                            yield each.get("name")
+                with tag("small"):
+                    yield "hold CTRL/CMD to select multiple targets"
+
+
+    targetTypeRender = dict(
+        sruUpdate=targetType_sruUpdate,
+        filesystem=targetType_filesystem,
+        composite=targetType_composite,
+    )
+
+    with tag("div", id_="placeholder_FrmUpdateTarget"):
+        with tag("form.form", id_="FrmUpdateTarget"):
+            with tag("input", type_="hidden", name="identifier", value=targetId): pass
+            with tag("input", type_="hidden", name="domainId", value=domainId): pass
+            with tag("input", type_="hidden", name="targetType", value=target.get("targetType")): pass
+            with tag("div.row"):
+                with tag("div.col-3"):
+                    with tag("label.col-form-label"): yield "Naam"
+                with tag("div.col"):
+                    with tag("input.form-control", type_="text", name="name", value=target.get("name", "")): pass
+            with tag("div.row.mt-3"):
+                with tag("div.col-3"):
+                    with tag("label.col-form-label"): yield "Type"
+                with tag("div.col"):
+                    with tag("label.col-form-label"): yield TARGET_TYPES[target.get("targetType")]
+            yield targetTypeRender.get(target.get("targetType"))(tag, target=target, domain=domain)
+
+            with tag("div.row.mt-3"):
+                with tag("div.col"):
+                    with tag("button.btn.btn-primary.float-end", id_="BtnUpdateTarget"):
+                        yield "Opslaan"
+
+
 
 def card_domainMappings(tag, domain, **kwargs):
     domainId = domain.get("identifier")
@@ -208,20 +300,21 @@ def table_mappings(tag, domain=None, **kwargs):
         domain = observable.call.getDomain(domainId)
     else:
         domainId = domain.get("identifier")
+
     with tag("table.table.table-sm.table-hover"):
         yield page2.thead(tag, ["", "Naam"])
         with tag("tbody"):
             mappings = [observable.call.getMapping(identifier=each, domainId=domainId) for each in domain['mappingIds']]
             for mapping in sorted(mappings, key=lambda x:x['name'].lower()):
-                with tag("tr"):
+                with tag("tr.clickable-row", **{'data-domainid': domainId, 'data-mappingId': mapping.get('identifier')}):
                     with tag("td.fit"):
                         with tag("button.seecr-btn.deletable", **{
                                 'data-domainid': domainId,
                                 'data-mappingid': mapping.get('identifier')}):
                             with tag("i.bi-trash"): pass
                     with tag("td"):
-                        with tag("a", href=page2.url("/mapping",
-                                identifier=mapping['identifier'],
-                                domainId=domainId,
-                                referrerDomain=domainId)):
-                            yield mapping.get('name')
+                        yield mapping.get('name')
+
+def popup_mapping(tag, arguments, **kwargs):
+    yield "Hello Mapping!", arguments
+

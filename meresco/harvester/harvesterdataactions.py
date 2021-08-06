@@ -58,8 +58,9 @@ class HarvesterDataActions(PostActions):
         self.registerAction('deleteMapping', self._deleteMapping)
 
         self.registerAction('addTarget', self._addTarget)
-        self._registerFormAction('updateTarget', self._updateTarget)
+        self.registerAction('updateTarget', self._updateTarget)
         self.registerAction('deleteTarget', self._deleteTarget)
+
         self.registerAction('repositoryDone', self._repositoryDone)
         self.defaultAction(lambda path, **kwargs: badRequestHtml + "Invalid action: " + path)
         self._fieldDefinitions = fieldDefinitions
@@ -213,19 +214,28 @@ class HarvesterDataActions(PostActions):
             return
         yield response(True)
 
-    def _updateTarget(self, identifier, arguments):
-        self.call.updateTarget(
-                identifier=identifier,
-                domainId=arguments.get('domainId', [''])[0],
-                name=arguments.get('name', [''])[0],
-                username=arguments.get('username', [''])[0],
-                port=int(arguments.get('port', [''])[0] or '0'),
-                targetType=arguments.get('targetType', [''])[0],
-                path=arguments.get('path', [''])[0],
-                baseurl=arguments.get('baseurl', [''])[0],
-                oaiEnvelope='oaiEnvelope' in arguments,
-                delegateIds=arguments.get('delegate',[]),
+    @check_and_parse('identifier', 'name', 'domainId', 'targetType', 'username', 'port', 'targetType', 'path', 'baseurl', 'oaiEnvelope', 'delegate', userCheck='user')
+    def _updateTarget(self, data, **kwargs):
+        print(data.delegate)
+        try:
+            self.call.updateTarget(
+                identifier=data.identifier,
+                domainId=data.domainId,
+                name=data.name,
+                username=data.username,
+                port=data.port,
+                targetType=data.targetType,
+                path=data.path,
+                baseurl=data.baseurl,
+                oaiEnvelope=not data.oaiEnvelope is None,
+                delegateIds=data.delegate or [],
             )
+        except Exception as e:
+            yield response(False, message=str(e))
+            print(data)
+            raise
+            return
+        yield response(True)
 
     @check_and_parse('identifier', 'domainId', userCheck='user')
     def _deleteTarget(self, data, **kwargs):

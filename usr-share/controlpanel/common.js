@@ -91,6 +91,15 @@ function form_setBordersAndDisabled(form, button) {
             button.prop('disabled', false);
         }
 	});
+	form.find("input[type=checkbox]").change(function(e) {
+        var _input = $(this);
+        if (!_input.hasClass("border-warning")) {
+            _input.addClass("border-warning");
+        }
+        if (button.prop('disabled') == true) {
+            button.prop('disabled', false);
+        }
+	});
 }
 
 function form_resetBordersAndDisabled(form, button, reset) {
@@ -116,7 +125,7 @@ function init_login_dialog(placeholder) {
                 dataType: "json",
                 success: function(loginResponse) {
                     if (loginResponse['success'] == true) {
-                        window.location = "/"
+                        window.location = loginResponse['url'] || "/";
                     } else {
                         var _box = placeholder.find("#login-message-box");
                         _box.find("strong").html(loginResponse.message);

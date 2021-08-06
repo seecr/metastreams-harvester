@@ -108,7 +108,47 @@ function init_cardTarget() {
                         }
                     })
 
-            })
+            });
+        _placeholder.find("tr.clickable-row")
+            .unbind("click")
+            .click(function(e) {
+                e.preventDefault();
+                var _row = $(this);
+
+                $.get('/domain/popup/target', $.param({domainId: _row.data('domainid'), identifier: _row.data('targetid')}))
+                    .done(function(data) {
+                        var _modal = $("#modal");
+                        var _modal_body = _modal.find("#placeholder_modal-body");
+                        _modal.find("#placeholder_modal-title").html("Target");
+                        _modal_body
+                            .empty()
+                            .append(data);
+                        var _frm = _modal_body.find("#FrmUpdateTarget");
+                        var _btn = _modal_body.find("#BtnUpdateTarget");
+
+                        _btn
+                            .unbind("click")
+                            .click(function(e) {
+                                e.preventDefault();
+                                $.post("/action/updateTarget", _frm.serialize())
+                                    .done(function(data) {
+                                        if (data['success'] == true) {
+                                            form_setBordersAndDisabled(_frm, _btn);
+                                            form_resetBordersAndDisabled(_frm, _btn);
+                                        } else {
+                                            msg_Error(
+                                                placeholder=$("#placeholder_FrmUpdateTarget"),
+                                                identifier=undefined,
+                                                text=data['message'] || "Er ging iets niet goed.");
+
+                                        }
+                                    });
+                            });
+                        form_setBordersAndDisabled(_frm, _btn);
+                        form_resetBordersAndDisabled(_frm, _btn);
+                        _modal.modal('show');
+                   })
+            });
     }
     init_table_targets();
 
@@ -133,7 +173,7 @@ function init_cardTarget() {
 function init_cardMapping() {
     var _frm = $("#FrmCreateMapping");
     var _btn = $("#BtnCreateMapping");
-    
+
     function _load_table_mappings(domainId) {
         var _placeholder = $("#placeholder_table_mappings");
         $.get("/domain/table/mappings", $.param({identifier: domainId}))
@@ -162,7 +202,26 @@ function init_cardMapping() {
                         }
                     })
 
-            })
+            });
+
+        _placeholder.find("tr.clickable-row")
+            .unbind("click")
+            .click(function(e) {
+                e.preventDefault();
+                var _row = $(this);
+
+                $.get('/domain/popup/mapping', $.param({domainId: _row.data('domainid'), identifier: _row.data('mappingid')}))
+                    .done(function(data) {
+                        var _modal = $("#modal");
+                        var _modal_body = _modal.find("#placeholder_modal-body");
+                        _modal.find("#placeholder_modal-title").html("Mapping");
+                        _modal_body
+                            .empty()
+                            .append(data);
+
+                        _modal.modal('show');
+                   })
+            });
     }
     init_table_mappings();
     _btn

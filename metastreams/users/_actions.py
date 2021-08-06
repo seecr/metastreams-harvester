@@ -35,7 +35,9 @@ def response(success, **kwargs):
 
 def parse_arguments(Body, wanted):
     data = parse_qs(str(Body, encoding='utf-8'))
-    return Bucket(**{key:data.get(key, [None])[0] for key in wanted})
+    def getValue(value):
+        return value[0] if len(value) == 1 else value
+    return Bucket(**{key:getValue(data.get(key, [None])) for key in wanted})
 
 
 checks = {
