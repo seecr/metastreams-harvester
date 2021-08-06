@@ -54,7 +54,7 @@ def main(**kwargs):
     yield page2.render(
         _content,
         additionalScripts=[
-            '/static/domain.js'
+            '/static/domain.js',
         ],
         **kwargs)
 
@@ -228,7 +228,8 @@ def popup_target(tag, arguments, **kwargs):
                         checked="checked" if target.get("oaiEnvelope", False) is True else ""): pass
 
     def targetType_composite(tag, target,  domain):
-        otherTargets = [observable.call.getTarget(identifier=each, domainId=domain.get('identifier')) for each in domain.get('targetIds') if each != target.get('identifier')]
+        otherTargets = [observable.call.getTarget(identifier=each, domainId=domain.get('identifier'))
+            for each in domain.get('targetIds') if each != target.get('identifier')]
 
         with tag("div.row.mt-3"):
             with tag("div.col-3"):
@@ -243,12 +244,6 @@ def popup_target(tag, arguments, **kwargs):
                 with tag("small"):
                     yield "hold CTRL/CMD to select multiple targets"
 
-
-    targetTypeRender = dict(
-        sruUpdate=targetType_sruUpdate,
-        filesystem=targetType_filesystem,
-        composite=targetType_composite,
-    )
 
     with tag("div", id_="placeholder_FrmUpdateTarget"):
         with tag("form.form", id_="FrmUpdateTarget"):
@@ -265,7 +260,11 @@ def popup_target(tag, arguments, **kwargs):
                     with tag("label.col-form-label"): yield "Type"
                 with tag("div.col"):
                     with tag("label.col-form-label"): yield TARGET_TYPES[target.get("targetType")]
-            yield targetTypeRender.get(target.get("targetType"))(tag, target=target, domain=domain)
+            targetRenderer = dict(
+                sruUpdate=targetType_sruUpdate,
+                filesystem=targetType_filesystem,
+                composite=targetType_composite).get(target.get("targetType"))
+            yield targetRenderer(tag, target=target, domain=domain)
 
             with tag("div.row.mt-3"):
                 with tag("div.col"):
@@ -316,5 +315,36 @@ def table_mappings(tag, domain=None, **kwargs):
                         yield mapping.get('name')
 
 def popup_mapping(tag, arguments, **kwargs):
-    yield "Hello Mapping!", arguments
+    domainId = arguments.get("domainId", [None])[0]
+    mappingId = arguments.get("identifier", [None])[0]
+    mapping = observable.call.getMapping(identifier=mappingId, domainId=domainId)
+    domain = observable.call.getDomain(domainId)
+
+    with tag("div", id_="placeholder_FrmUpdateMapping"):
+        with tag("form.form", id_="FrmUpdateMapping"):
+            with tag("input", type_="hidden", name="identifier", value=mappingId): pass
+            with tag("input", type_="hidden", name="domainId", value=domainId): pass
+            with tag("div.row"):
+                with tag("div.col-3"):
+                    with tag("label.col-form-label"): yield "Naam"
+                with tag("div.col"):
+                    with tag("input.form-control", type_="text", name="name", value=mapping.get("name", "")): pass
+            with tag("div.row.mt-3"):
+                with tag("div.col-3"):
+                    with tag("label.col-form-label"): yield "Omschrijving"
+                with tag("div.col"):
+                    with tag("textarea.form-control", name="description", rows="3"):
+                        yield mapping.get("description", "")
+
+            with tag("div.row.mt-3"):
+                with tag("div.col-3"):
+                    with tag("label.col-form-label"): yield "Code"
+                with tag("div.col"):
+                    with tag("textarea.form-control.font-monospace.fs-6", id_="mapping-code", name="code", rows="10", wrap="off"):
+                        yield mapping.get("code", "")
+
+            with tag("div.row.mt-3"):
+                with tag("div.col"):
+                    with tag("button.btn.btn-primary.float-end", id_="BtnUpdateMapping"):
+                        yield "Opslaan"
 

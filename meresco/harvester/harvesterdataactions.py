@@ -54,7 +54,7 @@ class HarvesterDataActions(PostActions):
         self._registerFormAction('updateRepository', self._updateRepository)
 
         self.registerAction('addMapping', self._addMapping)
-        self._registerFormAction('updateMapping', self._updateMapping)
+        self.registerAction('updateMapping', self._updateMapping)
         self.registerAction('deleteMapping', self._deleteMapping)
 
         self.registerAction('addTarget', self._addTarget)
@@ -176,18 +176,23 @@ class HarvesterDataActions(PostActions):
             )
         except Exception as e:
             yield response(False, message=str(e))
-            raise
             return
         yield response(True)
 
-    def _updateMapping(self, identifier, arguments):
-        self.call.updateMapping(
-                identifier=identifier,
-                domainId=arguments.get('domainId', [''])[0],
-                name=arguments.get('name', [''])[0],
-                description=arguments.get('description', [''])[0],
-                code=arguments.get('code', [''])[0].replace('\r', ''),
+    @check_and_parse('identifier', 'domainId', 'name', 'description', 'code', userCheck='user')
+    def _updateMapping(self, data, **kwargs):
+        try:
+            self.call.updateMapping(
+                identifier=data.identifier,
+                domainId=data.domainId,
+                name=data.name,
+                description=data.description,
+                code=(data.code or '').replace('\r', ''),
             )
+        except Exception as e:
+            yield response(False, message=str(e))
+            return
+        yield response(True)
 
     @check_and_parse('identifier', 'domainId', userCheck='user')
     def _deleteMapping(self, data, **kwargs):

@@ -133,6 +133,7 @@ function init_cardTarget() {
                                 $.post("/action/updateTarget", _frm.serialize())
                                     .done(function(data) {
                                         if (data['success'] == true) {
+                                            _load_table_targets(_row.data('domainid'));
                                             form_setBordersAndDisabled(_frm, _btn);
                                             form_resetBordersAndDisabled(_frm, _btn);
                                         } else {
@@ -218,6 +219,31 @@ function init_cardMapping() {
                         _modal_body
                             .empty()
                             .append(data);
+
+                        
+                        var _frm = _modal_body.find("#FrmUpdateMapping");
+                        var _btn = _modal_body.find("#BtnUpdateMapping");
+                        
+                        _btn
+                            .unbind("click")
+                            .click(function(e) {
+                                e.preventDefault();
+                                $.post("/action/updateMapping", _frm.serialize())
+                                    .done(function(data) {
+                                        if (data['success'] == true) {
+                                            _load_table_mappings(_row.data('domainid'));
+                                            form_setBordersAndDisabled(_frm, _btn);
+                                            form_resetBordersAndDisabled(_frm, _btn);
+                                        } else {
+                                            msg_Error(
+                                                placeholder=$("#placeholder_FrmUpdateMapping"),
+                                                identifier=undefined,
+                                                text=data['message'] || "Er ging iets niet goed.");
+                                        }
+                                    });
+                            });
+                        form_setBordersAndDisabled(_frm, _btn);
+                        form_resetBordersAndDisabled(_frm, _btn);
 
                         _modal.modal('show');
                    })
