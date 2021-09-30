@@ -70,9 +70,10 @@ class Sync(object):
             self._log(f'Creating repository "{identifier}" for group "{repositoryGroupId}"')
             await self._dest.createRepository(repositoryGroupId=repositoryGroupId, identifier=identifier)
         dest_repo = await self._dest.getRepository(identifier=identifier)
-        new_repo, changed = self._copyRepository(src_repo, dest_repo)
-        if changed:
-            self._log(f'Updating repository "{identifier}" for group "{repositoryGroupId}"')
+        new_repo, what_changed = self._copyRepository(src_repo, dest_repo)
+        if what_changed:
+            self._log(f'Updating repository "{identifier}" for group "{repositoryGroupId}", changes in {what_changed}')
+
             if new_repo.get('shopclosed'):
                 pprint(new_repo)
             await self._dest.updateRepository(identifier, new_repo)
@@ -83,12 +84,13 @@ class Sync(object):
 
 def copyRepository(src_repo, dest_repo, targetId=None, mappingId=None):
     new_repo = {'identifier': dest_repo['identifier'], 'repositoryGroupId': dest_repo['repositoryGroupId']}
-    changed = False
+    what_changed = []
     new_repo['use'] = dest_repo.get('use', False)
     new_repo['action'] = dest_repo.get('action')
     for k, v in [('targetId', targetId or dest_repo.get('targetId')),
                  ('mappingId', mappingId or dest_repo.get('mappingId'))]:
-        changed = changed or v != dest_repo.get('targetId')
+        if v != dest_repo.get(k):
+            what_changed.append(k)
         new_repo[k] = v
     for k in [
             'baseurl',
@@ -104,7 +106,8 @@ def copyRepository(src_repo, dest_repo, targetId=None, mappingId=None):
         ]:
         cur_v = dest_repo.get(k)
         new_v = src_repo.get(k)
-        changed = changed or new_v != cur_v
+        if new_v != cur_v:
+            what_changed.append(k)
         new_repo[k] = new_v
     if 'extra' in src_repo or 'extra' in dest_repo:
         extra = new_repo['extra'] = {}
@@ -112,9 +115,10 @@ def copyRepository(src_repo, dest_repo, targetId=None, mappingId=None):
             extra[k] = v
         for k,new_v in src_repo.get('extra', {}).items():
             cur_v = extra.get(k)
-            changed = changed or new_v != cur_v
+            if new_v != cur_v:
+                what_changed.append('extra/'+k)
             extra[k] = new_v
-    return new_repo, changed
+    return new_repo, what_changed
 
 
 async def _sync(src, dest, verbose):

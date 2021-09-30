@@ -47,7 +47,9 @@ class DomainApiTest(SeecrTestCase):
                 'mappingId': 'myMappingId',
                 'userAgent': 'Seecr Metastreams Harvester',
                 'extra': {
-                    'name': 'Somevalue'
+                    'name': 'Somevalue',
+                    'true': True,
+                    'false': False,
                 }}
         self.assertEqual({
                 'authorizationKey': 'let-me-in',
@@ -64,6 +66,7 @@ class DomainApiTest(SeecrTestCase):
                 'mappingId': 'myMappingId',
                 'userAgent': 'Seecr Metastreams Harvester',
                 'extra_name': 'Somevalue',
+                'extra_true': '1',
             }, DomainApi.createUpdateRepositoryKwargs(repo))
 
     def testTimeslot(self):

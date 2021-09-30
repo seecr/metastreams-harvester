@@ -39,7 +39,7 @@ if __name__ == '__main__':
     parser.add_argument('--destId', dest='dest_identifier', help='Destination domainId', required=True)
     parser.add_argument('--destUrl', dest='dest_url', help='Destination Metastreams url, default the same as url', default=None)
     parser.add_argument('--destUser', dest='dest_username', help='Username used to change data (Password will be prompted)', default=None)
-    parser.add_argument('--destCredential', dest='dest_credentials', help='Credential file, alternative for prompting password', default=None)
+    parser.add_argument('--destCredential', dest='dest_credentials', help='Credential file, alternative for prompting password. Contents: <username>:<password>', default=None)
     parser.add_argument('--destTargetId', dest='dest_targetId', help='TargetId for destination, default leaves targetId untouched.', default=None)
     parser.add_argument('--destMappingId', dest='dest_mappingId', help='MappingId for destination, default leaves mappingId untouched.', default=None)
     parser.add_argument('--quiet', dest='verbose', default=True, action='store_false', help='Be less verbose')

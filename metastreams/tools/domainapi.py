@@ -25,6 +25,7 @@
 
 from urllib.parse import urlparse
 from meresco.harvester.timeslot import Timeslot
+import itertools
 
 class DomainApi(object):
     def __init__(self, session, baseurl, identifier, **_):
@@ -107,14 +108,17 @@ class DomainApi(object):
 
     @staticmethod
     def createUpdateRepositoryKwargs(repo_dict):
-        repo_kwargs = {k:v for k, v in repo_dict.items() if not v is None}
-        extra = repo_kwargs.pop('extra', {})
-        shopclosed = repo_kwargs.pop('shopclosed', [])
-        for booleankey in ['use', 'complete']:
-            if repo_kwargs.pop(booleankey, False):
-                repo_kwargs[booleankey] = '1'
-        for k,v in extra.items():
-            repo_kwargs[f'extra_{k}'] = v
+        extra = repo_dict.pop('extra', {})
+        shopclosed = repo_dict.pop('shopclosed', [])
+        repo_kwargs = {}
+        for k,v in itertools.chain(repo_dict.items(), (('extra_'+k, v) for k,v in extra.items())):
+            if v is None:
+                continue
+            if isinstance(v, bool):
+                if not v:
+                    continue
+                v = '1'
+            repo_kwargs[k] = v
         for nr, closinghours in enumerate(shopclosed, start=1):
             t = Timeslot(closinghours)
             for k, v in [
