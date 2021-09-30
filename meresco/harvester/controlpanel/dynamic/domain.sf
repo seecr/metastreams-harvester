@@ -175,7 +175,7 @@ def table_targets(tag, domain=None, **kwargs):
     with tag("table.table.table-sm.table-hover"):
         yield page2.thead(tag, ["", "Naam", "Type"])
         with tag("tbody"):
-            targets = [observable.call.getTarget(identifier=each, domainId=domainId) for each in domain['targetIds']]
+            targets = [observable.call.getTarget(identifier=each, domainId=domainId) for each in domain.get('targetIds', [])]
             for target in sorted(targets, key=lambda x:x['name'].lower()):
                 with tag("tr.clickable-row", **{'data-domainid': domainId, 'data-targetid': target.get('identifier')}):
                     with tag("td.fit"):
@@ -303,7 +303,7 @@ def table_mappings(tag, domain=None, **kwargs):
     with tag("table.table.table-sm.table-hover"):
         yield page2.thead(tag, ["", "Naam"])
         with tag("tbody"):
-            mappings = [observable.call.getMapping(identifier=each, domainId=domainId) for each in domain['mappingIds']]
+            mappings = [observable.call.getMapping(identifier=each, domainId=domainId) for each in domain.get('mappingIds',[])]
             for mapping in sorted(mappings, key=lambda x:x['name'].lower()):
                 with tag("tr.clickable-row", **{'data-domainid': domainId, 'data-mappingId': mapping.get('identifier')}):
                     with tag("td.fit"):
