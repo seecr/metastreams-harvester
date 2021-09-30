@@ -137,7 +137,9 @@ class HarvesterDataActions(PostActions):
         extra = {}
         for definition in self._fieldDefinitions.get('repository_fields', []):
             fieldname = "extra_{}".format(definition['name'])
-            if fieldname in arguments:
+            if definition.get('type') == 'bool':
+                extra[definition['name']] = fieldname in arguments
+            elif fieldname in arguments:
                 extra[definition['name']] = arguments[fieldname][0]
 
         self.call.updateRepository(
