@@ -33,14 +33,14 @@ class FilterFieldsTest(TestCase):
     def setUp(self):
         TestCase.setUp(self)
         self.observer = CallTrace()
-        definition = {
+        self.observer.returnValues['getFieldDefinition'] = {
             'repository_fields': [
                 {"name": "name", "export": True},
                 {"name": "hidden", "export": False},
             ]
         }
         self.top = be((Observable(),
-            (FilterFields(definition),
+            (FilterFields(),
                 (self.observer,)
             )
         ))
@@ -51,19 +51,21 @@ class FilterFieldsTest(TestCase):
                 {'identifier':'identB', 'extra':{'name':'Repo name B', 'hidden': 'Hidden 2'}},
                 {'identifier':'identC', }
             ]
-        result = self.top.call.getRepositories(arg1=1, arg2=2)
+        result = self.top.call.getRepositories(domainId='mydomain', arg1=1, arg2=2)
         self.assertEqual([
                 {'identifier':'identA', 'extra':{'name':'Repo name A'}},
                 {'identifier':'identB', 'extra':{'name':'Repo name B'}},
                 {'identifier':'identC', 'extra':{'name':''}},
             ], result)
-        self.assertEqual({'arg1':1, 'arg2':2}, self.observer.calledMethods[0].kwargs)
+        self.assertEqual({'domainId': 'mydomain', 'arg1':1, 'arg2':2}, self.observer.calledMethods[0].kwargs)
+        self.assertEqual({'domainId': 'mydomain'}, self.observer.calledMethods[1].kwargs)
 
     def testFilterGetRepository(self):
         self.observer.returnValues['getRepository'] = {'identifier':'identA', 'extra':{'name':'Repo name A', 'hidden': 'Hidden 1'}}
-        result = self.top.call.getRepository(arg1=1, arg2=2)
+        result = self.top.call.getRepository(domainId='mydomain', arg1=1, arg2=2)
         self.assertEqual({'identifier':'identA', 'extra':{'name':'Repo name A'}}, result)
-        self.assertEqual({'arg1':1, 'arg2':2}, self.observer.calledMethods[0].kwargs)
+        self.assertEqual({'domainId': 'mydomain', 'arg1':1, 'arg2':2}, self.observer.calledMethods[0].kwargs)
+        self.assertEqual({'domainId': 'mydomain'}, self.observer.calledMethods[1].kwargs)
 
     def testOthers(self):
         self.observer.returnValues['getTarget'] = {'some':'data'}

@@ -33,20 +33,19 @@
 from meresco.core import Transparent
 
 class FilterFields(Transparent):
-    def __init__(self, fieldDefinitions):
-        Transparent.__init__(self)
-        self._allowedRepositoryFields = [definition['name'] for definition in fieldDefinitions.get('repository_fields', []) if definition.get('export', False)]
 
-    def getRepositories(self, *args, **kwargs):
-        return list(map(self._stripRepository, self.call.getRepositories(*args, **kwargs)))
+    def getRepositories(self, domainId, *args, **kwargs):
+        return [self._stripRepository(domainId, repo) for repo in self.call.getRepositories(domainId=domainId, *args, **kwargs)]
 
-    def getRepository(self, *args, **kwargs):
-        return self._stripRepository(self.call.getRepository(*args, **kwargs))
+    def getRepository(self, domainId, *args, **kwargs):
+        return self._stripRepository(domainId, self.call.getRepository(domainId=domainId, *args, **kwargs))
 
-    def _stripRepository(self, repository):
+    def _stripRepository(self, domainId, repository):
+        fd = self.call.getFieldDefinition(domainId=domainId)
+        allowedRepositoryFields = [definition['name'] for definition in fd.get('repository_fields', []) if definition.get('export', False)]
         result = dict(repository)
-        if self._allowedRepositoryFields:
+        if allowedRepositoryFields:
             extra = repository.get('extra', {})
-            result['extra'] = dict((k,v) for k,v in list(repository.get('extra', {}).items()) if k in self._allowedRepositoryFields)
-            result['extra'] = dict((k, extra.get(k, "")) for k in self._allowedRepositoryFields)
+            result['extra'] = dict((k,v) for k,v in list(repository.get('extra', {}).items()) if k in allowedRepositoryFields)
+            result['extra'] = dict((k, extra.get(k, "")) for k in allowedRepositoryFields)
         return result

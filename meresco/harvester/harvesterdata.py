@@ -278,6 +278,16 @@ upload.parts['meta'] = """<meta xmlns="http://meresco.org/namespace/harvester/me
         self._store.deleteData(id_combine(domainId, identifier), 'mapping')
         self._store.addData(domainId, 'domain', domain)
 
+    # fielddefinition
+    def getFieldDefinition(self, domainId, guid=None):
+        try:
+            return self._store.getData(domainId, 'fielddefinition', guid)
+        except ValueError:
+            return {}
+
+    def updateFieldDefinition(self, domainId, data):
+        self._store.addData(domainId, 'fielddefinition', data)
+
     def getPublicRecord(self, guid):
         "Retrieves a record given its uuid only"
         return self._store.getGuid(guid)

@@ -140,11 +140,12 @@ def _repository(tag, domain, repository):
     yield """
                     </td>
                 </tr>"""
-    if fieldDefinitions.get('repository_fields'):
+    fieldDefinition = observable.call.getFieldDefinition(domainId=domainId)
+    if fieldDefinition.get('repository_fields'):
         with tag('tr'):
             with tag('td', colspan="2"):
                 with tag('hr'): pass
-    for definition in fieldDefinitions.get('repository_fields', []):
+    for definition in fieldDefinition.get('repository_fields', []):
         export = definition.get('export', False)
         with tag("tr"):
             with tag("td"):

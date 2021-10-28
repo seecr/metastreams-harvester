@@ -41,7 +41,7 @@ from meresco.harvester.timeslot import Timeslot
 from metastreams.users._actions import check_and_parse, response
 
 class HarvesterDataActions(PostActions):
-    def __init__(self, fieldDefinitions, **kwargs):
+    def __init__(self, **kwargs):
         PostActions.__init__(self, **kwargs)
         self.registerAction('addDomain', self._addDomain)
         self.registerAction('updateDomain', self._updateDomain)
@@ -63,7 +63,6 @@ class HarvesterDataActions(PostActions):
 
         self.registerAction('repositoryDone', self._repositoryDone)
         self.defaultAction(lambda path, **kwargs: badRequestHtml + "Invalid action: " + path)
-        self._fieldDefinitions = fieldDefinitions
 
     @check_and_parse('identifier', userCheck='admin')
     def _addDomain(self, data, **kwargs):
@@ -121,6 +120,7 @@ class HarvesterDataActions(PostActions):
             )
 
     def _updateRepository(self, identifier, arguments):
+        domainId = arguments['domainId'][0]
         shopclosed = []
         shopStart = 0 if 'addTimeslot' in arguments else 1
         shopEnd = 1 + int(arguments.get('numberOfTimeslots', [''])[0] or '0')
@@ -139,7 +139,8 @@ class HarvesterDataActions(PostActions):
             'text': str,
             'bool': lambda value: value == "on"
         }
-        for definition in self._fieldDefinitions.get('repository_fields', []):
+        fieldDefinitions = self.call.getFieldDefinition(domainId=domainId)
+        for definition in fieldDefinitions.get('repository_fields', []):
             fieldname = "extra_{}".format(definition['name'])
             if definition.get('type') == 'bool':
                 # checkboxes when not checked are not present in the form
@@ -149,7 +150,7 @@ class HarvesterDataActions(PostActions):
 
         self.call.updateRepository(
                 identifier=identifier,
-                domainId=arguments['domainId'][0],
+                domainId=domainId,
                 baseurl=arguments.get('baseurl', [None])[0],
                 set=arguments.get('set', [None])[0],
                 metadataPrefix=arguments.get('metadataPrefix', [None])[0],

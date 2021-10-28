@@ -533,6 +533,16 @@ class _HarvesterDataTest(SeecrTestCase):
             self.assertNotEqual(dId, self.hd.getDomain('adomain')['@id'])
             self.assertEqual(targetId, self.hd.getTarget(domainId='adomain', identifier=targetId, guid=tId)['identifier'])
 
+    def testFieldDefinition(self):
+        definition = self.hd.getFieldDefinition(domainId='adomain')
+        self.assertEqual({}, definition)
+        self.hd.updateFieldDefinition('adomain', {'my': 'definition'})
+        definition = self.hd.getFieldDefinition(domainId='adomain')
+        if self.with_id:
+            self.assertEqual({'@id': 'mock-id: 1', 'my': 'definition'}, definition)
+        else:
+            self.assertEqual({'my': 'definition'}, definition)
+
 class HarvesterDataTest(_HarvesterDataTest):
     with_id = True
 

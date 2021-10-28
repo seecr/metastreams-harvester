@@ -48,7 +48,6 @@ if __name__ == '__main__':
     parser.add_argument('--logPath', help='Meresco harvester log directory', required=True)
     parser.add_argument('--statePath', help='Meresco harvester state directory', required=True)
     parser.add_argument('--externalUrl', help='Url this harvester can be reached at', required=True)
-    parser.add_argument('--fieldDefinitionsFile', help='File containing additional fielddefinitions')
     parser.add_argument('--customerLogoUrl', help='URL to logo of customer')
     parser.add_argument('--deproxyIp', dest='deproxyIps', action='append', help="DeproxyIps")
 

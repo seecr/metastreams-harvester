@@ -62,7 +62,6 @@ from meresco.components.http.utils import ContentTypeJson
 from .throughputanalyser import ThroughputAnalyser
 from .onlineharvest import OnlineHarvest
 from .filterfields import FilterFields
-from .fielddefinitions import loadDefinitions
 from .environment import createEnvironment
 
 from metastreams.users import initializeUserGroupManagement
@@ -80,7 +79,7 @@ staticHtmlPath = join(usrSharePath, 'controlpanel')
 def dateSince(days):
     return strftime("%Y-%m-%d", localtime(time() - days * 3600 * 24))
 
-def dna(reactor, port, dataPath, logPath, statePath, externalUrl, fieldDefinitionsFile, customerLogoUrl, deproxyIps=None, **ignored):
+def dna(reactor, port, dataPath, logPath, statePath, externalUrl, customerLogoUrl, deproxyIps=None, **ignored):
     environment = createEnvironment(dataPath)
     harvesterData = environment.createHarvesterData()
     harvesterDataRetrieve = environment.createHarvesterDataRetrieve()
@@ -97,7 +96,6 @@ def dna(reactor, port, dataPath, logPath, statePath, externalUrl, fieldDefinitio
         dataPath=dataPath,
     )
     print("Started Metastreams with configuration:\n" + configDict.pretty_print())
-    fieldDefinitions = loadDefinitions(fieldDefinitionsFile)
 
     userGroup = initializeUserGroupManagement(join(statePath, 'users'), harvesterData)
     basicHtmlLoginHelix = (BasicHtmlLoginForm(
@@ -167,7 +165,6 @@ def dna(reactor, port, dataPath, logPath, statePath, externalUrl, fieldDefinitio
                                                             'okPlainText': okPlainText,
                                                             'ZuluTime': ZuluTime,
                                                             'xpathFirst': xpathFirst,
-                                                            'fieldDefinitions': fieldDefinitions,
                                                             'customerLogoUrl': customerLogoUrl,
                                                             'uuid': lambda: str(uuid4()),
                                                         },
@@ -183,13 +180,13 @@ def dna(reactor, port, dataPath, logPath, statePath, externalUrl, fieldDefinitio
                                         ),
                                     ),
                                     (PathFilter('/action'),
-                                        (HarvesterDataActions(fieldDefinitions=fieldDefinitions),
+                                        (HarvesterDataActions(),
                                             (harvesterData,)
                                         ),
                                     ),
                                     (PathFilter(harvesterDataRetrieve.paths),
                                         (harvesterDataRetrieve,
-                                            (FilterFields(fieldDefinitions),
+                                            (FilterFields(),
                                                 (harvesterData,),
                                             ),
                                             (repositoryStatus,),

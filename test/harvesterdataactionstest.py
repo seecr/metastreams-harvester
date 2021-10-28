@@ -48,18 +48,19 @@ class HarvesterDataActionsTest(SeecrTestCase):
         self.hd.addDomain('domain')
         self.hd.addRepositoryGroup('group', domainId='domain')
         self.hd.addRepository('repository', repositoryGroupId='group', domainId='domain')
-        self.hda = HarvesterDataActions(fieldDefinitions={'repository_fields':[
+        self.hd.updateFieldDefinition('domain', {'repository_fields':[
                 {'name': 'name', 'label':'Label', 'type':'text', 'export': False},
                 {'name': 'choice_1', 'label':'Keuze', 'type':'bool', 'export': False},
                 {'name': 'choice_2', 'label':'Keuze', 'type':'bool', 'export': False},
             ]})
+        self.hda = HarvesterDataActions()
         self.hda.addObserver(self.hd)
 
     def testAddDomain(self):
         observable = CallTrace()
         dna = be(
             (Observable(),
-                (HarvesterDataActions(fieldDefinitions={}),
+                (HarvesterDataActions(),
                     (observable, )
                 )
             )
