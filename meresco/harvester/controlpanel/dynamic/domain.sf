@@ -117,21 +117,21 @@ def table_repositoryGroups(tag, domain=None, **kwargs):
         domain = observable.call.getDomain(domainId)
     else:
         domainId = domain.get("identifier")
-
     with tag("table.table.table-sm.table-hover"):
         yield page2.thead(tag, ["", "Identifier", "Naam"])
         with tag("tbody"):
-            for groupId in sorted(domain.get('repositoryGroupIds', []), key=lambda x:str(x).lower()):
-                repositoryGroup = observable.call.getRepositoryGroup(identifier=groupId, domainId=domainId)
+            repositoryGroups = [observable.call.getRepositoryGroup(identifier=groupId, domainId=domainId) for groupId in domain.get('repositoryGroupIds', [])]
+            for repositoryGroup in sorted(repositoryGroups, key=lambda rg: rg.get("name", {}).get("nl", "")):
+                rgIdentifier = repositoryGroup['identifier']
                 with tag("tr"):
                     with tag("td.fit"):
-                        with tag("button.seecr-btn.deletable", **{'data-domainId': domainId, 'data-groupId': groupId}):
+                        with tag("button.seecr-btn.deletable", **{'data-domainId': domainId, 'data-groupId': rgIdentifier}):
                             with tag("i.bi-trash"): pass
                     with tag("td"):
                         with tag("a", href=page2.url("/repositoryGroup",
-                            identifier=repositoryGroup['identifier'],
+                            identifier=rgIdentifier,
                             domainId=domainId)):
-                            yield repositoryGroup.get('identifier')
+                            yield rgIdentifier
                     with tag("td"):
                         yield repositoryGroup.get("name", {}).get("nl", '')
 
@@ -172,10 +172,16 @@ def table_targets(tag, domain=None, **kwargs):
     else:
         domainId = domain.get("identifier")
 
+    targetIds = domain.get("targetIds", [])
+    if len(targetIds) == 0:
+        with tag("span"):
+            yield "Nog geen targets aangemaakt."
+            return
+
     with tag("table.table.table-sm.table-hover"):
         yield page2.thead(tag, ["", "Naam", "Type"])
         with tag("tbody"):
-            targets = [observable.call.getTarget(identifier=each, domainId=domainId) for each in domain.get('targetIds', [])]
+            targets = [observable.call.getTarget(identifier=each, domainId=domainId) for each in targetIds]
             for target in sorted(targets, key=lambda x:x['name'].lower()):
                 with tag("tr.clickable-row", **{'data-domainid': domainId, 'data-targetid': target.get('identifier')}):
                     with tag("td.fit"):
@@ -300,10 +306,16 @@ def table_mappings(tag, domain=None, **kwargs):
     else:
         domainId = domain.get("identifier")
 
+    mappingIds = domain.get("mappingIds", [])
+    if len(mappingIds) == 0:
+        with tag("span"):
+            yield "Nog geen mappings aangemaakt."
+        return
+
     with tag("table.table.table-sm.table-hover"):
         yield page2.thead(tag, ["", "Naam"])
         with tag("tbody"):
-            mappings = [observable.call.getMapping(identifier=each, domainId=domainId) for each in domain.get('mappingIds',[])]
+            mappings = [observable.call.getMapping(identifier=each, domainId=domainId) for each in mappingIds]
             for mapping in sorted(mappings, key=lambda x:x['name'].lower()):
                 with tag("tr.clickable-row", **{'data-domainid': domainId, 'data-mappingId': mapping.get('identifier')}):
                     with tag("td.fit"):
