@@ -1,6 +1,7 @@
 ## begin license ##
 #
-# "Seecr Metastreams" can gather, translate, index, search and provide metadata. It is based on "Meresco Harvester".
+# "Metastreams Harvester" is a fork of Meresco Harvester that demonstrates
+# the translation of traditional metadata into modern events streams.
 #
 # Copyright (C) 2006-2007 SURFnet B.V. http://www.surfnet.nl
 # Copyright (C) 2007-2008 SURF Foundation. http://www.surf.nl
@@ -10,20 +11,20 @@
 # Copyright (C) 2011, 2013, 2021 Seecr (Seek You Too B.V.) https://seecr.nl
 # Copyright (C) 2011 Stichting Kennisnet http://www.kennisnet.nl
 #
-# This file is part of "Seecr Metastreams"
+# This file is part of "Metastreams Harvester"
 #
-# "Seecr Metastreams" is free software; you can redistribute it and/or modify
+# "Metastreams Harvester" is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
 # the Free Software Foundation; either version 2 of the License, or
 # (at your option) any later version.
 #
-# "Seecr Metastreams" is distributed in the hope that it will be useful,
+# "Metastreams Harvester" is distributed in the hope that it will be useful,
 # but WITHOUT ANY WARRANTY; without even the implied warranty of
 # MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 # GNU General Public License for more details.
 #
 # You should have received a copy of the GNU General Public License
-# along with "Seecr Metastreams"; if not, write to the Free Software
+# along with "Metastreams Harvester"; if not, write to the Free Software
 # Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 #
 ## end license ##
@@ -43,7 +44,7 @@ for path, dirs, files in walk('meresco'):
         packages.append(packagename)
 
 for path, dirs, files in walk('metastreams'):
-    if '__init__.py' in files:
+    if '__init__.py' in files and path != 'metastreams':
         packagename = path.replace('/', '.')
         packages.append(packagename)
 
@@ -62,9 +63,10 @@ for path, dirs, files in walk('bin'):
     scripts.extend(join(path, f) for f in files if f not in ['start-mockoai', 'sitecustomize.py'])
 
 setup(
-    name='metastreams',
+    name='metastreams-harvester',
     packages=[
         'meresco',                              #DO_NOT_DISTRIBUTE
+        'metastreams',                          #DO_NOT_DISTRIBUTE
     ] + packages,
     package_data=package_data,
     data_files=data_files,
@@ -73,8 +75,8 @@ setup(
     url='https://seecr.nl',
     author='Seecr',
     author_email='info@seecr.nl',
-    description='"Seecr Metastreams" demonstrates the translation of traditional metadata into modern events streams.',
-    long_description='"Seecr Metastreams" is a fork of Meresco Harvester that demonstrates the translation of traditional metadata into modern events streams.',
+    description='"Metastreams Harvester" demonstrates the translation of traditional metadata into modern events streams.',
+    long_description='"Metastreams Harvester" is a fork of Meresco Harvester that demonstrates the translation of traditional metadata into modern events streams.',
     license='GNU Public License',
     platforms='all',
 )
