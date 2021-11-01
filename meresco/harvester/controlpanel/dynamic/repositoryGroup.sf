@@ -23,17 +23,126 @@
 ## end license ##
 
 import page, common
+import page2
 
 #req.req.headers_out['Cache-control'] = 'no-cache'
-
 
 def main(**kwargs):
     if not common.userAuthorized(**kwargs):
         yield http.redirect("/login")
         return
+    sub = page2.findPath(
+        "table", dict(
+            repositories=table_repositories,
+        ), **kwargs)
+    if not sub is None:
+        yield sub(**kwargs)
+        return
+    yield page2.render(
+        _content,
+        additionalScripts=[
+            '/static/repositoryGroup.js',
+        ],
+        **kwargs)
+
+def _content(tag, **kwargs):
+    arguments = kwargs['arguments']
+    identifier = arguments.get('identifier', [None])[0]
+    domainId = arguments.get("domainId", [None])[0]
+    group = observable.call.getRepositoryGroup(identifier=identifier, domainId=domainId)
+    groupName = group.get("name", {}).get("nl", identifier)
+    domain = observable.call.getDomain(domainId)
+    yield page2.breadcrumbs(tag, [
+        dict(label="Domeinen", href="/domains"),
+        dict(label=domainId, href=page2.url("/domain", identifier=domainId)),
+        dict(label=groupName, active=True)
+    ])
+    yield page2.card(f"Repository Groep Gegevens - {groupName}", card_repositoryGroupAttributes, tag=tag, domain=domain, group=group, **kwargs)
+    yield page2.card("Repositories", card_repositories, tag=tag, domain=domain, group=group, **kwargs)
+
+def card_repositoryGroupAttributes(tag, domain, group, **kwargs):
+    groupId = group.get("identifier")
+    langNames = dict(nl="Nederlands", en="Engels")
+    with tag("div", id_="placeholder_FrmRepositoryGroupAttributes"):
+        with tag("form.form", id_="FrmRepositoryGroupAttributes"):
+            with tag("input", type_="hidden", name="identifier", value=groupId): pass
+            with tag("input", type_="hidden", name="domainId", value=domain.get("identifier")): pass
+            for lang in ['nl', 'en']:
+                with tag("div.row.mb-2"):
+                    with tag("div.col"):
+                        yield page2.textInput(tag,
+                            label="Naam ({})".format(langNames[lang]),
+                            name=f"{lang}_name",
+                            value=group.get("name", {}).get(lang, ""))
+
+            with tag("div.row"):
+                with tag("div.col"):
+                    with tag("button.btn.btn-small.btn-primary.float-end", type_="submit", id_="BtnRepositoryGroupAttributes"):
+                        yield "Aanpassen"
+
+def card_repositories(tag, domain, group, **kwargs):
+    repositoryGroupId = group.get("identifier")
+    domainId = domain.get("identifier")
+    group = observable.call.getRepositoryGroup(identifier=repositoryGroupId, domainId=domainId)
+
+    uniqueId = uuid()
+    with tag("div", id_="placeholder_FrmCreateRepository"):
+        with tag("form.form", id_="FrmCreateRepository", **{'data-domainid': domainId, 'data-repositorygroupid': repositoryGroupId}):
+            with tag("input", type_="hidden", name="domainId", value=domainId): pass
+            with tag("input", type_="hidden", name="repositoryGroupId", value=repositoryGroupId): pass
+            with tag("div.row.mb-2"):
+                with tag("div.col"):
+                    yield page2.textInput(tag, label="Identifier", name="identifier", value="")
+
+            with tag("div.row"):
+                with tag("div.col"):
+                    with tag("button.btn.btn-small.btn-primary.float-end", type_="submit", id_="BtnCreateRepository"):
+                        yield "Aanmaken"
+
+    with tag("div", id_="placeholder_table_repositories"):
+        yield table_repositories(tag, domain=domain, group=group, **kwargs)
+
+
+def table_repositories(tag, domain=None, group=None, **kwargs):
+    if domain is None:
+        domainId = kwargs.get("arguments", {}).get("domainId", [None])[0]
+        domain = observable.call.getDomain(domainId)
+    else:
+        domainId = domain.get("identifier")
+
+    if group is None:
+        repositoryGroupId = kwargs.get("arguments", {}).get("repositoryGroupId", [None])[0]
+        repositoryGroup = observable.call.getRepositoryGroup(identifier=repositoryGroupId, domainId=domainId)
+    else:
+        repositoryGroupId = group.get("identifier")
+
+    with tag("table.table.table-sm.table-hover"):
+        yield page2.thead(tag, ["", "Identifier", "Actief"])
+        with tag("tbody"):
+            repositories = observable.call.getRepositories(domainId=domainId, repositoryGroupId=repositoryGroupId)
+            for repository in repositories:
+                repositoryId = repository.get("identifier")
+                with tag("tr"):
+                    with tag("td.fit"):
+                        with tag("button.seecr-btn.deletable", **{'data-identifier': repositoryId, 'data-domainid': domainId, 'data-repositorygroupid': repositoryGroupId}):
+                            with tag("i.bi-trash"): pass
+                    with tag("td"):
+                        with tag("a", href=page2.url("/repository",
+                            identifier=repositoryId,
+                            domainId=domainId)):
+                            yield repositoryId
+                    with tag("td"):
+                        if repository.get("use") is True:
+                            with tag("i.bi.bi-check"): yield " "
+
+
+def old_main(**kwargs):
+    if not common.userAuthorized(**kwargs):
+        yield http.redirect("/login")
+        return
     yield page.layoutWithMenu(_content, **kwargs)
 
-def _content(arguments, user, session, **kwargs):
+def __content(arguments, user, session, **kwargs):
     identifier = arguments.get('identifier', [None])[0]
     domainId = arguments.get("domainId", [None])[0]
     group = observable.call.getRepositoryGroup(identifier=identifier, domainId=domainId)

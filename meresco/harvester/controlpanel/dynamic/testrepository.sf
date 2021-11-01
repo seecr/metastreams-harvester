@@ -23,9 +23,10 @@
 ## end license ##
 
 def main(arguments, **kwargs):
+    domainId = arguments.get('domainId', [None])[0]
     repository = observable.call.getRepository(
         identifier=arguments.get('repositoryId', [None])[0],
-        domainId=arguments.get('domainId', [None])[0])
+        domainId=domainId)
     queryArguments = dict(
         verb="ListRecords",
         metadataPrefix=repository.get('metadataPrefix'))
@@ -34,4 +35,5 @@ def main(arguments, **kwargs):
         queryArguments['set'] = setName
     yield http.redirect("{}?{}".format("/onlinemapping", urlencode(dict(
         mappingId=repository.get('mappingId'),
+        domainId=domainId,
         inputurl="{}?{}".format(repository.get('baseurl'), urlencode(queryArguments))))))

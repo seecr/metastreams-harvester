@@ -91,7 +91,25 @@ function form_setBordersAndDisabled(form, button) {
             button.prop('disabled', false);
         }
 	});
+	form.find("textarea").change(function(e) {
+        var _input = $(this);
+        if (!_input.hasClass("border-warning")) {
+            _input.addClass("border-warning");
+        }
+        if (button.prop('disabled') == true) {
+            button.prop('disabled', false);
+        }
+	});
 	form.find("input[type=checkbox]").change(function(e) {
+        var _input = $(this);
+        if (!_input.hasClass("border-warning")) {
+            _input.addClass("border-warning");
+        }
+        if (button.prop('disabled') == true) {
+            button.prop('disabled', false);
+        }
+	});
+	form.find("input[type=number]").change(function(e) {
         var _input = $(this);
         if (!_input.hasClass("border-warning")) {
             _input.addClass("border-warning");

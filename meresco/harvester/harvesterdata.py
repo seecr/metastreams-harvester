@@ -41,6 +41,7 @@ from meresco.components.json import JsonList, JsonDict
 
 from meresco.harvester.controlpanel.tools import checkName
 from meresco.harvester.mapping import Mapping
+from meresco.harvester.timeslot import Timeslot
 
 from .datastore import OldDataStore
 
@@ -149,6 +150,42 @@ class HarvesterData(object):
         repo = self.getRepository(identifier, domainId)
         self._store.deleteData(id_combine(domainId, identifier), 'repository')
         self._store.addData(id_combine(domainId, repositoryGroupId), 'repositoryGroup', group)
+    
+
+    def updateRepositoryAttributes(self, **kwargs):
+        mandatory = ['identifier', 'domainId']
+        allowed = ['baseurl', 'set', 'metadataPrefix', 'mappingId', 'targetId', 'collection', 'maximumIgnore', 'use', 'continuous', 'complete', 'userAgent', 'authorizationKey']
+        for each in mandatory:
+            if not each in kwargs:
+                raise KeyError(f"'{each}' is mandatory")
+
+        attributesToSet = {k:v for k,v in kwargs.items() if k in allowed}
+        domainId = kwargs['domainId']
+        identifier = kwargs['identifier']
+        repository = self.getRepository(identifier, domainId)
+        for each in kwargs:
+            if each in allowed:
+                repository[each] = kwargs[each]
+        self._store.addData(id_combine(domainId, identifier), 'repository', repository)
+
+    def addClosingHours(self, identifier, domainId, week, day, startHour, endHour):
+        repository = self.getRepository(identifier, domainId)
+        shopClosed = repository.get('shopclosed', [])
+        shopClosed.append(str(Timeslot(f'{week}:{day}:{startHour}:00-{week}:{day}:{endHour}:00')))
+        repository['shopclosed'] = shopClosed
+        self._store.addData(id_combine(domainId, identifier), 'repository', repository)
+
+    def deleteClosingHours(self, identifier, domainId, closingHoursIndex):
+        repository = self.getRepository(identifier, domainId)
+        shopClosed = repository.get('shopclosed', [])
+        try:
+            shopClosed.pop(int(closingHoursIndex))
+        except IndexError:
+            pass
+        repository['shopclosed'] = shopClosed
+        self._store.addData(id_combine(domainId, identifier), 'repository', repository)
+
+
 
     def updateRepository(self, identifier, domainId, baseurl, set, metadataPrefix, mappingId, targetId, collection, maximumIgnore, use, continuous, complete, action, shopclosed, userAgent, authorizationKey, **kwargs):
         repository = self.getRepository(identifier, domainId)

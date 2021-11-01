@@ -1,0 +1,86 @@
+function init_cardRepositoryAttributes() {
+    var _frm = $("#FrmRepositoryAttributes");
+    var _btn = $("#BtnRepositoryAttributes");
+    _btn
+        .prop("disabled", true)
+        .unbind("click")
+        .click(function(e) {
+            e.preventDefault();
+            $.post("/actions/updateRepositoryAttributes", _frm.serialize())
+                .done(function(data) {
+                    if (data['success'] == true) {
+                        form_resetBordersAndDisabled(_frm, _btn);
+                    } else {
+                        msg_Error(placeholder=$("#placeholder_FrmRepositoryAttributes"), identifier=undefined, text=data['message']);
+                    }
+                })
+        });
+    form_setBordersAndDisabled(_frm, _btn);
+    form_resetBordersAndDisabled(_frm, _btn);
+}
+
+function init_cardClosingHours() {
+    var _frm = $("#FrmCreateClosingHours");
+    var _btn = $("#BtnCreateClosingHours");
+
+    function _load_table_closinghours(domainId, repositoryId) {
+        var _placeholder = $("#placeholder_table_closinghours");
+        $.get("/repository/table/closingHours", $.param({domainId: domainId, identifier: repositoryId}))
+            .done(function(page) {
+                _placeholder
+                    .empty()
+                    .append(page);
+                init_table_closinghours();
+            });
+    }
+
+
+    function init_table_closinghours() {
+        var _placeholder = $("#placeholder_table_closinghours");
+        _placeholder.find("button.deletable.seecr-btn")
+            .unbind("click")
+            .click(function(e) {
+                var _btn = $(this);
+                var _domainId = _btn.data('domainid');
+                var _repositoryId = _btn.data('repositoryid'); 
+                e.preventDefault();
+                $.post("/actions/deleteRepositoryClosingHours", $.param({
+                        repositoryId: _repositoryId,
+                        domainId: _domainId,
+                        closingHour: _btn.data('closinghour')
+                    }))
+                    .done(function(data) {
+                        if (data['success'] == true) {
+                            _load_table_closinghours(_domainId, _repositoryId);
+                        } else {
+                            msg_Error(placeholder=$("#placeholder_FrmCreateClosingHours"), identifier=undefined, text=data['message']);
+                        }
+                    })
+
+            })
+    }
+    init_table_closinghours();
+
+    _btn
+        .prop("disabled", true)
+        .unbind("click")
+        .click(function(e) {
+            e.preventDefault();
+            $.post("/actions/addRepositoryClosingHours", _frm.serialize())
+                .done(function(data) {
+                    if (data['success'] == true) {
+                        form_resetBordersAndDisabled(_frm, _btn, true);
+                        _load_table_closinghours(_frm.data("domainid"), _frm.data("repositoryid"));
+                    } else {
+                        msg_Error(placeholder=$("#placeholder_FrmCreateClosingHours"), identifier=undefined, text=data['message']);
+                    }
+                })
+        });
+    form_setBordersAndDisabled(_frm, _btn);
+    form_resetBordersAndDisabled(_frm, _btn);
+}
+
+$(document).ready(function() {
+    init_cardRepositoryAttributes();
+    init_cardClosingHours();
+})

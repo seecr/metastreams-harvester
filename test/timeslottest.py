@@ -40,90 +40,90 @@ from seecr.test import SeecrTestCase
 
 class TimeslotTest(SeecrTestCase):
 
-	def testWildCard(self):
-		self.assertEqual('*', Wildcard())
-		self.assertTrue(Wildcard() > 0)
-		self.assertTrue(Wildcard() < 0)
-		self.assertTrue(Wildcard() == 0)
-		self.assertTrue(Wildcard() >= 0)
-		self.assertTrue(Wildcard() <= 0)
-		self.assertTrue(0 < Wildcard())
-		self.assertTrue(0 > Wildcard())
-		self.assertTrue(0 <= Wildcard())
-		self.assertTrue(0 >= Wildcard())
-		self.assertTrue(0 == Wildcard())
+    def testWildCard(self):
+        self.assertEqual('*', Wildcard())
+        self.assertTrue(Wildcard() > 0)
+        self.assertTrue(Wildcard() < 0)
+        self.assertTrue(Wildcard() == 0)
+        self.assertTrue(Wildcard() >= 0)
+        self.assertTrue(Wildcard() <= 0)
+        self.assertTrue(0 < Wildcard())
+        self.assertTrue(0 > Wildcard())
+        self.assertTrue(0 <= Wildcard())
+        self.assertTrue(0 >= Wildcard())
+        self.assertTrue(0 == Wildcard())
 
-	def testCreateTimeslot(self):
-		timeslot = Timeslot('52:7:23:59-45:5:10:33')
-		self.assertEqual((52,7,23,59),timeslot._begin)
-		self.assertEqual((45,5,10,33),timeslot._end)
+    def testCreateTimeslot(self):
+        timeslot = Timeslot('52:7:23:59-45:5:10:33')
+        self.assertEqual((52,7,23,59),timeslot._begin)
+        self.assertEqual((45,5,10,33),timeslot._end)
 
-	def testStringFormat(self):
-		timeslot = Timeslot('33:1:09:55-45:5:10:33')
-		self.assertEqual('33:1:9:55-45:5:10:33', str(timeslot))
-		self.assertEqual('33', timeslot.beginweek)
+    def testStringFormat(self):
+        timeslot = Timeslot('33:1:09:55-45:5:10:33')
+        self.assertEqual('33:1:9:55-45:5:10:33', str(timeslot))
+        self.assertEqual('33', timeslot.beginweek)
 
-	def testInTimeslot(self):
-		timeslot = Timeslot('33:1:09:55-45:5:10:33')
-		self.assertTrue(timeslot.areWeWithinTimeslot((2006, 10, 8, 12, 0)))
+    def testInTimeslot(self):
+        timeslot = Timeslot('33:1:09:55-45:5:10:33')
+        self.assertTrue(timeslot.areWeWithinTimeslot((2006, 10, 8, 12, 0)))
 
-	def testValidTimeslot(self):
-		self.assertFalse(Timeslot('*:*:20:00-*:*:10:00').valid())
-		self.assertFalse(Timeslot('*:*:10:00-*:*:10:00').valid())
-		self.assertTrue(Timeslot('*:*:10:00-*:*:20:00').valid())
+    def testValidTimeslot(self):
+        self.assertFalse(Timeslot('*:*:20:00-*:*:10:00').valid())
+        self.assertFalse(Timeslot('*:*:10:00-*:*:10:00').valid())
+        self.assertTrue(Timeslot('*:*:10:00-*:*:20:00').valid())
 
-	def testNotWithinTimeslot(self):
-		timeslot = Timeslot('36:1:09:55-45:5:10:33')
-		self.assertFalse(timeslot.areWeWithinTimeslot((1983,  1, 23, 10, 45)))
+    def testNotWithinTimeslot(self):
+        timeslot = Timeslot('36:1:09:55-45:5:10:33')
+        self.assertFalse(timeslot.areWeWithinTimeslot((1983,  1, 23, 10, 45)))
 
-	def testExactlyWithinTimeslot(self):
-		timeslot = Timeslot('36:1:09:55-45:5:10:33')
-		self.assertFalse(timeslot.areWeWithinTimeslot((1983,  1, 23, 10, 45)))
-		self.assertFalse(timeslot.areWeWithinTimeslot((2020, 12, 23, 10, 45)))
+    def testExactlyWithinTimeslot(self):
+        timeslot = Timeslot('36:1:09:55-45:5:10:33')
+        self.assertFalse(timeslot.areWeWithinTimeslot((1983,  1, 23, 10, 45)))
+        self.assertFalse(timeslot.areWeWithinTimeslot((2020, 12, 23, 10, 45)))
 
-		self.assertTrue(timeslot.areWeWithinTimeslot( (2006,  9,  4,  9, 55)))
-		self.assertFalse(timeslot.areWeWithinTimeslot((2006,  9,  4,  9, 54)))
-		self.assertFalse(timeslot.areWeWithinTimeslot((2006,  9,  4,  8, 55)))
-		self.assertFalse(timeslot.areWeWithinTimeslot((2006,  9,  3,  9, 55)))
-		self.assertFalse(timeslot.areWeWithinTimeslot((2006,  8,  4,  9, 55)))
+        self.assertTrue(timeslot.areWeWithinTimeslot( (2006,  9,  4,  9, 55)))
+        self.assertFalse(timeslot.areWeWithinTimeslot((2006,  9,  4,  9, 54)))
+        self.assertFalse(timeslot.areWeWithinTimeslot((2006,  9,  4,  8, 55)))
+        self.assertFalse(timeslot.areWeWithinTimeslot((2006,  9,  3,  9, 55)))
+        self.assertFalse(timeslot.areWeWithinTimeslot((2006,  8,  4,  9, 55)))
 
-		self.assertTrue(timeslot.areWeWithinTimeslot( (2006, 11, 10, 10, 33)))
-		self.assertFalse(timeslot.areWeWithinTimeslot((2006, 11, 10, 10, 34)))
-		self.assertFalse(timeslot.areWeWithinTimeslot((2006, 11, 10, 11, 33)))
-		self.assertFalse(timeslot.areWeWithinTimeslot((2006, 11, 11, 10, 33)))
-		self.assertFalse(timeslot.areWeWithinTimeslot((2006, 12, 10, 10, 33)))
+        self.assertTrue(timeslot.areWeWithinTimeslot( (2006, 11, 10, 10, 33)))
+        self.assertFalse(timeslot.areWeWithinTimeslot((2006, 11, 10, 10, 34)))
+        self.assertFalse(timeslot.areWeWithinTimeslot((2006, 11, 10, 11, 33)))
+        self.assertFalse(timeslot.areWeWithinTimeslot((2006, 11, 11, 10, 33)))
+        self.assertFalse(timeslot.areWeWithinTimeslot((2006, 12, 10, 10, 33)))
 
-		self.assertFalse(timeslot.areWeWithinTimeslot((2006,  9,  4,  9, 54)))
-		self.assertTrue(timeslot.areWeWithinTimeslot( (2006,  9,  4,  9, 55)))
-		self.assertTrue(timeslot.areWeWithinTimeslot( (2006,  9,  4, 10, 54)))
-		self.assertTrue(timeslot.areWeWithinTimeslot( (2006,  9,  5,  9, 54)))
-		self.assertTrue(timeslot.areWeWithinTimeslot( (2006, 10,  4,  9, 54)))
+        self.assertFalse(timeslot.areWeWithinTimeslot((2006,  9,  4,  9, 54)))
+        self.assertTrue(timeslot.areWeWithinTimeslot( (2006,  9,  4,  9, 55)))
+        self.assertTrue(timeslot.areWeWithinTimeslot( (2006,  9,  4, 10, 54)))
+        self.assertTrue(timeslot.areWeWithinTimeslot( (2006,  9,  5,  9, 54)))
+        self.assertTrue(timeslot.areWeWithinTimeslot( (2006, 10,  4,  9, 54)))
 
-	def testRegExp(self):
-		self.assertEqual((43, 5, 7, 45), parse('43:5:7:45'))
-		self.assertEqual((43, Wildcard(), 7, 45), parse('43:*:7:45'))
-		self.assertEqual((Wildcard(), 5, 7, 45), parse('*:5:7:45'))
-		self.assertEqual((Wildcard(), Wildcard(), 7, 45), parse('*:*:7:45'))
+    def testRegExp(self):
+        self.assertEqual((43, 5, 7, 45), parse('43:5:7:45'))
+        self.assertEqual((43, Wildcard(), 7, 45), parse('43:*:7:45'))
+        self.assertEqual((Wildcard(), 5, 7, 45), parse('*:5:7:45'))
+        self.assertEqual((Wildcard(), Wildcard(), 7, 45), parse('*:*:7:45'))
 
-	def testParseZero(self):
-		self.assertEqual((43, 5, 7, 45), parse('43:5:07:45'))
+    def testParseZero(self):
+        self.assertEqual((43, 5, 7, 45), parse('43:5:07:45'))
 
-	def testTimeslotinOneDay(self):
-		timeslot = Timeslot('40:1:09:55-40:1:10:00')
-		self.assertTrue(timeslot.areWeWithinTimeslot( (2006, 10, 2,  9, 59)))
-		self.assertFalse(timeslot.areWeWithinTimeslot((2006, 10, 2,  9, 54)))
-		self.assertFalse(timeslot.areWeWithinTimeslot((2006, 10, 2, 10, 0o1)))
+    def testTimeslotinOneDay(self):
+        timeslot = Timeslot('40:1:09:55-40:1:10:00')
+        self.assertTrue(timeslot.areWeWithinTimeslot( (2006, 10, 2,  9, 59)))
+        self.assertFalse(timeslot.areWeWithinTimeslot((2006, 10, 2,  9, 54)))
+        self.assertFalse(timeslot.areWeWithinTimeslot((2006, 10, 2, 10, 0o1)))
 
-	def testWildCards(self):
-		timeslot = Timeslot('*:*:10:00-*:*:11:00')
-		self.assertFalse(timeslot.areWeWithinTimeslot( (2099, 12, 31,  9, 59)))
-		self.assertTrue(timeslot.areWeWithinTimeslot((2006,  1,  1, 10, 0o4)))
-		self.assertTrue(timeslot.areWeWithinTimeslot((2001, 10,  2, 10, 0o1)))
+    def testWildCards(self):
+        timeslot = Timeslot('*:*:10:00-*:*:11:00')
+        self.assertFalse(timeslot.areWeWithinTimeslot( (2099, 12, 31,  9, 59)))
+        self.assertTrue(timeslot.areWeWithinTimeslot((2006,  1,  1, 10, 0o4)))
+        self.assertTrue(timeslot.areWeWithinTimeslot((2001, 10,  2, 10, 0o1)))
 
-	def testParseError(self):
-		try:
-			Timeslot('*:*:***:00-*:*:11:00')
-			self.fail()
-		except ParseException as e:
-			self.assertEqual('Illegal timeslot def', str(e)[:20])
+    def testParseError(self):
+        try:
+            Timeslot('*:*:***:00-*:*:11:00')
+            self.fail()
+        except ParseException as e:
+            self.assertEqual('Illegal timeslot def', str(e)[:20])
 

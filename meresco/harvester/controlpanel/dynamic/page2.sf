@@ -157,8 +157,79 @@ def renderModal(tag):
                 with tag("div.modal-body", id_="placeholder_modal-body"):
                     pass
 
+def breadcrumbs(tag, items=None):
+    items = items or []
+    def breadcrumbItem(tag, label, href=None, active=False):
+        liKwargs = {'aria-current': 'page'} if active else {}
+        with tag("li.breadcrumb-item", class_=['active'] if active else [], **liKwargs):
+            if not active:
+                with tag("a", href=href):
+                    yield label
+            else:
+                yield label
+
+    with tag("nav", **{'aria-label': "breadcrumb"}):
+        with tag("ol.breadcrumb"):
+            yield breadcrumbItem(tag, "Home", "/", active=len(items) == 0)
+            for each in items:
+                yield breadcrumbItem(tag, **each)
+
 def thead(tag, ths):
     with tag("thead"):
         with tag("tr"):
             for each in ths:
                 with tag("th"): yield each
+
+def floatingLabel(func):
+    def f(tag, *args, **kwargs):
+        label = kwargs.get("label", "")
+        with tag("div.form-floating"):
+            controlId = uuid()
+            yield func(tag, *args, controlId=controlId, **kwargs)
+            with tag("label", for_=controlId):
+                yield label
+    return f
+
+@floatingLabel
+def dropdown(tag, label, items, name, controlId, selected=None):
+    with tag("select.form-select", id_=controlId, name=name):
+        for value, each in items:
+            with tag("option", value=str(value), selected="SELECTED" if value == selected else ""):
+                yield each
+@floatingLabel
+def numberInput(tag, label, name, minValue, maxValue, value, controlId):
+    with tag("input.form-control", id_=controlId, type_="number", name=name, min_=minValue, max_=maxValue, value=str(value)):
+        yield ''
+
+@floatingLabel
+def textInput(tag, label, name, value, controlId):
+    with tag("input.form-control", id_=controlId, type_="text", name=name, value=str(value)):
+        yield ''
+
+@floatingLabel
+def textLabel(tag, label, value, controlId):
+    with tag("input.form-control", id_=controlId, type_="text", value=str(value), readonly=True):
+        yield ''
+
+@floatingLabel
+def checkbox(tag, label, name, controlId, checked=False):
+    with tag("div.form-check.form-switch.form-control"):
+        with tag("input.form-check-input",
+            style="margin-left: 0em",
+            id_=controlId, 
+            type_="checkbox",
+            name=name,
+            checked="checked" if checked else ""): yield ""
+
+@floatingLabel
+def selectList(tag, label, items, name, controlId, selected=None, size=3):
+    selected = selected or []
+    with tag("select.form-select", multiple="multiple", size=size, name=name, id_=controlId):
+        for value, each in items:
+            with tag("option", value=str(value), selected="SELECTED" if value in selected else ""):
+                yield each
+
+@floatingLabel
+def textarea(tag, label, name, value, controlId, rows=3, wrap=None, extraClasses=None, height=None):
+    with tag("textarea.form-control", class_=extraClasses or [], name=name, rows=rows, wrap=wrap, style=f"height: {height}" if not height is None else ''):
+        yield value

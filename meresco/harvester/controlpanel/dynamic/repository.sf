@@ -26,6 +26,9 @@
 ## end license ##
 
 import page, common
+import page2
+
+WEEKDAYS = list(enumerate(["Maandag", "Dinsdag", "Woensdag", "Donderdag", "Vrijdag", "Zaterdag", "Zondag"]))
 
 # req.req.headers_out['Cache-Control'] = 'no-cache'
 
@@ -35,8 +38,166 @@ def main(**kwargs):
     if not common.userAuthorized(**kwargs):
         yield http.redirect("/login")
         return
-    yield page.layoutWithMenu(_contents, **kwargs)
 
+    sub = page2.findPath(
+        "table", dict(
+            closingHours=table_closinghours,
+        ), **kwargs)
+    if not sub is None:
+        yield sub(**kwargs)
+        return
+
+    yield page2.render(
+        _content,
+        additionalScripts=[
+            '/static/repository.js',
+        ],
+        **kwargs)
+
+def _content(tag, arguments, **kwargs):
+    domainId = arguments.get("domainId", [None])[0]
+    domain = observable.call.getDomain(domainId)
+    repositoryId = arguments.get("identifier", [None])[0]
+    repository = observable.call.getRepository(identifier=repositoryId, domainId=domainId)
+    repositoryGroupId = repository.get("repositoryGroupId")
+
+    yield page2.breadcrumbs(tag, [
+        dict(label="Domeinen", href="/domains"),
+        dict(label=domainId, href=page2.url("/domain", identifier=domainId)),
+        dict(label=repositoryGroupId, href=page2.url("/repositoryGroup", identifier=repositoryGroupId, domainId=domainId)),
+        dict(label=repositoryId, active=True)
+    ])
+    cardKwargs = dict(tag=tag, domain=domain, repository=repository, repositoryGroupId=repositoryGroupId)
+    cardKwargs.update(kwargs)
+    yield page2.card(f"Repository Gegevens - {repositoryId}", card_repositoryAttributes, **cardKwargs)
+    #yield page2.card("Field Definitions", card_fieldDefinitions, **cardKwargs)
+    yield page2.card("Closing Hours", card_closingHours, **cardKwargs)
+
+
+def card_repositoryAttributes(tag, domain, repository, repositoryGroupId, **kwargs):
+    domainId = domain.get("identifier")
+    with tag("div", id_="placeholder_FrmRepositoryAttributes"):
+        with tag("form.form", id_="FrmRepositoryAttributes"):
+            with tag("input", type_="hidden", name="domainId", value=domainId): pass
+            with tag("input", type_="hidden", name="identifier", value=repository.get("identifier")): pass
+            with tag("input", type_="hidden", name="repositoryGroupId", value=repositoryGroupId): pass
+
+            with tag("div.row.mb-2"):
+                with tag("div.col"):
+                    yield page2.textInput(tag, label="Base URL", name="baseurl", value=repository.get("baseurl"))
+            with tag("div.row.mb-2"):
+                with tag("div.col"):
+                    yield page2.textInput(tag, label="Set", name="set", value=repository.get("set"))
+            with tag("div.row.mb-2"):
+                with tag("div.col"):
+                    yield page2.textInput(tag, label="Metadata Prefix", name="metadataPrefix", value=repository.get("metadataPrefix"))
+            with tag("div.row.mb-2"):
+                with tag("div.col"):
+                    yield page2.textInput(tag, label="User-Agent", name="userAgent", value=repository.get("userAgent"))
+            with tag("div.row.mb-2"):
+                with tag("div.col"):
+                    yield page2.textInput(tag, label="Authorization Key", name="authorizationKey", value=repository.get("authorizationKey"))
+            with tag("div.row.mb-2"):
+                with tag("div.col"):
+                    yield page2.textInput(tag, label="Target Collection", name="collection", value=repository.get("collection"))
+
+            with tag("div.row.mb-2"):
+                with tag("div.col"):
+                    yield page2.dropdown(tag,
+                        label="Mapping",
+                        name="mappingId",
+                        items=[(mappingId, observable.call.getMapping(identifier=mappingId, domainId=domainId).get('name', ''))
+                            for mappingId in domain.get('mappingIds', [])],
+                        selected=repository.get("mappingId") or "")
+            with tag("div.row.mb-2"):
+                with tag("div.col"):
+                    yield page2.dropdown(tag,
+                        label="Target",
+                        name="targetId",
+                        items=[(targetId, observable.call.getTarget(identifier=targetId, domainId=domainId).get('name', ''))
+                            for targetId in domain.get('targetIds', [])],
+                        selected=repository.get("targetId") or "")
+
+            with tag("div.row"):
+                with tag("div.col"):
+                    with tag("button.btn.btn-small.btn-primary.float-end", type_="submit", id_="BtnRepositoryAttributes"):
+                        yield "Aanpassen"
+
+def card_fieldDefinitions(tag, domain, repository, **kwargs):
+    yield "fieldDefinitions"
+
+
+def card_closingHours(tag, domain, repository, **kwargs):
+    weeks = [(str(x), x) for x in range(1, 54)]
+
+    with tag("div", id_="placeholder_FrmCreateClosingHours"):
+        with tag("form.form-inline", id_="FrmCreateClosingHours", **{
+                'data-domainid': domain.get('identifier'),
+                'data-repositoryid': repository.get('identifier')}):
+            with tag("input", type_="hidden", name="repositoryId", value=repository.get("identifier")): pass
+            with tag("input", type_="hidden", name="domainId", value=domain.get("identifier")): pass
+
+            with tag("div.row"):
+                with tag("div.col"):
+                    yield page2.dropdown(tag,
+                        label="Week",
+                        items=[('*', "Alle weken")] + weeks,
+                        name="week")
+                with tag("div.col"):
+                    yield page2.dropdown(tag,
+                        label="Dag",
+                        items=[('*', "Alle dagen")] + WEEKDAYS,
+                        name="day")
+                with tag("div.col"):
+                    yield page2.numberInput(tag, label="Van (uur)", name="startHour", minValue="0", maxValue="24", value=0)
+                with tag("div.col"):
+                    yield page2.numberInput(tag, label="Tot (uur)", name="endHour", minValue="0", maxValue="24", value=6)
+                with tag("div.col-1.d-flex.flex-column.justify-content-end"):
+                    with tag("button.btn.btn-primary", id_="BtnCreateClosingHours"):
+                        yield "Toevoegen"
+
+    with tag("div", id_="placeholder_table_closinghours"):
+        yield table_closinghours(tag, domain=domain, repository=repository, **kwargs)
+
+def table_closinghours(tag, domain=None, repository=None, **kwargs):
+    if domain is None:
+        domainId = kwargs.get("arguments", {}).get("domainId", [None])[0]
+        domain = observable.call.getDomain(domainId)
+    else:
+        domainId = domain.get("identifier")
+
+    if repository is None:
+        repositoryId = kwargs.get("arguments", {}).get("identifier", [None])[0]
+        repository = observable.call.getRepository(repositoryId, domainId)
+    else:
+        repositoryId = repository.get("identifier")
+
+    closingHours = repository.get("shopclosed", [])
+    if len(closingHours) == 0:
+        with tag("p.mt-3"):
+            yield "Nog geen tijden opgegeven."
+        return
+
+    with tag("table.table.table-sm.table-hover"):
+        yield page2.thead(tag, ['', 'Week', 'Dag', 'Van', 'Tot', ''])
+        with tag("tbody"):
+            for index, each in enumerate([Timeslot(each) for each in closingHours]):
+                with tag("tr.clickable-row", **{}):
+                    with tag("td.fit"):
+                        with tag("button.seecr-btn.deletable", title="Verwijderen", **{
+                                'data-closinghour': str(index),
+                                'data-domainid': domain.get('identifier'),
+                                'data-repositoryid': repository.get('identifier'),
+                                }):
+                            with tag("i.bi-trash"): pass
+                    with tag("td"):
+                        yield "Alle weken" if each.beginweek == "*" else each.beginweek
+                    with tag("td"):
+                        yield "Alle dagen" if each.beginday == "*" else dict(WEEKDAYS)[int(each.beginday)]
+                    with tag("td"):
+                        yield f"{each.beginhour}:00"
+                    with tag("td"):
+                        yield f"{each.endhour}:00"
 
 def _contents(tag, arguments, **kwargs):
     domainId = arguments.get("domainId", [None])[0]
@@ -236,12 +397,11 @@ def renderDropdown(index, selectName, options, selectedValue, wildcardName=''):
 def renderTimeslot(index, timeslot):
     weeks = [(str(x), x) for x in range(1, 54)]
     hours = [(str(x), x) for x in range(25)]
-    weekdays = list(enumerate(['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday']))
 
     yield '<td>'
     yield renderDropdown(index, 'shopclosedWeek', weeks, timeslot.beginweek, 'Any week')
     yield '</td><td>'
-    yield renderDropdown(index, 'shopclosedWeekDay', weekdays, timeslot.beginday, 'Any day')
+    yield renderDropdown(index, 'shopclosedWeekDay', WEEKDAYS, timeslot.beginday, 'Any day')
     yield '</td><td>from'
     yield renderDropdown(index, 'shopclosedBegin', hours, timeslot.beginhour)
     yield ':00 hrs</td><td>until'

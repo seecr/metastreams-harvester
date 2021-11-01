@@ -56,28 +56,29 @@ class HarvesterDataActionsTest(SeecrTestCase):
         self.hda = HarvesterDataActions()
         self.hda.addObserver(self.hd)
 
-    def testAddDomain(self):
-        observable = CallTrace()
-        dna = be(
+        self.observable = CallTrace()
+        self.dna = be(
             (Observable(),
                 (HarvesterDataActions(),
-                    (observable, )
+                    (self.observable, )
                 )
             )
         )
-        header, body = parseResponse(asBytes(dna.all.handleRequest(
+
+    def testAddDomain(self):
+        header, body = parseResponse(asBytes(self.dna.all.handleRequest(
             user=CallTrace(returnValues=dict(isAdmin=False)),
             path="/actions/addDomain",
             Body=bytes(urlencode(dict(identifier="aap")), encoding="utf-8"),
             Method='Post')))
-        self.assertEqual(0, len(observable.calledMethods))
+        self.assertEqual(0, len(self.observable.calledMethods))
         self.assertEqual("200", header['StatusCode'])
         self.assertEqual("application/json", header['Headers']['Content-Type'])
         response = JsonDict.loads(body)
         self.assertFalse(response['success'])
         self.assertEqual("Not allowed", response['message'])
 
-        header, body = parseResponse(asBytes(dna.all.handleRequest(
+        header, body = parseResponse(asBytes(self.dna.all.handleRequest(
             user=CallTrace(returnValues=dict(isAdmin=True)),
             path="/actions/addDomain",
             Body=bytes(urlencode(dict(identifier="aap")), encoding="utf-8"),
@@ -86,9 +87,9 @@ class HarvesterDataActionsTest(SeecrTestCase):
         self.assertEqual("application/json", header['Headers']['Content-Type'])
         response = JsonDict.loads(body)
         self.assertTrue(response['success'])
-        self.assertEqual(1, len(observable.calledMethods))
-        self.assertEqual("addDomain", observable.calledMethods[0].name)
-        self.assertEqual(dict(identifier='aap'), observable.calledMethods[0].kwargs)
+        self.assertEqual(1, len(self.observable.calledMethods))
+        self.assertEqual("addDomain", self.observable.calledMethods[0].name)
+        self.assertEqual(dict(identifier='aap'), self.observable.calledMethods[0].kwargs)
 
     def testUpdateRepository(self):
         data = {
@@ -250,6 +251,156 @@ class HarvesterDataActionsTest(SeecrTestCase):
         consume(self.hda.handleRequest(Method='POST', path='/somewhere/repositoryDone', Body=bUrlencode(data, doseq=True)))
         repository = self.hd.getRepository('repository', 'domain')
         self.assertEqual(None, repository['action'])
+
+    def testUpdateRepositoryGroup(self):
+        header, body = parseResponse(asBytes(self.dna.all.handleRequest(
+            user=CallTrace(returnValues=dict(isAdmin=True)),
+            Method='POST',
+            path='/somewhere/updateRepositoryGroup',
+            Body=bUrlencode(dict(
+                identifier='group',
+                domainId='domain',
+                nl_name="De nieuwe naam",
+                en_name="The old name",
+                ), doseq=True))))
+        self.assertEqual('200', header['StatusCode'])
+        self.assertEqual(dict(success=True), JsonDict.loads(body))
+        self.assertEqual(1, len(self.observable.calledMethods))
+        self.assertEqual('updateRepositoryGroup', self.observable.calledMethods[0].name)
+        self.assertEqual({'identifier': 'group', 'domainId': 'domain', 'name': {'nl': 'De nieuwe naam', 'en': 'The old name'}}, self.observable.calledMethods[0].kwargs)
+
+    def testCreateRepository(self):
+        header, body = parseResponse(asBytes(self.dna.all.handleRequest(
+            user=CallTrace(returnValues=dict(isAdmin=True)),
+            Method='POST',
+            path='/actions/addRepository',
+            Body=bUrlencode(dict(
+                identifier='repo-id',
+                domainId='domain-id',
+                repositoryGroupId='repositoryGroupId',
+                ), doseq=True))))
+        self.assertEqual('200', header['StatusCode'])
+        self.assertEqual(dict(success=True), JsonDict.loads(body))
+        self.assertEqual(1, len(self.observable.calledMethods))
+        self.assertEqual('addRepository', self.observable.calledMethods[0].name)
+        self.assertEqual({
+            'domainId': 'domain-id',
+            'identifier': 'repo-id',
+            'repositoryGroupId': 'repositoryGroupId'}, self.observable.calledMethods[0].kwargs)
+
+
+    def testDeleteRepository(self):
+        header, body = parseResponse(asBytes(self.dna.all.handleRequest(
+            user=CallTrace(returnValues=dict(isAdmin=True)),
+            Method='POST',
+            path='/actions/deleteRepository',
+            Body=bUrlencode(dict(
+                identifier='repo-id',
+                domainId='domain-id',
+                repositoryGroupId='repositoryGroupId',
+                ), doseq=True))))
+        self.assertEqual('200', header['StatusCode'])
+        self.assertEqual(dict(success=True), JsonDict.loads(body))
+        self.assertEqual(1, len(self.observable.calledMethods))
+        self.assertEqual('deleteRepository', self.observable.calledMethods[0].name)
+        self.assertEqual({
+            'domainId': 'domain-id',
+            'identifier': 'repo-id',
+            'repositoryGroupId': 'repositoryGroupId'}, self.observable.calledMethods[0].kwargs)
+
+    def testUpdateRepositoryAttributes(self):
+        header, body = parseResponse(asBytes(self.dna.all.handleRequest(
+            user=CallTrace(returnValues=dict(isAdmin=True)),
+            Method='POST',
+            path='/actions/updateRepositoryAttributes',
+            Body=bUrlencode(dict(
+                identifier='repo-id',
+                domainId='domain-id',
+                userAgent="Herman in de zon op een terras",
+                ), doseq=True))))
+        self.assertEqual('200', header['StatusCode'])
+        self.assertEqual(dict(success=True), JsonDict.loads(body))
+        self.assertEqual(1, len(self.observable.calledMethods))
+        self.assertEqual('updateRepositoryAttributes', self.observable.calledMethods[0].name)
+
+        self.assertEqual({
+            'identifier': 'repo-id',
+            'domainId': 'domain-id',
+            'baseurl': None,
+            'set': None,
+            'metadataPrefix': None,
+            'userAgent': 'Herman in de zon op een terras',
+            'authorizationKey': None,
+            'mappingId': None,
+            'targetId': None}, self.observable.calledMethods[0].kwargs)
+
+        header, body = parseResponse(asBytes(self.dna.all.handleRequest(
+            user=CallTrace(returnValues=dict(isAdmin=True)),
+            Method='POST',
+            path='/actions/updateRepositoryAttributes',
+            Body=bUrlencode(dict(
+                identifier='repo-id',
+                domainId='domain-id',
+                userAgent="",
+                ), doseq=True))))
+        self.assertEqual('200', header['StatusCode'])
+        self.assertEqual(dict(success=True), JsonDict.loads(body))
+        self.assertEqual(2, len(self.observable.calledMethods))
+        self.assertEqual('updateRepositoryAttributes', self.observable.calledMethods[1].name)
+        self.assertEqual({
+            'identifier': 'repo-id',
+            'domainId': 'domain-id',
+            'baseurl': None,
+            'set': None,
+            'metadataPrefix': None,
+            'userAgent': None,
+            'authorizationKey': None,
+            'mappingId': None,
+            'targetId': None}, self.observable.calledMethods[1].kwargs)
+
+    def testAddClosingHours(self):
+        header, body = parseResponse(asBytes(self.dna.all.handleRequest(
+            user=CallTrace(returnValues=dict(isAdmin=True)),
+            Method='POST',
+            path='/actions/addRepositoryClosingHours',
+            Body=bUrlencode(dict(
+                repositoryId='repo-id',
+                domainId='domain-id',
+                week="*",
+                day="1",
+                startHour="10",
+                endHour="14"
+                ), doseq=True))))
+        self.assertEqual('200', header['StatusCode'])
+        self.assertEqual(dict(success=True), JsonDict.loads(body))
+        self.assertEqual(1, len(self.observable.calledMethods))
+        self.assertEqual('addClosingHours', self.observable.calledMethods[0].name)
+        self.assertEqual({
+            'day': '1',
+            'domainId': 'domain-id',
+            'endHour': '14',
+            'identifier': 'repo-id',
+            'startHour': '10',
+            'week': '*'}, self.observable.calledMethods[0].kwargs)
+
+    def testDeleteClosingHours(self):
+        header, body = parseResponse(asBytes(self.dna.all.handleRequest(
+            user=CallTrace(returnValues=dict(isAdmin=True)),
+            Method='POST',
+            path='/actions/deleteRepositoryClosingHours',
+            Body=bUrlencode(dict(
+                repositoryId='repo-id',
+                domainId='domain-id',
+                closingHour="0"
+                ), doseq=True))))
+        self.assertEqual('200', header['StatusCode'])
+        self.assertEqual(dict(success=True), JsonDict.loads(body))
+        self.assertEqual(1, len(self.observable.calledMethods))
+        self.assertEqual('deleteClosingHours', self.observable.calledMethods[0].name)
+        self.assertEqual({
+            'domainId': 'domain-id',
+            'identifier': 'repo-id',
+            'closingHourIndex': '0'}, self.observable.calledMethods[0].kwargs)
 
     def updateTheRepository(self, baseurl='', set='', metadataPrefix='', mappingId='', targetId='', collection='', maximumIgnore=0, use=False, continuous=False, complete=True, action='', shopclosed=None):
         self.hd.updateRepository('repository', domainId='domain',

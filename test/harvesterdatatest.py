@@ -397,6 +397,27 @@ class _HarvesterDataTest(SeecrTestCase):
             self.assertEqual(repoid, repository['@base'])
             self.assertNotEqual(repoid, repository['@id'])
 
+    def testUpdateRepositoryAttributes(self):
+        repository = self.hd.getRepository('repository1', 'adomain')
+        try:
+            self.hd.updateRepositoryAttributes()
+            self.fail()
+        except KeyError as e:
+            self.assertEqual("'identifier' is mandatory", e.args[0])
+        try:
+            self.hd.updateRepositoryAttributes(identifier="identifier")
+            self.fail()
+        except KeyError as e:
+            self.assertEqual("'domainId' is mandatory", e.args[0])
+        self.hd.updateRepositoryAttributes(identifier='repository1', domainId='adomain', baseurl="http://base.url")
+        repository = self.hd.getRepository('repository1', 'adomain')
+        self.assertEqual("http://base.url", repository['baseurl'])
+
+        self.hd.updateRepositoryAttributes(identifier='repository1', domainId='adomain', metadataPrefix="prefix")
+        repository = self.hd.getRepository('repository1', 'adomain')
+        self.assertEqual("http://base.url", repository['baseurl'])
+        self.assertEqual("prefix", repository['metadataPrefix'])
+
     def testRepositoryDone(self):
         self.hd.updateRepository('repository1',
                 domainId='adomain',
@@ -533,6 +554,7 @@ class _HarvesterDataTest(SeecrTestCase):
             self.assertNotEqual(dId, self.hd.getDomain('adomain')['@id'])
             self.assertEqual(targetId, self.hd.getTarget(domainId='adomain', identifier=targetId, guid=tId)['identifier'])
 
+
     def testFieldDefinition(self):
         definition = self.hd.getFieldDefinition(domainId='adomain')
         self.assertEqual({}, definition)
@@ -542,6 +564,30 @@ class _HarvesterDataTest(SeecrTestCase):
             self.assertEqual({'@id': 'mock-id: 1', 'my': 'definition'}, definition)
         else:
             self.assertEqual({'my': 'definition'}, definition)
+
+    def testAddClosingHours(self):
+        self.hd.addClosingHours('repository1', 'adomain', week="*", day="1", startHour="10", endHour="13")
+
+        repository = self.hd.getRepository('repository1', 'adomain')
+        self.assertEqual(['*:1:10:0-*:1:13:0'], repository['shopclosed'])
+
+        self.hd.addClosingHours('repository1', 'adomain', week="*", day="3", startHour="10", endHour="13")
+        repository = self.hd.getRepository('repository1', 'adomain')
+        self.assertEqual(['*:1:10:0-*:1:13:0', '*:3:10:0-*:3:13:0'], repository['shopclosed'])
+
+    def testDeleteClosingHours(self):
+        self.hd.deleteClosingHours('repository1', 'adomain', closingHoursIndex="0")
+
+        self.hd.addClosingHours('repository1', 'adomain', week="*", day="1", startHour="10", endHour="13")
+        self.hd.addClosingHours('repository1', 'adomain', week="*", day="3", startHour="10", endHour="13")
+        repository = self.hd.getRepository('repository1', 'adomain')
+        self.assertEqual(['*:1:10:0-*:1:13:0', '*:3:10:0-*:3:13:0'], repository['shopclosed'])
+        self.hd.deleteClosingHours('repository1', 'adomain', closingHoursIndex="0")
+        repository = self.hd.getRepository('repository1', 'adomain')
+        self.assertEqual(['*:3:10:0-*:3:13:0'], repository['shopclosed'])
+        self.hd.deleteClosingHours('repository1', 'adomain', closingHoursIndex="0")
+        repository = self.hd.getRepository('repository1', 'adomain')
+        self.assertEqual([], repository['shopclosed'])
 
 class HarvesterDataTest(_HarvesterDataTest):
     with_id = True

@@ -40,28 +40,28 @@ import time
 import re
 
 class Timeslot(object):
-	def __init__(self, string):
-		self._begin, self._end = list(map(_parse, string.split('-')))
+    def __init__(self, string):
+        self._begin, self._end = list(map(_parse, string.split('-')))
 
-	beginweek = property(lambda self: str(self._begin[0]))
-	beginday = property(lambda self: str(self._begin[1]))
-	beginhour = property(lambda self: str(self._begin[2]))
-	beginminute = property(lambda self: str(self._begin[3]))
-	endweek = property(lambda self: str(self._end[0]))
-	endday = property(lambda self: str(self._end[1]))
-	endhour = property(lambda self: str(self._end[2]))
-	endminute = property(lambda self: str(self._end[3]))
+    beginweek = property(lambda self: str(self._begin[0]))
+    beginday = property(lambda self: str(self._begin[1]))
+    beginhour = property(lambda self: str(self._begin[2]))
+    beginminute = property(lambda self: str(self._begin[3]))
+    endweek = property(lambda self: str(self._end[0]))
+    endday = property(lambda self: str(self._end[1]))
+    endhour = property(lambda self: str(self._end[2]))
+    endminute = property(lambda self: str(self._end[3]))
 
-	def __str__(self):
-		return format(self._begin) + '-' + format(self._end)
+    def __str__(self):
+        return format(self._begin) + '-' + format(self._end)
 
-	def valid(self):
-		return self._begin < self._end
+    def valid(self):
+        return self._begin < self._end
 
-	def areWeWithinTimeslot(self, dateTuple = time.localtime()[:5]):
-		date = datetime.datetime(*dateTuple)
-		date = date.isocalendar()[1:] + (date.hour, date.minute)
-		return self._begin <= date <= self._end
+    def areWeWithinTimeslot(self, dateTuple = time.localtime()[:5]):
+        date = datetime.datetime(*dateTuple)
+        date = date.isocalendar()[1:] + (date.hour, date.minute)
+        return self._begin <= date <= self._end
 
 class Wildcard(object):
     def __eq__(self, arg): return True
@@ -73,21 +73,18 @@ class Wildcard(object):
     def __repr__(self): return '*'
 
 def _parseField(string):
-	if string == '*':
-		return Wildcard()
-	else:
-		return int(string)
+    return Wildcard() if string == '*' else int(string)
 
 class ParseException(Exception):
-	pass
+    pass
 
 _r = re.compile('(\d{1,2}|\*):(\d|\*):(\d{1,2}):(\d{1,2})')
 def _parse(txt):
-	match = _r.match(txt)
-	if not match:
-            raise ParseException(f'Illegal timeslot definition (should be "W[W]*|:D|*:HH:MM"), but was "{txt}". -- W is weeknumber, D is day of week (monday = 0), HH is hours in 24 format, MM is minutes.  Week and weekday can be * (wildcard).')
-	return tuple(map(_parseField, match.groups()))
+    match = _r.match(txt)
+    if not match:
+        raise ParseException(f'Illegal timeslot definition (should be "W[W]*|:D|*:HH:MM"), but was "{txt}". -- W is weeknumber, D is day of week (monday = 0), HH is hours in 24 format, MM is minutes.  Week and weekday can be * (wildcard).')
+    return tuple(map(_parseField, match.groups()))
 
 def format(date):
-	return ':'.join(map(str, date))
+    return ':'.join(map(str, date))
 

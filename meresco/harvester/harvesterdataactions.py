@@ -47,11 +47,16 @@ class HarvesterDataActions(PostActions):
         self.registerAction('updateDomain', self._updateDomain)
         self.registerAction('addRepositoryGroup', self._addRepositoryGroup)
         self.registerAction('deleteRepositoryGroup', self._deleteRepositoryGroup)
-        self._registerFormAction('updateRepositoryGroup', self._updateRepositoryGroup)
+        self.registerAction('updateRepositoryGroup', self._updateRepositoryGroup)
 
-        self._registerFormAction('addRepository', self._addRepository)
-        self._registerFormAction('deleteRepository', self._deleteRepository)
-        self._registerFormAction('updateRepository', self._updateRepository)
+        self.registerAction('addRepository', self._addRepository)
+        self.registerAction('deleteRepository', self._deleteRepository)
+        self.registerAction('updateRepositoryAttributes', self._updateRepositoryAttributes)
+
+        self.registerAction('addRepositoryClosingHours', self._addRepositoryClosingHours)
+        self.registerAction('deleteRepositoryClosingHours', self._deleteReppositoryClosingHours)
+
+        #self.registerAction('updateRepositoryFieldDefinitions', self._updateRepositoryFieldDefinitions)
 
         self.registerAction('addMapping', self._addMapping)
         self.registerAction('updateMapping', self._updateMapping)
@@ -90,15 +95,22 @@ class HarvesterDataActions(PostActions):
 
         yield response(True)
 
-    def _updateRepositoryGroup(self, identifier, arguments):
-        self.call.updateRepositoryGroup(
-                identifier=identifier,
-                domainId=arguments.get('domainId', [''])[0],
+    @check_and_parse('identifier', 'domainId', 'nl_name', 'en_name', userCheck='user')
+    def _updateRepositoryGroup(self, data, **kwargs):
+        try:
+            self.call.updateRepositoryGroup(
+                identifier=data.identifier,
+                domainId=data.domainId,
                 name={
-                    'nl': arguments.get('nl_name', [''])[0],
-                    'en': arguments.get('en_name', [''])[0],
+                    'nl': data.nl_name,
+                    'en': data.en_name,
                 },
             )
+        except Exception as e:
+            yield response(False, message=str(e))
+            return
+        yield response(True)
+
 
     @check_and_parse('identifier', 'domainId', userCheck='user')
     def _deleteRepositoryGroup(self, data, **kwargs):
@@ -112,12 +124,28 @@ class HarvesterDataActions(PostActions):
             return
         yield response(True)
 
-    def _addRepository(self, identifier, arguments):
-        self.call.addRepository(
-                identifier=identifier,
-                domainId=arguments.get('domainId', [''])[0],
-                repositoryGroupId=arguments.get('repositoryGroupId', [''])[0],
+    @check_and_parse('identifier', 'domainId', 'repositoryGroupId', userCheck='user')
+    def _addRepository(self, data, **kwargs):
+        try:
+            self.call.addRepository(
+                    identifier=data.identifier,
+                    domainId=data.domainId,
+                    repositoryGroupId=data.repositoryGroupId,
             )
+        except Exception as e:
+            yield response(False, message=str(e))
+            return
+        yield response(True)
+
+
+    @check_and_parse('identifier', 'domainId', "baseurl", "set", "metadataPrefix", "userAgent", "authorizationKey", "mappingId", "targetId", userCheck='user', keepEmpty=False)
+    def _updateRepositoryAttributes(self, data, **kwargs):
+        try:
+            self.call.updateRepositoryAttributes(**data.asDict())
+        except Exception as e:
+            yield response(False, message=str(e))
+            return
+        yield response(True)
 
     def _updateRepository(self, identifier, arguments):
         domainId = arguments['domainId'][0]
@@ -168,12 +196,18 @@ class HarvesterDataActions(PostActions):
                 extra=extra,
             )
 
-    def _deleteRepository(self, identifier, arguments):
-        self.call.deleteRepository(
-                identifier=identifier,
-                domainId=arguments.get('domainId', [''])[0],
-                repositoryGroupId=arguments.get('repositoryGroupId', [''])[0],
+    @check_and_parse('identifier', 'domainId', 'repositoryGroupId', userCheck='user')
+    def _deleteRepository(self, data, **kwargs):
+        try:
+            self.call.deleteRepository(
+                identifier=data.identifier,
+                domainId=data.domainId,
+                repositoryGroupId=data.repositoryGroupId,
             )
+        except Exception as e:
+            yield response(False, message=str(e))
+            return
+        yield response(True)
 
     @check_and_parse('name', 'domainId', userCheck='user')
     def _addMapping(self, data, **kwargs):
@@ -261,6 +295,37 @@ class HarvesterDataActions(PostActions):
             yield response(False, message=str(e))
             return
         yield response(True)
+
+    @check_and_parse('repositoryId', 'domainId', "week", "day", "startHour", "endHour", userCheck='user')
+    def _addRepositoryClosingHours(self, data, **kwargs):
+        try:
+            self.call.addClosingHours(
+                identifier=data.repositoryId,
+                domainId=data.domainId,
+                week=data.week,
+                day=data.day,
+                startHour=data.startHour,
+                endHour=data.endHour
+            )
+        except Exception as e:
+            yield response(False, message=str(e))
+            return
+        yield response(True)
+
+    @check_and_parse('repositoryId', 'domainId', 'closingHour', userCheck='user')
+    def _deleteReppositoryClosingHours(self, data, **kwargs):
+        print(data)
+        try:
+            self.call.deleteClosingHours(
+                identifier=data.repositoryId,
+                domainId=data.domainId,
+                closingHoursIndex=data.closingHour,
+            )
+        except Exception as e:
+            yield response(False, message=str(e))
+            return
+        yield response(True)
+
 
     def _repositoryDone(self, Body, **kwargs):
         arguments = parse_qs(str(Body, encoding='utf-8'))

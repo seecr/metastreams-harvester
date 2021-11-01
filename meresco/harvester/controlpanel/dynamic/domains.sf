@@ -41,21 +41,21 @@ def main(**kwargs):
         **kwargs)
 
 def _contents(tag, arguments, **kwargs):
-    with tag("div.container"):
-        yield page2.card("Domeinen", cardDomains, icon="collection", tag=tag, **kwargs)
+    yield page2.breadcrumbs(tag, [
+        dict(label="Domeinen", active=True),
+    ])
+    #with tag("div.container"):
+    yield page2.card("Domeinen", cardDomains, icon="collection", tag=tag, **kwargs)
 
 def cardDomains(tag, **kwargs):
     user = kwargs.get("user", None)
     if user and user.isAdmin():
         with tag("form.form", id_="FrmCreateDomain"):
-            with tag("div.row"):
-                with tag("div.col-auto"):
-                    with tag("label.col-form-label"):
-                        yield "Naam"
+            with tag("div.row.mb-2"):
                 with tag("div.col"):
-                    with tag("input.form-control", type_="text", name="identifier"): pass
-                with tag("div.col-auto"):
-                    with tag("button.btn.btn-small.btn-primary.float-end", type_="submit", id_="BtnCreateDomain"):
+                    yield page2.textInput(tag, label="Naam", name="identifier", value="")
+                with tag("div.col-1.d-flex.flex-column.justify-content-end"):
+                    with tag("button.btn.btn-small.btn-primary", type_="submit", id_="BtnCreateDomain"):
                         yield "Aanmaken"
 
     with tag("div", id_="placeholder_domains"):

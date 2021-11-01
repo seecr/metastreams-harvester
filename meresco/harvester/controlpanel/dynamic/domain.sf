@@ -63,6 +63,10 @@ def _content(tag, arguments, **kwargs):
     domainId = arguments.get("identifier", [None])[0]
     domain = observable.call.getDomain(domainId)
 
+    yield page2.breadcrumbs(tag, [
+        dict(label="Domeinen", href="/domains"),
+        dict(label=domainId, active=True)
+    ])
     yield page2.card(f"Domein Gegevens - {domainId}", card_domainAttributes, tag=tag, domain=domain, **kwargs)
     yield page2.card("Repository Groepen", card_domainRepositoryGroups, tag=tag, domain=domain, **kwargs)
     with tag("div.row"):
@@ -78,17 +82,13 @@ def card_domainAttributes(tag, domain, **kwargs):
     with tag("div", id_="placeholder_FrmDomainAttributes"):
         with tag("form.form", id_="FrmDomainAttributes"):
             with tag("input", type_="hidden", name="identifier", value=domainId): pass
+            with tag("div.row.mb-2"):
+                with tag("div.col"):
+                    yield page2.textInput(tag, label="Omschrijving", name="description", value=domain.get("description"))
             with tag("div.row"):
-                with tag("div.col-3"):
-                    with tag("label.col-form-label", for_=uniqueId): yield "Omschrijving"
-                with tag("div.col-9"):
-                    with tag("input.form-control", id_=uniqueId, type_="text", name="description", value=domain.get("description")): pass
-
-            with tag("div.row.mt-3"):
                 with tag("div.col"):
                     with tag("button.btn.btn-small.btn-primary.float-end", type_="submit", id_="BtnDomainAttributes"):
                         yield "Aanpassen"
-
 
 def card_domainRepositoryGroups(tag, domain, **kwargs):
     domainId = domain.get("identifier")
@@ -97,14 +97,10 @@ def card_domainRepositoryGroups(tag, domain, **kwargs):
         with tag("form.form", id_="FrmCreateRepositoryGroup", **{'data-domainId': domainId}):
             with tag("input", type_="hidden", name="domainId", value=domainId): pass
             with tag("div.row"):
-                with tag("div.col-3"):
-                    with tag("label.col-form-label", for_=uniqueId): yield "Identifier"
-                with tag("div.col-9"):
-                    with tag("input.form-control", id_=uniqueId, type_="text", name="identifier", value=""): pass
-
-            with tag("div.row.mt-3"):
                 with tag("div.col"):
-                    with tag("button.btn.btn-small.btn-primary.float-end", type_="submit", id_="BtnCreateRepositoryGroup"):
+                    yield page2.textInput(tag, label="Identifier", name="identifier", value="")
+                with tag("div.col-1.d-flex.flex-column.justify-content-end"):
+                    with tag("button.btn.btn-small.btn-primary", type_="submit", id_="BtnCreateRepositoryGroup"):
                         yield "Aanmaken"
 
     with tag("div", id_="placeholder_table_repositorygroups"):
@@ -118,7 +114,7 @@ def table_repositoryGroups(tag, domain=None, **kwargs):
     else:
         domainId = domain.get("identifier")
     with tag("table.table.table-sm.table-hover"):
-        yield page2.thead(tag, ["", "Identifier", "Naam"])
+        yield page2.thead(tag, ["", "Identifier", "Naam", "Repositories"])
         with tag("tbody"):
             repositoryGroups = [observable.call.getRepositoryGroup(identifier=groupId, domainId=domainId) for groupId in domain.get('repositoryGroupIds', [])]
             for repositoryGroup in sorted(repositoryGroups, key=lambda rg: rg.get("name", {}).get("nl", "")):
@@ -134,6 +130,8 @@ def table_repositoryGroups(tag, domain=None, **kwargs):
                             yield rgIdentifier
                     with tag("td"):
                         yield repositoryGroup.get("name", {}).get("nl", '')
+                    with tag("td"):
+                        yield len(repositoryGroup.get('repositoryIds') or [])
 
 
 def card_domainTargets(tag, domain, **kwargs):
@@ -142,24 +140,15 @@ def card_domainTargets(tag, domain, **kwargs):
         with tag("form.form", id_="FrmCreateTarget", **{'data-domainId': domainId}):
             with tag("input", type_="hidden", name="domainId", value=domainId): pass
             with tag("div.row"):
-                uniqueId = uuid()
-                with tag("div.col-2"):
-                    with tag("label.col-form-label", for_=uniqueId): yield "Naam"
-                with tag("div.col-4"):
-                    with tag("input.form-control", id_=uniqueId, type_="text", name="name", value=""): pass
-
-                uniqueId = uuid()
-                with tag("div.col-2"):
-                    with tag("label.col-form-label", for_=uniqueId): yield "Type"
-                with tag("div.col-4"):
-                    with tag("select.form-control", name="targetType"):
-                        for key in sorted(TARGET_TYPES.keys()):
-                            with tag("option", value=key):
-                                yield TARGET_TYPES[key]
-
-            with tag("div.row.mt-3"):
                 with tag("div.col"):
-                    with tag("button.btn.btn-small.btn-primary.float-end", type_="submit", id_="BtnCreateTarget"):
+                    yield page2.textInput(tag, label="Naam", name="name", value="")
+                with tag("div.col"):
+                    yield page2.dropdown(tag,
+                        label="Type", name="targetType",
+                        items=sorted(TARGET_TYPES.items(), key=lambda item: item[1]))
+
+                with tag("div.col-2.d-flex.flex-column.justify-content-end"):
+                    with tag("button.btn.btn-small.btn-primary", type_="submit", id_="BtnCreateTarget"):
                         yield "Aanmaken"
 
     with tag("div", id_="placeholder_table_targets"):
@@ -176,7 +165,7 @@ def table_targets(tag, domain=None, **kwargs):
     if len(targetIds) == 0:
         with tag("span"):
             yield "Nog geen targets aangemaakt."
-            return
+        return
 
     with tag("table.table.table-sm.table-hover"):
         yield page2.thead(tag, ["", "Naam", "Type"])
@@ -202,54 +191,37 @@ def popup_target(tag, arguments, **kwargs):
 
     def targetType_sruUpdate(tag, target, domain):
         with tag("div.row.mt-3"):
-            with tag("div.col-3"):
-                with tag("label.col-form-label"): yield "Hostname"
             with tag("div.col"):
-                with tag("input.form-control", type_="text", name="baseurl", value=target.get("baseurl", "")): pass
+                yield page2.textInput(tag, label="Hostname", name="baseurl", value=target.get("baseurl", ""))
         with tag("div.row.mt-3"):
-            with tag("div.col-3"):
-                with tag("label.col-form-label"): yield "Port"
             with tag("div.col"):
-                with tag("input.form-control", type_="text", name="port", value=target.get("port", "")): pass
+                yield page2.textInput(tag, label="Port", name="port", value=target.get("port", ""))
         with tag("div.row.mt-3"):
-            with tag("div.col-3"):
-                with tag("label.col-form-label"): yield "Path"
             with tag("div.col"):
-                with tag("input.form-control", type_="text", name="path", value=target.get("path", "")): pass
+                yield page2.textInput(tag, label="Path", name="path", value=target.get("path", ""))
 
     def targetType_filesystem(tag, target, domain):
         with tag("div.row.mt-3"):
-            with tag("div.col-3"):
-                with tag("label.col-form-label"): yield "Path"
             with tag("div.col"):
-                with tag("input.form-control", type_="text", name="path", value=target.get("path", "")): pass
+                yield page2.textInput(tag, label="Path", name="path", value=target.get("path", ""))
         with tag("div.row.mt-3"):
-            with tag("div.col-3"):
-                with tag("label.col-form-label"): yield "OAI Envelope"
-            with tag("div.col.d-flex.align-items-center"):
-                with tag("div.form-check.form-switch"):
-                    with tag("input.form-check-input",
-                        type_="checkbox",
-                        name="oaiEnvelope",
-                        checked="checked" if target.get("oaiEnvelope", False) is True else ""): pass
+            with tag("div.col"):
+                yield page2.checkbox(tag,
+                    label="OAI Envelope", name="oaiEnvelope",
+                    checked=target.get("oaiEnvelope", False) is True)
 
     def targetType_composite(tag, target,  domain):
         otherTargets = [observable.call.getTarget(identifier=each, domainId=domain.get('identifier'))
             for each in domain.get('targetIds') if each != target.get('identifier')]
 
         with tag("div.row.mt-3"):
-            with tag("div.col-3"):
-                with tag("label.col-form-label"): yield "Target"
             with tag("div.col"):
-                with tag("select.form-select", multiple="multiple", size="3", name="delegate"):
-                    selectedTargets = target.get('delegateIds', [])
-                    for each in otherTargets:
-                        targetId = each.get("identifier")
-                        with tag("option", value=targetId, selected="selected" if targetId in selectedTargets else ""):
-                            yield each.get("name")
-                with tag("small"):
-                    yield "hold CTRL/CMD to select multiple targets"
-
+                yield page2.selectList(tag,
+                    name="delegateIds",
+                    label="Targets (hold CTRL/CMD to select multiple targets",
+                    items=[(each.get("identifier"), each.get("name")) for each in otherTargets],
+                    selected=target.get("delegateIds", []),
+                    size=3)
 
     with tag("div", id_="placeholder_FrmUpdateTarget"):
         with tag("form.form", id_="FrmUpdateTarget"):
@@ -257,15 +229,11 @@ def popup_target(tag, arguments, **kwargs):
             with tag("input", type_="hidden", name="domainId", value=domainId): pass
             with tag("input", type_="hidden", name="targetType", value=target.get("targetType")): pass
             with tag("div.row"):
-                with tag("div.col-3"):
-                    with tag("label.col-form-label"): yield "Naam"
                 with tag("div.col"):
-                    with tag("input.form-control", type_="text", name="name", value=target.get("name", "")): pass
+                    yield page2.textInput(tag, label="Naam", name="name", value=target.get("name", ""))
             with tag("div.row.mt-3"):
-                with tag("div.col-3"):
-                    with tag("label.col-form-label"): yield "Type"
                 with tag("div.col"):
-                    with tag("label.col-form-label"): yield TARGET_TYPES[target.get("targetType")]
+                    yield page2.textLabel(tag, label="Type", value=TARGET_TYPES[target.get("targetType")])
             targetRenderer = dict(
                 sruUpdate=targetType_sruUpdate,
                 filesystem=targetType_filesystem,
@@ -277,22 +245,15 @@ def popup_target(tag, arguments, **kwargs):
                     with tag("button.btn.btn-primary.float-end", id_="BtnUpdateTarget"):
                         yield "Opslaan"
 
-
-
 def card_domainMappings(tag, domain, **kwargs):
     domainId = domain.get("identifier")
     with tag("div", id_="placeholder_FrmCreateMapping"):
         with tag("form.form", id_="FrmCreateMapping", **{'data-domainId': domainId}):
             with tag("input", type_="hidden", name="domainId", value=domainId): pass
             with tag("div.row"):
-                uniqueId = uuid()
-                with tag("div.col-2"):
-                    with tag("label.col-form-label", for_=uniqueId): yield "Naam"
-                with tag("div.col-4"):
-                    with tag("input.form-control", id_=uniqueId, type_="text", name="name", value=""): pass
-
-            with tag("div.row.mt-3"):
                 with tag("div.col"):
+                    yield page2.textInput(tag, label="Naam", name="name", value="")
+                with tag("div.col-2.d-flex.flex-column.justify-content-end"):
                     with tag("button.btn.btn-small.btn-primary.float-end", type_="submit", id_="BtnCreateMapping"):
                         yield "Aanmaken"
 
@@ -337,26 +298,21 @@ def popup_mapping(tag, arguments, **kwargs):
             with tag("input", type_="hidden", name="identifier", value=mappingId): pass
             with tag("input", type_="hidden", name="domainId", value=domainId): pass
             with tag("div.row"):
-                with tag("div.col-3"):
-                    with tag("label.col-form-label"): yield "Naam"
                 with tag("div.col"):
-                    with tag("input.form-control", type_="text", name="name", value=mapping.get("name", "")): pass
+                    yield page2.textInput(tag, label="Naam", name="name", value=mapping.get("name", ""))
             with tag("div.row.mt-3"):
-                with tag("div.col-3"):
-                    with tag("label.col-form-label"): yield "Omschrijving"
                 with tag("div.col"):
-                    with tag("textarea.form-control", name="description", rows="3"):
-                        yield mapping.get("description", "")
+                    yield page2.textarea(tag, label="Omschrijving", name="description",
+                        value=mapping.get("description", ""),
+                        height="5em")
 
             with tag("div.row.mt-3"):
-                with tag("div.col-3"):
-                    with tag("label.col-form-label"): yield "Code"
                 with tag("div.col"):
-                    with tag("textarea.form-control.font-monospace.fs-6", id_="mapping-code", name="code", rows="10", wrap="off"):
-                        yield mapping.get("code", "")
+                    yield page2.textarea(tag, label="Code", name="code",
+                        value=mapping.get("code", ""), height="20em", wrap="off",
+                        extraClasses=['font-monospace', 'fs-6'])
 
             with tag("div.row.mt-3"):
                 with tag("div.col"):
                     with tag("button.btn.btn-primary.float-end", id_="BtnUpdateMapping"):
                         yield "Opslaan"
-
