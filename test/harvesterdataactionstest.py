@@ -94,6 +94,15 @@ class HarvesterDataActionsTest(SeecrTestCase):
     def testUpdateRepository(self):
         data = {
             'redirectUri': 'http://example.org',
+            "identifier": "repository",
+            "domainId": "domain",
+            "maximumIgnore": "23",
+            "complete": "1",
+            "continuous": "60",
+            "repositoryAction": "clear",
+            "numberOfTimeslots": "0",
+        }
+        dataAttributes = {
             "repositoryGroupId": "ignored",
             "identifier": "repository",
             "domainId": "domain",
@@ -103,15 +112,15 @@ class HarvesterDataActionsTest(SeecrTestCase):
             "mappingId": "mapping_identifier",
             "targetId": "",
             "collection": "the collection",
-            "maximumIgnore": "23",
-            "complete": "1",
-            "continuous": "60",
-            "repositoryAction": "clear",
-            "numberOfTimeslots": "0",
             "extra_name": "Name for this object",
             "extra_choice_1": '1'
         }
         consume(self.hda.handleRequest(Method='POST', path='/somewhere/updateRepository', Body=bUrlencode(data, doseq=True)))
+        header, body = parseResponse(asBytes(self.dna.all.handleRequest(
+            user=CallTrace(returnValues=dict(isAdmin=True)),
+            Method='POST',
+            path='/somewhere/updateRepositoryAttributes',
+            Body=bUrlencode(dataAttributes, doseq=True))))
         repository = self.hd.getRepository('repository', 'domain')
         self.assertEqual('group', repository["repositoryGroupId"])
         self.assertEqual("repository", repository["identifier"])
@@ -132,115 +141,6 @@ class HarvesterDataActionsTest(SeecrTestCase):
             "choice_1": True,
             "choice_2": False
             }, repository['extra'])
-
-    def testMinimalInfo(self):
-        data = {
-            'redirectUri': 'http://example.org',
-            "repositoryGroupId": "ignored",
-            "identifier": "repository",
-            "domainId": "domain",
-        }
-        consume(self.hda.handleRequest(Method='POST', path='/somewhere/updateRepository', Body=bUrlencode(data, doseq=True)))
-        repository = self.hd.getRepository('repository', 'domain')
-        self.assertEqual('group', repository["repositoryGroupId"])
-        self.assertEqual("repository", repository["identifier"])
-        self.assertEqual(None, repository["baseurl"])
-        self.assertEqual(None, repository["set"])
-        self.assertEqual(None, repository["metadataPrefix"])
-        self.assertEqual(None, repository["mappingId"])
-        self.assertEqual(None, repository["targetId"])
-        self.assertEqual(None, repository["collection"])
-        self.assertEqual(0, repository["maximumIgnore"])
-        self.assertEqual(None, repository["continuous"])
-        self.assertEqual(False, repository["complete"])
-        self.assertEqual(False, repository["use"])
-        self.assertEqual(None, repository["action"])
-        self.assertEqual([], repository['shopclosed'])
-
-    def testShopClosedButNotAdded(self):
-        data = {
-            'redirectUri': 'http://example.org',
-            "repositoryGroupId": "ignored",
-            "identifier": "repository",
-            "domainId": "domain",
-            "numberOfTimeslots": "0",
-            'shopclosedWeek_0': '*',
-            'shopclosedWeekDay_0': '*',
-            'shopclosedBegin_0': '7',
-            'shopclosedEnd_0': '9',
-        }
-        consume(self.hda.handleRequest(Method='POST', path='/somewhere/updateRepository', Body=bUrlencode(data, doseq=True)))
-        repository = self.hd.getRepository('repository', 'domain')
-        self.assertEqual([], repository['shopclosed'])
-
-    def testShopClosedAdded(self):
-        data = {
-            'redirectUri': 'http://example.org',
-            "repositoryGroupId": "ignored",
-            "identifier": "repository",
-            "domainId": "domain",
-            "numberOfTimeslots": "0",
-            'shopclosedWeek_0': '*',
-            'shopclosedWeekDay_0': '*',
-            'shopclosedBegin_0': '7',
-            'shopclosedEnd_0': '9',
-            "addTimeslot": "button pressed",
-        }
-        consume(self.hda.handleRequest(Method='POST', path='/somewhere/updateRepository', Body=bUrlencode(data, doseq=True)))
-        repository = self.hd.getRepository('repository', 'domain')
-        self.assertEqual(['*:*:7:0-*:*:9:0'], repository['shopclosed'])
-
-    def testModifyShopClosed(self):
-        self.updateTheRepository(shopclosed=['1:2:7:0-1:2:9:0', '2:*:7:0-2:*:9:0',])
-        data = {
-            'redirectUri': 'http://example.org',
-            "repositoryGroupId": "ignored",
-            "identifier": "repository",
-            "domainId": "domain",
-            "numberOfTimeslots": "2",
-            'shopclosedWeek_0': '*',
-            'shopclosedWeekDay_0': '*',
-            'shopclosedBegin_0': '7',
-            'shopclosedEnd_0': '9',
-            'shopclosedWeek_1': '3',
-            'shopclosedWeekDay_1': '*',
-            'shopclosedBegin_1': '17',
-            'shopclosedEnd_1': '19',
-            'shopclosedWeek_2': '4',
-            'shopclosedWeekDay_2': '5',
-            'shopclosedBegin_2': '9',
-            'shopclosedEnd_2': '10',
-        }
-        consume(self.hda.handleRequest(Method='POST', path='/somewhere/updateRepository', Body=bUrlencode(data, doseq=True)))
-        repository = self.hd.getRepository('repository', 'domain')
-        self.assertEqual(['3:*:17:0-3:*:19:0', '4:5:9:0-4:5:10:0',], repository['shopclosed'])
-
-    def testDeleteShopClosed(self):
-        self.updateTheRepository(shopclosed=['1:2:7:0-1:2:9:0', '2:*:7:0-2:*:9:0',])
-        data = {
-            'redirectUri': 'http://example.org',
-            "repositoryGroupId": "ignored",
-            "identifier": "repository",
-            "domainId": "domain",
-            "numberOfTimeslots": "2",
-            'shopclosedWeek_0': '*',
-            'shopclosedWeekDay_0': '*',
-            'shopclosedBegin_0': '7',
-            'shopclosedEnd_0': '9',
-            'shopclosedWeek_1': '3',
-            'shopclosedWeekDay_1': '*',
-            'shopclosedBegin_1': '17',
-            'shopclosedEnd_1': '19',
-            'shopclosedWeek_2': '4',
-            'shopclosedWeekDay_2': '5',
-            'shopclosedBegin_2': '9',
-            'shopclosedEnd_2': '10',
-            'deleteTimeslot_1.x': '10',
-            'deleteTimeslot_1.y': '20',
-        }
-        consume(self.hda.handleRequest(Method='POST', path='/somewhere/updateRepository', Body=bUrlencode(data, doseq=True)))
-        repository = self.hd.getRepository('repository', 'domain')
-        self.assertEqual(['4:5:9:0-4:5:10:0',], repository['shopclosed'])
 
     def testSetRepositoryDone(self):
         self.updateTheRepository(action='refresh')
@@ -400,7 +300,7 @@ class HarvesterDataActionsTest(SeecrTestCase):
         self.assertEqual({
             'domainId': 'domain-id',
             'identifier': 'repo-id',
-            'closingHourIndex': '0'}, self.observable.calledMethods[0].kwargs)
+            'closingHoursIndex': '0'}, self.observable.calledMethods[0].kwargs)
 
     def updateTheRepository(self, baseurl='', set='', metadataPrefix='', mappingId='', targetId='', collection='', maximumIgnore=0, use=False, continuous=False, complete=True, action='', shopclosed=None):
         self.hd.updateRepository('repository', domainId='domain',

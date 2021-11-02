@@ -85,17 +85,15 @@ def card_repositories(tag, domain, group, **kwargs):
     domainId = domain.get("identifier")
     group = observable.call.getRepositoryGroup(identifier=repositoryGroupId, domainId=domainId)
 
-    uniqueId = uuid()
     with tag("div", id_="placeholder_FrmCreateRepository"):
         with tag("form.form", id_="FrmCreateRepository", **{'data-domainid': domainId, 'data-repositorygroupid': repositoryGroupId}):
             with tag("input", type_="hidden", name="domainId", value=domainId): pass
             with tag("input", type_="hidden", name="repositoryGroupId", value=repositoryGroupId): pass
-            with tag("div.row.mb-2"):
-                with tag("div.col"):
+            with tag("div.d-flex.flex-row"):
+                with tag("div.flex-fill.me-2"):
                     yield page2.textInput(tag, label="Identifier", name="identifier", value="")
 
-            with tag("div.row"):
-                with tag("div.col"):
+                with tag("div.d-flex.flex-shrink-1.flex-column.justify-content-end"):
                     with tag("button.btn.btn-small.btn-primary.float-end", type_="submit", id_="BtnCreateRepository"):
                         yield "Aanmaken"
 

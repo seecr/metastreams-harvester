@@ -261,9 +261,8 @@ class HarvesterDataActions(PostActions):
             return
         yield response(True)
 
-    @check_and_parse('identifier', 'name', 'domainId', 'targetType', 'username', 'port', 'targetType', 'path', 'baseurl', 'oaiEnvelope', 'delegate', userCheck='user')
+    @check_and_parse('identifier', 'name', 'domainId', 'targetType', 'username', 'port', 'targetType', 'path', 'baseurl', 'oaiEnvelope', 'delegateIds', userCheck='user')
     def _updateTarget(self, data, **kwargs):
-        print(data.delegate)
         try:
             self.call.updateTarget(
                 identifier=data.identifier,
@@ -275,7 +274,7 @@ class HarvesterDataActions(PostActions):
                 path=data.path,
                 baseurl=data.baseurl,
                 oaiEnvelope=not data.oaiEnvelope is None,
-                delegateIds=data.delegate or [],
+                delegateIds=data.delegateIds or [],
             )
         except Exception as e:
             yield response(False, message=str(e))

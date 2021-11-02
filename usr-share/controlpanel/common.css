@@ -44,3 +44,10 @@
 html.wait, html.wait * {
     cursor: wait !important;
 }
+
+.helpText {
+    position: absolute;
+    padding: 0;
+    top: 0px;
+    right: 0.3em;
+}

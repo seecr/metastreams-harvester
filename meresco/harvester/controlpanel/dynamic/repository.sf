@@ -70,6 +70,7 @@ def _content(tag, arguments, **kwargs):
     cardKwargs = dict(tag=tag, domain=domain, repository=repository, repositoryGroupId=repositoryGroupId)
     cardKwargs.update(kwargs)
     yield page2.card(f"Repository Gegevens - {repositoryId}", card_repositoryAttributes, **cardKwargs)
+    yield page2.card("Uitvoering", card_repositoryActions, **cardKwargs)
     #yield page2.card("Field Definitions", card_fieldDefinitions, **cardKwargs)
     yield page2.card("Closing Hours", card_closingHours, **cardKwargs)
 
@@ -84,22 +85,21 @@ def card_repositoryAttributes(tag, domain, repository, repositoryGroupId, **kwar
 
             with tag("div.row.mb-2"):
                 with tag("div.col"):
-                    yield page2.textInput(tag, label="Base URL", name="baseurl", value=repository.get("baseurl"))
+                    yield page2.textInput(tag, label="Base URL", name="baseurl", value=repository.get("baseurl") or '')
+
             with tag("div.row.mb-2"):
                 with tag("div.col"):
-                    yield page2.textInput(tag, label="Set", name="set", value=repository.get("set"))
-            with tag("div.row.mb-2"):
+                    yield page2.textInput(tag, label="Set", name="set", value=repository.get("set") or '')
                 with tag("div.col"):
-                    yield page2.textInput(tag, label="Metadata Prefix", name="metadataPrefix", value=repository.get("metadataPrefix"))
-            with tag("div.row.mb-2"):
-                with tag("div.col"):
-                    yield page2.textInput(tag, label="User-Agent", name="userAgent", value=repository.get("userAgent"))
-            with tag("div.row.mb-2"):
-                with tag("div.col"):
-                    yield page2.textInput(tag, label="Authorization Key", name="authorizationKey", value=repository.get("authorizationKey"))
-            with tag("div.row.mb-2"):
+                    yield page2.textInput(tag, label="Metadata Prefix", name="metadataPrefix", value=repository.get("metadataPrefix") or '')
                 with tag("div.col"):
                     yield page2.textInput(tag, label="Target Collection", name="collection", value=repository.get("collection"))
+
+            with tag("div.row.mb-2"):
+                with tag("div.col"):
+                    yield page2.textInput(tag, label="User-Agent", name="userAgent", value=repository.get("userAgent") or '')
+                with tag("div.col"):
+                    yield page2.textInput(tag, label="Authorization Key", name="authorizationKey", value=repository.get("authorizationKey") or '')
 
             with tag("div.row.mb-2"):
                 with tag("div.col"):
@@ -109,7 +109,6 @@ def card_repositoryAttributes(tag, domain, repository, repositoryGroupId, **kwar
                         items=[(mappingId, observable.call.getMapping(identifier=mappingId, domainId=domainId).get('name', ''))
                             for mappingId in domain.get('mappingIds', [])],
                         selected=repository.get("mappingId") or "")
-            with tag("div.row.mb-2"):
                 with tag("div.col"):
                     yield page2.dropdown(tag,
                         label="Target",
@@ -121,6 +120,49 @@ def card_repositoryAttributes(tag, domain, repository, repositoryGroupId, **kwar
             with tag("div.row"):
                 with tag("div.col"):
                     with tag("button.btn.btn-small.btn-primary.float-end", type_="submit", id_="BtnRepositoryAttributes"):
+                        yield "Aanpassen"
+
+def card_repositoryActions(tag, domain, repository, repositoryGroupId, **kwargs):
+    domainId = domain.get("identifier")
+    with tag("div", id_="placeholder_FrmRepositoryActions"):
+        with tag("form.form", id_="FrmRepositoryActions"):
+            with tag("input", type_="hidden", name="domainId", value=domainId): pass
+            with tag("input", type_="hidden", name="identifier", value=repository.get("identifier")): pass
+            with tag("input", type_="hidden", name="repositoryGroupId", value=repositoryGroupId): pass
+
+            with tag("div.row.mb-2"):
+                with tag("div.col"):
+                    yield page2.numberInput(tag, label="Maximale aantal validatie fouten",
+                        minValue=60,
+                        maxValue=7200,
+                        name="maximumIgnore",
+                        value=repository.get("maximumIgnore") or '')
+                with tag("div.col"):
+                    yield page2.checkbox(tag,
+                        label="Harvester aan", name="use",
+                        checked=repository.get("use", False))
+                with tag("div.col"):
+                    yield page2.dropdown(tag,
+                        label="Actie",
+                        name="repositoryAction",
+                        items=[('', '-'), ('clear', 'Clear'), ('refresh', 'Refresh')],
+                        selected=repository.get("repositoryAction") or '')
+            with tag("div.row.mb-2"):
+                with tag("div.col"):
+                    yield page2.numberInput(tag, label="Interval",
+                        minValue=60,
+                        maxValue=7200,
+                        name="continuous",
+                        value=repository.get("continuous") or 1200)
+                with tag("div.col"):
+                    yield page2.checkbox(tag, label="Aansluitend harvesten",
+                        name="complete",
+                        checked=repository.get("complete", False),
+                        helpText="Laat de harvester de repository in één keer harvesten door niet te wachten tussen OAI batches. Deze optie is met name bedoelt voor repositories met resumptionToken van korte levensduur.")
+
+            with tag("div.row"):
+                with tag("div.col"):
+                    with tag("button.btn.btn-small.btn-primary.float-end", type_="submit", id_="BtnRepositoryActions"):
                         yield "Aanpassen"
 
 def card_fieldDefinitions(tag, domain, repository, **kwargs):
@@ -137,22 +179,22 @@ def card_closingHours(tag, domain, repository, **kwargs):
             with tag("input", type_="hidden", name="repositoryId", value=repository.get("identifier")): pass
             with tag("input", type_="hidden", name="domainId", value=domain.get("identifier")): pass
 
-            with tag("div.row"):
-                with tag("div.col"):
+            with tag("div.d-flex.flex-row"):
+                with tag("div.flex-fill"):
                     yield page2.dropdown(tag,
                         label="Week",
                         items=[('*', "Alle weken")] + weeks,
                         name="week")
-                with tag("div.col"):
+                with tag("div.flex-fill.ms-2"):
                     yield page2.dropdown(tag,
                         label="Dag",
                         items=[('*', "Alle dagen")] + WEEKDAYS,
                         name="day")
-                with tag("div.col"):
+                with tag("div.flex-fill.ms-2"):
                     yield page2.numberInput(tag, label="Van (uur)", name="startHour", minValue="0", maxValue="24", value=0)
-                with tag("div.col"):
+                with tag("div.flex-fill.ms-2"):
                     yield page2.numberInput(tag, label="Tot (uur)", name="endHour", minValue="0", maxValue="24", value=6)
-                with tag("div.col-1.d-flex.flex-column.justify-content-end"):
+                with tag("div.d-flex.flex-column.flex-shrink-1.justify-content-end.ms-2"):
                     with tag("button.btn.btn-primary", id_="BtnCreateClosingHours"):
                         yield "Toevoegen"
 
@@ -244,15 +286,15 @@ def _repository(tag, domain, repository):
     with tablerow(tag, 'Id:'):
         yield repository.get('identifier')
     with tablerow(tag, 'Baseurl:'):
-        yield textinput(tag, "baseurl", repository.get('baseurl'))
+        yield textinput(tag, "baseurl", repository.get('baseurl') or '')
     with tablerow(tag, 'Set:'):
-        yield textinput(tag, "set", repository.get('set'))
+        yield textinput(tag, "set", repository.get('set') or '')
     with tablerow(tag, 'Metadata Prefix:'):
-        yield textinput(tag, "metadataPrefix", repository.get('metadataPrefix'))
+        yield textinput(tag, "metadataPrefix", repository.get('metadataPrefix') or '')
     with tablerow(tag, 'User-Agent:'):
-        yield textinput(tag, "userAgent", repository.get('userAgent'))
+        yield textinput(tag, "userAgent", repository.get('userAgent') or '')
     with tablerow(tag, 'Authorization Key:'):
-        yield textinput(tag, "authorizationKey", repository.get('authorizationKey'))
+        yield textinput(tag, "authorizationKey", repository.get('authorizationKey') or '')
     yield "<tr><td>Mapping:</td><td>"
     yield common.dropdown(name="mappingId", options=[('', '')] + mappings, selected=repository.get('mappingId') or '')
     yield """

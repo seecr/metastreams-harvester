@@ -96,10 +96,10 @@ def card_domainRepositoryGroups(tag, domain, **kwargs):
     with tag("div", id_="placeholder_FrmCreateRepositoryGroup"):
         with tag("form.form", id_="FrmCreateRepositoryGroup", **{'data-domainId': domainId}):
             with tag("input", type_="hidden", name="domainId", value=domainId): pass
-            with tag("div.row"):
-                with tag("div.col"):
+            with tag("div.d-flex.flex-row"):
+                with tag("div.flex-fill.me-2"):
                     yield page2.textInput(tag, label="Identifier", name="identifier", value="")
-                with tag("div.col-1.d-flex.flex-column.justify-content-end"):
+                with tag("div.d-flex.flex-column.flex-shrink-1.justify-content-end"):
                     with tag("button.btn.btn-small.btn-primary", type_="submit", id_="BtnCreateRepositoryGroup"):
                         yield "Aanmaken"
 
@@ -221,7 +221,7 @@ def popup_target(tag, arguments, **kwargs):
                     label="Targets (hold CTRL/CMD to select multiple targets",
                     items=[(each.get("identifier"), each.get("name")) for each in otherTargets],
                     selected=target.get("delegateIds", []),
-                    size=3)
+                    height="6em")
 
     with tag("div", id_="placeholder_FrmUpdateTarget"):
         with tag("form.form", id_="FrmUpdateTarget"):

@@ -80,7 +80,37 @@ function init_cardClosingHours() {
     form_resetBordersAndDisabled(_frm, _btn);
 }
 
+function init_cardRepositoryActions() {
+
+}
+
 $(document).ready(function() {
     init_cardRepositoryAttributes();
+    init_cardRepositoryActions();
     init_cardClosingHours();
+
+    $("button.helpText").each(function(index) {
+        var _btn = $(this);
+        _btn
+            .unbind("click")
+            .click(function(e) {
+                e.preventDefault();
+                var _modal = $("#modal");
+                _modal.find("#placeholder_modal-title").html(_btn.data('caption'));
+                $.get("/page2/modal/helpText", $.param({"text": _btn.data("helptext")}))
+                    .done(function(data) {
+                        _modal.find("#placeholder_modal-body")
+                            .empty()
+                            .append(data)
+                        _modal.find("button")
+                            .unbind("click")
+                            .click(function(e) {
+                                e.preventDefault();
+                                _modal.modal("hide");
+                            });
+                    });
+                _modal.modal("show");
+            });
+    })
+
 })

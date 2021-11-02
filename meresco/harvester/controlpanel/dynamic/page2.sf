@@ -183,11 +183,17 @@ def thead(tag, ths):
 def floatingLabel(func):
     def f(tag, *args, **kwargs):
         label = kwargs.get("label", "")
+        helpText = kwargs.get("helpText", "")
         with tag("div.form-floating"):
             controlId = uuid()
             yield func(tag, *args, controlId=controlId, **kwargs)
-            with tag("label", for_=controlId):
+            with tag("label"):
                 yield label
+
+            if helpText != "":
+                with tag("div"):
+                    with tag("button.btn.seecr-btn.helpText", **{'data-helptext': helpText, 'data-caption': label}):
+                        with tag("i.bi.bi-question-circle"): yield ""
     return f
 
 @floatingLabel
@@ -196,6 +202,7 @@ def dropdown(tag, label, items, name, controlId, selected=None):
         for value, each in items:
             with tag("option", value=str(value), selected="SELECTED" if value == selected else ""):
                 yield each
+
 @floatingLabel
 def numberInput(tag, label, name, minValue, maxValue, value, controlId):
     with tag("input.form-control", id_=controlId, type_="number", name=name, min_=minValue, max_=maxValue, value=str(value)):
@@ -212,19 +219,19 @@ def textLabel(tag, label, value, controlId):
         yield ''
 
 @floatingLabel
-def checkbox(tag, label, name, controlId, checked=False):
+def checkbox(tag, label, name, controlId, checked=False, helpText=""):
     with tag("div.form-check.form-switch.form-control"):
         with tag("input.form-check-input",
             style="margin-left: 0em",
-            id_=controlId, 
+            id_=controlId,
             type_="checkbox",
             name=name,
             checked="checked" if checked else ""): yield ""
 
 @floatingLabel
-def selectList(tag, label, items, name, controlId, selected=None, size=3):
+def selectList(tag, label, items, name, controlId, selected=None, height=None):
     selected = selected or []
-    with tag("select.form-select", multiple="multiple", size=size, name=name, id_=controlId):
+    with tag("select.form-select", multiple="multiple", name=name, id_=controlId, style=f"height: {height}" if not height is None else ''):
         for value, each in items:
             with tag("option", value=str(value), selected="SELECTED" if value in selected else ""):
                 yield each
@@ -233,3 +240,17 @@ def selectList(tag, label, items, name, controlId, selected=None, size=3):
 def textarea(tag, label, name, value, controlId, rows=3, wrap=None, extraClasses=None, height=None):
     with tag("textarea.form-control", class_=extraClasses or [], name=name, rows=rows, wrap=wrap, style=f"height: {height}" if not height is None else ''):
         yield value
+
+def main(**kwargs):
+    renderFunc = findPath("modal", dict(helpText=_renderHelp), **kwargs)
+    if not renderFunc is None:
+        yield renderFunc(**kwargs)
+
+def _renderHelp(tag, arguments, **kwargs):
+    text = arguments.get("text", [""])[0]
+    with tag("div.d-flex.flex-column"):
+        with tag("div"):
+            yield text
+        with tag("div.d-flex.flex-row-reverse"):
+            with tag("button.btn.btn-small.btn-primary"):
+                yield "OK"
