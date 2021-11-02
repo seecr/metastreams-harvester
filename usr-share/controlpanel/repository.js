@@ -81,6 +81,26 @@ function init_cardClosingHours() {
 }
 
 function init_cardRepositoryActions() {
+    var _frm = $("#FrmRepositoryActions");
+    var _btn = $("#BtnRepositoryActions");
+    _btn
+        .prop("disabled", true)
+        .unbind("click")
+        .click(function(e) {
+            e.preventDefault();
+/*
+            $.post("/actions/updateRepositoryAtctions", _frm.serialize())
+                .done(function(data) {
+                    if (data['success'] == true) {
+                        form_resetBordersAndDisabled(_frm, _btn);
+                    } else {
+                        msg_Error(placeholder=$("#placeholder_FrmRepositoryAtctions"), identifier=undefined, text=data['message']);
+                    }
+                })
+                */
+        });
+    form_setBordersAndDisabled(_frm, _btn);
+    form_resetBordersAndDisabled(_frm, _btn);
 
 }
 

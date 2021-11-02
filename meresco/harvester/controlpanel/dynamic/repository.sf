@@ -88,21 +88,21 @@ def card_repositoryAttributes(tag, domain, repository, repositoryGroupId, **kwar
                     yield page2.textInput(tag, label="Base URL", name="baseurl", value=repository.get("baseurl") or '')
 
             with tag("div.row.mb-2"):
-                with tag("div.col"):
+                with tag("div.col.pe-0"):
                     yield page2.textInput(tag, label="Set", name="set", value=repository.get("set") or '')
-                with tag("div.col"):
+                with tag("div.col.pe-0"):
                     yield page2.textInput(tag, label="Metadata Prefix", name="metadataPrefix", value=repository.get("metadataPrefix") or '')
                 with tag("div.col"):
                     yield page2.textInput(tag, label="Target Collection", name="collection", value=repository.get("collection"))
 
             with tag("div.row.mb-2"):
-                with tag("div.col"):
+                with tag("div.col.pe-0"):
                     yield page2.textInput(tag, label="User-Agent", name="userAgent", value=repository.get("userAgent") or '')
                 with tag("div.col"):
                     yield page2.textInput(tag, label="Authorization Key", name="authorizationKey", value=repository.get("authorizationKey") or '')
 
             with tag("div.row.mb-2"):
-                with tag("div.col"):
+                with tag("div.col.pe-0"):
                     yield page2.dropdown(tag,
                         label="Mapping",
                         name="mappingId",
@@ -131,13 +131,13 @@ def card_repositoryActions(tag, domain, repository, repositoryGroupId, **kwargs)
             with tag("input", type_="hidden", name="repositoryGroupId", value=repositoryGroupId): pass
 
             with tag("div.row.mb-2"):
-                with tag("div.col"):
+                with tag("div.col.pe-0"):
                     yield page2.numberInput(tag, label="Maximale aantal validatie fouten",
                         minValue=60,
                         maxValue=7200,
                         name="maximumIgnore",
                         value=repository.get("maximumIgnore") or '')
-                with tag("div.col"):
+                with tag("div.col.pe-0"):
                     yield page2.checkbox(tag,
                         label="Harvester aan", name="use",
                         checked=repository.get("use", False))
@@ -148,7 +148,7 @@ def card_repositoryActions(tag, domain, repository, repositoryGroupId, **kwargs)
                         items=[('', '-'), ('clear', 'Clear'), ('refresh', 'Refresh')],
                         selected=repository.get("repositoryAction") or '')
             with tag("div.row.mb-2"):
-                with tag("div.col"):
+                with tag("div.col.pe-0"):
                     yield page2.numberInput(tag, label="Interval",
                         minValue=60,
                         maxValue=7200,
