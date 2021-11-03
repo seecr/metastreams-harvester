@@ -237,8 +237,8 @@ def selectList(tag, label, items, name, controlId, selected=None, height=None):
                 yield each
 
 @floatingLabel
-def textarea(tag, label, name, value, controlId, rows=3, wrap=None, extraClasses=None, height=None):
-    with tag("textarea.form-control", class_=extraClasses or [], name=name, rows=rows, wrap=wrap, style=f"height: {height}" if not height is None else ''):
+def textarea(tag, label, name, value, controlId, wrap=None, extraClasses=None, height=None):
+    with tag("textarea.form-control", class_=extraClasses or [], name=name, id_=controlId, wrap=wrap, style=f"height: {height}" if not height is None else ''):
         yield value
 
 def main(**kwargs):

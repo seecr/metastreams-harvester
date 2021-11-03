@@ -33,6 +33,7 @@
 from urllib.parse import urlencode
 from urllib.parse import parse_qs, urlparse
 from functools import partial
+from json import loads, JSONDecodeError
 
 from meresco.components.http.utils import redirectHttp, badRequestHtml, Ok
 from meresco.html import PostActions
@@ -56,7 +57,7 @@ class HarvesterDataActions(PostActions):
         self.registerAction('addRepositoryClosingHours', self._addRepositoryClosingHours)
         self.registerAction('deleteRepositoryClosingHours', self._deleteReppositoryClosingHours)
 
-        #self.registerAction('updateRepositoryFieldDefinitions', self._updateRepositoryFieldDefinitions)
+        self.registerAction('updateFieldDefinition', self._updateFieldDefinition)
 
         self.registerAction('addMapping', self._addMapping)
         self.registerAction('updateMapping', self._updateMapping)
@@ -270,6 +271,20 @@ class HarvesterDataActions(PostActions):
                 domainId=data.domainId,
                 closingHoursIndex=data.closingHour,
             )
+        except Exception as e:
+            yield response(False, message=str(e))
+            return
+        yield response(True)
+
+    @check_and_parse('domainId', 'fieldDefinition', userCheck='admin')
+    def _updateFieldDefinition(self, data, **kwargs):
+        fieldDefinition = data.fieldDefinition
+        try:
+            fieldDefinition = loads(fieldDefinition)
+            self.call.updateFieldDefinition(domainId=data.domainId, data=fieldDefinition)
+        except JSONDecodeError:
+            yield response(False, message="Ongeldige JSON")
+            return
         except Exception as e:
             yield response(False, message=str(e))
             return

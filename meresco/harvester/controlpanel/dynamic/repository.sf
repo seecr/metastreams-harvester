@@ -71,6 +71,8 @@ def _content(tag, arguments, **kwargs):
     cardKwargs.update(kwargs)
     yield page2.card(f"Repository Gegevens - {repositoryId}", card_repositoryAttributes, **cardKwargs)
     yield page2.card("Uitvoering", card_repositoryActions, **cardKwargs)
+    fieldDefinition = observable.call.getFieldDefinition(domainId=domainId)
+    # yield str(fieldDefinition)
     #yield page2.card("Field Definitions", card_fieldDefinitions, **cardKwargs)
     yield page2.card("Closing Hours", card_closingHours, **cardKwargs)
 

@@ -220,10 +220,10 @@ function init_cardMapping() {
                             .empty()
                             .append(data);
 
-                        
+
                         var _frm = _modal_body.find("#FrmUpdateMapping");
                         var _btn = _modal_body.find("#BtnUpdateMapping");
-                        
+
                         _btn
                             .unbind("click")
                             .click(function(e) {
@@ -268,9 +268,31 @@ function init_cardMapping() {
     form_resetBordersAndDisabled(_frm, _btn);
 }
 
+function init_cardFieldDefinition() {
+    var _frm = $("#FrmFieldDefinition");
+    var _btn = $("#BtnFieldDefinition");
+
+    _btn
+        .unbind("click")
+        .click(function(e) {
+            e.preventDefault();
+            $.post("/actions/updateFieldDefinition", _frm.serialize())
+                .done(function(data) {
+                    if (data['success'] == true) {
+                        form_resetBordersAndDisabled(_frm, _btn, true);
+                    } else {
+                        msg_Error(placeholder=$("#placeholder_FrmFieldDefinition"), identifier=undefined, text=data['message']);
+                    }
+                })
+        })
+    form_setBordersAndDisabled(_frm, _btn);
+    form_resetBordersAndDisabled(_frm, _btn);
+}
+
 $(document).ready(function() {
     init_domainAttributes();
     init_cardRepositoryGroup();
     init_cardTarget();
     init_cardMapping();
+    init_cardFieldDefinition();
 })

@@ -60,6 +60,7 @@ def main(**kwargs):
 
 
 def _content(tag, arguments, **kwargs):
+    user = kwargs['user']
     domainId = arguments.get("identifier", [None])[0]
     domain = observable.call.getDomain(domainId)
 
@@ -74,6 +75,8 @@ def _content(tag, arguments, **kwargs):
             yield page2.card("Targets", card_domainTargets, tag=tag, domain=domain, **kwargs)
         with tag("div.col"):
             yield page2.card("Mappings", card_domainMappings, tag=tag, domain=domain, **kwargs)
+    if user.isAdmin():
+        yield page2.card("Field definition", card_fieldDefinition, tag=tag, domain=domain, **kwargs)
 
 
 def card_domainAttributes(tag, domain, **kwargs):
@@ -105,6 +108,21 @@ def card_domainRepositoryGroups(tag, domain, **kwargs):
 
     with tag("div", id_="placeholder_table_repositorygroups"):
         yield table_repositoryGroups(tag, domain=domain, **kwargs)
+
+def card_fieldDefinition(tag, domain, **kwargs):
+    domainId = domain["identifier"]
+    fieldDefinition = observable.call.getFieldDefinition(domainId=domainId)
+    with tag("div", id_="placeholder_FrmFieldDefinition"):
+        with tag("form.form", id_="FrmFieldDefinition"):
+            with tag("input", type_="hidden", name="domainId", value=domainId): pass
+            with tag("div.d-flex.flex-column"):
+                with tag("div"):
+                    value = dumps(fieldDefinition, indent=2)
+                    height = '40em' if value.count('\n') > 10 else '10em'
+                    yield page2.textarea(tag, label='Field Definition', name='fieldDefinition', value=value, height=height)
+                with tag("div.d-flex.flex-row-reverse.mt-2"):
+                    with tag("button.btn.btn-small.btn-primary", type_="submit", id_="BtnFieldDefinition"):
+                        yield "Opslaan"
 
 
 def table_repositoryGroups(tag, domain=None, **kwargs):

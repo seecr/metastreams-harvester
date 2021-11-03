@@ -253,6 +253,38 @@ class HarvesterDataActionsTest(SeecrTestCase):
             'identifier': 'repo-id',
             'closingHoursIndex': '0'}, self.observable.calledMethods[0].kwargs)
 
+    def testUpdateFieldDefinition(self):
+        header, body = parseResponse(asBytes(self.dna.all.handleRequest(
+            user=CallTrace(returnValues=dict(isAdmin=True)),
+            Method='POST',
+            path='/actions/updateFieldDefinition',
+            Body=bUrlencode(dict(
+                domainId='domain-id',
+                fieldDefinition='{"is":"json"}',
+                ), doseq=True))))
+        self.assertEqual('200', header['StatusCode'])
+        self.assertEqual(dict(success=True), JsonDict.loads(body))
+        self.assertEqual(1, len(self.observable.calledMethods))
+        self.assertEqual('updateFieldDefinition', self.observable.calledMethods[0].name)
+        self.assertEqual({
+                'domainId': 'domain-id',
+                'data': {'is':'json'},
+            }, self.observable.calledMethods[0].kwargs)
+
+    def testUpdateFieldDefinition_error(self):
+        header, body = parseResponse(asBytes(self.dna.all.handleRequest(
+            user=CallTrace(returnValues=dict(isAdmin=True)),
+            Method='POST',
+            path='/actions/updateFieldDefinition',
+            Body=bUrlencode(dict(
+                domainId='domain-id',
+                fieldDefinition='{"is no json"}',
+                ), doseq=True))))
+        self.assertEqual('200', header['StatusCode'])
+        self.assertEqual(dict(success=False, message='Ongeldige JSON'), JsonDict.loads(body))
+        self.assertEqual(0, len(self.observable.calledMethods))
+
+
     def updateTheRepository(self, baseurl='', set='', metadataPrefix='', mappingId='', targetId='', collection='', maximumIgnore=0, use=False, continuous=False, complete=True, action='', shopclosed=None):
         self.hd.updateRepositoryAttributes(
                 identifier='repository',
