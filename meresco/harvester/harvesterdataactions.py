@@ -138,7 +138,7 @@ class HarvesterDataActions(PostActions):
         yield response(True)
 
 
-    @check_and_parse('identifier', 'domainId', "baseurl", "set", "metadataPrefix", "userAgent", "authorizationKey", "mappingId", "targetId", userCheck='user', keepEmpty=False)
+    @check_and_parse('identifier', 'domainId', "baseurl", "set", "metadataPrefix", "userAgent", "authorizationKey", "collection", "mappingId", "targetId", userCheck='user', keepEmpty=False)
     def _updateRepositoryAttributes(self, data, **kwargs):
         try:
             self.call.updateRepositoryAttributes(**data.asDict())
@@ -146,55 +146,6 @@ class HarvesterDataActions(PostActions):
             yield response(False, message=str(e))
             return
         yield response(True)
-
-    def _updateRepository(self, identifier, arguments):
-        domainId = arguments['domainId'][0]
-        shopclosed = []
-        shopStart = 0 if 'addTimeslot' in arguments else 1
-        shopEnd = 1 + int(arguments.get('numberOfTimeslots', [''])[0] or '0')
-        for i in range(shopStart, shopEnd):
-            if arguments.get('deleteTimeslot_%s.x' % i, [None])[0]:
-                continue
-            shopclosed.append(str(Timeslot('{week}:{weekday}:{begin}:00-{week}:{weekday}:{end}:00'.format(
-                    week=arguments.get('shopclosedWeek_%s' % i, ['*'])[0],
-                    weekday=arguments.get('shopclosedWeekDay_%s' % i, ['*'])[0],
-                    begin=arguments.get('shopclosedBegin_%s' % i, ['*'])[0],
-                    end=arguments.get('shopclosedEnd_%s' % i, ['*'])[0],
-                ))))
-
-        extra = {}
-        converters = {
-            'text': str,
-            'bool': lambda value: value == "on"
-        }
-        fieldDefinitions = self.call.getFieldDefinition(domainId=domainId)
-        for definition in fieldDefinitions.get('repository_fields', []):
-            fieldname = "extra_{}".format(definition['name'])
-            if definition.get('type') == 'bool':
-                # checkboxes when not checked are not present in the form
-                extra[definition['name']] = fieldname in arguments
-            elif fieldname in arguments:
-                extra[definition['name']] = converters.get(definition['type'], lambda x: x)(arguments[fieldname][0])
-
-        self.call.updateRepository(
-                identifier=identifier,
-                domainId=domainId,
-                baseurl=arguments.get('baseurl', [None])[0],
-                set=arguments.get('set', [None])[0],
-                metadataPrefix=arguments.get('metadataPrefix', [None])[0],
-                mappingId=arguments.get('mappingId', [None])[0],
-                targetId=arguments.get('targetId', [None])[0],
-                collection=arguments.get('collection', [None])[0],
-                maximumIgnore=int(arguments.get('maximumIgnore', [None])[0] or '0'),
-                use='use' in arguments,
-                continuous=int(arguments.get('continuous', ['0'])[0]) or None,
-                complete='complete' in arguments,
-                action=arguments.get('repositoryAction', [None])[0],
-                userAgent=arguments.get('userAgent', [None])[0],
-                authorizationKey=arguments.get('authorizationKey', [None])[0],
-                shopclosed=shopclosed,
-                extra=extra,
-            )
 
     @check_and_parse('identifier', 'domainId', 'repositoryGroupId', userCheck='user')
     def _deleteRepository(self, data, **kwargs):
@@ -313,7 +264,6 @@ class HarvesterDataActions(PostActions):
 
     @check_and_parse('repositoryId', 'domainId', 'closingHour', userCheck='user')
     def _deleteReppositoryClosingHours(self, data, **kwargs):
-        print(data)
         try:
             self.call.deleteClosingHours(
                 identifier=data.repositoryId,

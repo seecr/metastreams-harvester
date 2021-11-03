@@ -81,7 +81,7 @@ class HarvesterTest(IntegrationTestCase):
             self.harvesterData.addRepository(identifier=repositoryId, domainId=domain, repositoryGroupId=repositoryGroupId)
         except ValueError:
             pass
-        self.harvesterData.updateRepository(
+        self.harvesterData.updateRepositoryAttributes(
                 identifier=repositoryId,
                 domainId=domain,
                 baseurl=baseUrl,
@@ -95,7 +95,6 @@ class HarvesterTest(IntegrationTestCase):
                 complete=complete,
                 continuous=continuous,
                 action=action,
-                shopclosed=[],
                 userAgent='',
                 authorizationKey='',
             )

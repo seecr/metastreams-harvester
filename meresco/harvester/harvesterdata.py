@@ -150,11 +150,25 @@ class HarvesterData(object):
         repo = self.getRepository(identifier, domainId)
         self._store.deleteData(id_combine(domainId, identifier), 'repository')
         self._store.addData(id_combine(domainId, repositoryGroupId), 'repositoryGroup', group)
-    
+
 
     def updateRepositoryAttributes(self, **kwargs):
         mandatory = ['identifier', 'domainId']
-        allowed = ['baseurl', 'set', 'metadataPrefix', 'mappingId', 'targetId', 'collection', 'maximumIgnore', 'use', 'continuous', 'complete', 'userAgent', 'authorizationKey']
+        allowed = [
+            'baseurl',
+            'set',
+            'metadataPrefix',
+            'mappingId',
+            'targetId',
+            'collection',
+            'maximumIgnore',
+            'use',
+            'continuous',
+            'complete',
+            'userAgent',
+            'authorizationKey',
+            'action',
+        ]
         for each in mandatory:
             if not each in kwargs:
                 raise KeyError(f"'{each}' is mandatory")
@@ -185,26 +199,6 @@ class HarvesterData(object):
         repository['shopclosed'] = shopClosed
         self._store.addData(id_combine(domainId, identifier), 'repository', repository)
 
-
-
-    def updateRepository(self, identifier, domainId, baseurl, set, metadataPrefix, mappingId, targetId, collection, maximumIgnore, use, continuous, complete, action, shopclosed, userAgent, authorizationKey, **kwargs):
-        repository = self.getRepository(identifier, domainId)
-        repository['baseurl'] = baseurl
-        repository['set'] = set
-        repository['metadataPrefix'] = metadataPrefix
-        repository['mappingId'] = mappingId
-        repository['targetId'] = targetId
-        repository['collection'] = collection
-        repository['maximumIgnore'] = maximumIgnore
-        repository['use'] = use
-        repository['complete'] = complete
-        repository['continuous'] = continuous
-        repository['action'] = action
-        repository['userAgent'] = userAgent
-        repository['authorizationKey'] = authorizationKey
-        repository['shopclosed'] = shopclosed
-        repository.update(**kwargs)
-        self._store.addData(id_combine(domainId, identifier), 'repository', repository)
 
     def repositoryDone(self, identifier, domainId):
         repository = self.getRepository(identifier, domainId)

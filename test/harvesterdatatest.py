@@ -360,43 +360,6 @@ class _HarvesterDataTest(SeecrTestCase):
             self.assertEqual(repoid, self.hd.getRepository('repository2', 'adomain', guid=repoid)['@id'])
             self.assertNotEqual(groupid, self.hd.getRepositoryGroup('Group1', 'adomain')['@id'])
 
-    def testUpdateRepository(self):
-        if self.with_id:
-            repoid = self.hd.getRepository('repository1', 'adomain')['@id']
-        self.hd.updateRepository('repository1',
-                domainId='adomain',
-                baseurl='baseurl',
-                set='set',
-                metadataPrefix='metadataPrefix',
-                mappingId='mappingId',
-                targetId='targetId',
-                collection='collection',
-                maximumIgnore=0,
-                use=False,
-                complete=True,
-                continuous=True,
-                action='action',
-                shopclosed=['40:1:09:55-40:1:10:00'],
-                userAgent='',
-                authorizationKey='',
-            )
-        repository = self.hd.getRepository('repository1', 'adomain')
-        self.assertEqual('baseurl', repository['baseurl'])
-        self.assertEqual('set', repository['set'])
-        self.assertEqual('metadataPrefix', repository['metadataPrefix'])
-        self.assertEqual('mappingId', repository['mappingId'])
-        self.assertEqual('targetId', repository['targetId'])
-        self.assertEqual('collection', repository['collection'])
-        self.assertEqual(0, repository['maximumIgnore'])
-        self.assertEqual(False, repository['use'])
-        self.assertEqual(True, repository['complete'])
-        self.assertEqual(True, repository['continuous'])
-        self.assertEqual('action', repository['action'])
-        self.assertEqual(['40:1:09:55-40:1:10:00'], repository['shopclosed'])
-        if self.with_id:
-            self.assertEqual(repoid, repository['@base'])
-            self.assertNotEqual(repoid, repository['@id'])
-
     def testUpdateRepositoryAttributes(self):
         repository = self.hd.getRepository('repository1', 'adomain')
         try:
@@ -419,7 +382,8 @@ class _HarvesterDataTest(SeecrTestCase):
         self.assertEqual("prefix", repository['metadataPrefix'])
 
     def testRepositoryDone(self):
-        self.hd.updateRepository('repository1',
+        self.hd.updateRepositoryAttributes(
+                identifier='repository1',
                 domainId='adomain',
                 baseurl='baseurl',
                 set='set',
@@ -432,13 +396,16 @@ class _HarvesterDataTest(SeecrTestCase):
                 complete=True,
                 continuous=True,
                 action='action',
-                shopclosed=['40:1:09:55-40:1:10:00'],
                 userAgent='',
                 authorizationKey='',
             )
+        repository = self.hd.getRepository('repository1', 'adomain')
+        self.assertEqual('action', repository['action'])
         if self.with_id:
             repoid = self.hd.getRepository('repository1', 'adomain')['@id']
+
         self.hd.repositoryDone(identifier='repository1', domainId='adomain')
+
         repository = self.hd.getRepository('repository1', 'adomain')
         self.assertEqual(None, repository['action'])
         if self.with_id:

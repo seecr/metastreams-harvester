@@ -91,57 +91,6 @@ class HarvesterDataActionsTest(SeecrTestCase):
         self.assertEqual("addDomain", self.observable.calledMethods[0].name)
         self.assertEqual(dict(identifier='aap'), self.observable.calledMethods[0].kwargs)
 
-    def testUpdateRepository(self):
-        data = {
-            'redirectUri': 'http://example.org',
-            "identifier": "repository",
-            "domainId": "domain",
-            "maximumIgnore": "23",
-            "complete": "1",
-            "continuous": "60",
-            "repositoryAction": "clear",
-            "numberOfTimeslots": "0",
-        }
-        dataAttributes = {
-            "repositoryGroupId": "ignored",
-            "identifier": "repository",
-            "domainId": "domain",
-            "baseurl": "http://example.org/oai",
-            "set": "ASET",
-            "metadataPrefix": "oai_dc",
-            "mappingId": "mapping_identifier",
-            "targetId": "",
-            "collection": "the collection",
-            "extra_name": "Name for this object",
-            "extra_choice_1": '1'
-        }
-        consume(self.hda.handleRequest(Method='POST', path='/somewhere/updateRepository', Body=bUrlencode(data, doseq=True)))
-        header, body = parseResponse(asBytes(self.dna.all.handleRequest(
-            user=CallTrace(returnValues=dict(isAdmin=True)),
-            Method='POST',
-            path='/somewhere/updateRepositoryAttributes',
-            Body=bUrlencode(dataAttributes, doseq=True))))
-        repository = self.hd.getRepository('repository', 'domain')
-        self.assertEqual('group', repository["repositoryGroupId"])
-        self.assertEqual("repository", repository["identifier"])
-        self.assertEqual("http://example.org/oai", repository["baseurl"])
-        self.assertEqual("ASET", repository["set"])
-        self.assertEqual("oai_dc", repository["metadataPrefix"])
-        self.assertEqual("mapping_identifier", repository["mappingId"])
-        self.assertEqual(None, repository["targetId"])
-        self.assertEqual("the collection", repository["collection"])
-        self.assertEqual(23, repository["maximumIgnore"])
-        self.assertEqual(True, repository["complete"])
-        self.assertEqual(60, repository["continuous"])
-        self.assertEqual(False, repository["use"])
-        self.assertEqual("clear", repository["action"])
-        self.assertEqual([], repository['shopclosed'])
-        self.assertEqual({
-            "name": "Name for this object",
-            "choice_1": True,
-            "choice_2": False
-            }, repository['extra'])
-
     def testSetRepositoryDone(self):
         self.updateTheRepository(action='refresh')
         repository = self.hd.getRepository('repository', 'domain')
@@ -230,6 +179,7 @@ class HarvesterDataActionsTest(SeecrTestCase):
             'set': None,
             'metadataPrefix': None,
             'userAgent': 'Herman in de zon op een terras',
+            'collection': None,
             'authorizationKey': None,
             'mappingId': None,
             'targetId': None}, self.observable.calledMethods[0].kwargs)
@@ -254,6 +204,7 @@ class HarvesterDataActionsTest(SeecrTestCase):
             'set': None,
             'metadataPrefix': None,
             'userAgent': None,
+            'collection': None,
             'authorizationKey': None,
             'mappingId': None,
             'targetId': None}, self.observable.calledMethods[1].kwargs)
@@ -303,21 +254,22 @@ class HarvesterDataActionsTest(SeecrTestCase):
             'closingHoursIndex': '0'}, self.observable.calledMethods[0].kwargs)
 
     def updateTheRepository(self, baseurl='', set='', metadataPrefix='', mappingId='', targetId='', collection='', maximumIgnore=0, use=False, continuous=False, complete=True, action='', shopclosed=None):
-        self.hd.updateRepository('repository', domainId='domain',
-            baseurl=baseurl,
-            set=set,
-            metadataPrefix=metadataPrefix,
-            mappingId=mappingId,
-            targetId=targetId,
-            collection=collection,
-            maximumIgnore=maximumIgnore,
-            use=use,
-            continuous=continuous,
-            complete=complete,
-            action=action,
-            shopclosed=shopclosed or [],
-            userAgent='',
-            authorizationKey='',
-        )
+        self.hd.updateRepositoryAttributes(
+                identifier='repository',
+                domainId='domain',
+                baseurl=baseurl,
+                set=set,
+                metadataPrefix=metadataPrefix,
+                mappingId=mappingId,
+                targetId=targetId,
+                collection=collection,
+                maximumIgnore=maximumIgnore,
+                use=use,
+                continuous=continuous,
+                complete=complete,
+                action=action,
+                userAgent='',
+                authorizationKey='',
+            )
 
 
