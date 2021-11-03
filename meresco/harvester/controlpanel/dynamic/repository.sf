@@ -158,7 +158,7 @@ def card_repositoryActions(tag, domain, repository, repositoryGroupId, **kwargs)
                     yield page2.checkbox(tag, label="Aansluitend harvesten",
                         name="complete",
                         checked=repository.get("complete", False),
-                        helpText="Laat de harvester de repository in één keer harvesten door niet te wachten tussen OAI batches. Deze optie is met name bedoelt voor repositories met resumptionToken van korte levensduur.")
+                        helpText="Laat de harvester de repository in één keer harvesten door niet te wachten tussen OAI batches. Deze optie is met name voor repositories met resumptionToken van korte levensduur.")
 
             with tag("div.row"):
                 with tag("div.col"):
