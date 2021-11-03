@@ -65,11 +65,19 @@ function msg_create(placeholder, alertClass, icon, text) {
 }
 
 
-function msg_Error(placeholder=undefined, id=undefined, text="") {
+function msg_Error(placeholder=undefined, text="") {
     msg_create(placeholder, "alert-danger", "bi-emoji-frown", text);
 }
-function msg_Success(placeholder=undefined, id=undefined, text="") {
+function msg_Success(placeholder=undefined, text="") {
     msg_create(placeholder, "alert-success", "bi-emoji-smile", text);
+}
+function msg_clear(placeholder) {
+    if (placeholder != undefined) {
+        placeholder.find(".alert").each(function() {
+            var _alert = $(this);
+            _alert.alert("close");
+        });
+    }
 }
 
 function form_setBordersAndDisabled(form, button) {
@@ -184,6 +192,36 @@ function init_login_button() {
             })
     }
 }
+
+function form_init(frm, action, btn, placeholder, callback) {
+    btn
+        .unbind("click")
+        .click(function(e) {
+            e.preventDefault();
+            msg_clear(placeholder);
+            $.post(action, frm.serialize())
+                .done(function(data) {
+                    console.log(data);
+                    if (data['success'] == true) {
+                        form_resetBordersAndDisabled(frm, btn, !(frm.data('reset-on-submit') == undefined));
+                        if (callback != undefined) {
+                            callback(frm);
+                        }
+                    } else {
+                        if (placeholder == undefined) {
+                            console.log("ERROR: " + data['message']);
+                        } else {
+                            msg_Error(placeholder=placeholder, text=data['message']);
+                        }
+                    }
+                })
+        })
+    form_setBordersAndDisabled(frm, btn);
+    form_resetBordersAndDisabled(frm, btn);
+    console.log("form_init");
+}
+
+
 
 $(document).ready(function () {
     init_login_button();

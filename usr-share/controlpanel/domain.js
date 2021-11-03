@@ -1,22 +1,5 @@
 function init_domainAttributes() {
-    var _frm = $("#FrmDomainAttributes");
-    var _btn = $("#BtnDomainAttributes");
-    _btn
-        .prop("disabled", true)
-        .unbind("click")
-        .click(function(e) {
-            e.preventDefault();
-            $.post("/actions/updateDomain", _frm.serialize())
-                .done(function(data) {
-                    if (data['success'] == true) {
-                        form_resetBordersAndDisabled(_frm, _btn);
-                    } else {
-                        alert("Something went wrong!");
-                    }
-                })
-        });
-    form_setBordersAndDisabled(_frm, _btn);
-    form_resetBordersAndDisabled(_frm, _btn);
+    form_init($("#FrmDomainAttributes"), "/actions/updateDomain", $("#BtnDomainAttributes"), $("#placeholder_FrmDomainAttributes"));
 }
 
 function init_cardRepositoryGroup() {
@@ -55,24 +38,7 @@ function init_cardRepositoryGroup() {
             })
     }
     init_table_repositoryGroups();
-
-    _btn
-        .prop("disabled", true)
-        .unbind("click")
-        .click(function(e) {
-            e.preventDefault();
-            $.post("/actions/addRepositoryGroup", _frm.serialize())
-                .done(function(data) {
-                    if (data['success'] == true) {
-                        form_resetBordersAndDisabled(_frm, _btn, true);
-                        _load_table_repositoryGroups(_frm.data("domainid"));
-                    } else {
-                        msg_Error(placeholder=$("#placeholder_FrmCreateRepositoryGroup"), identifier=undefined, text=data['message']);
-                    }
-                })
-        });
-    form_setBordersAndDisabled(_frm, _btn);
-    form_resetBordersAndDisabled(_frm, _btn);
+    form_init(_frm, "/actions/addRepositoryGroup", _btn, $("#placeholder_FrmCreateRepositoryGroup"), function() {_load_table_repositoryGroups(_frm.data("domainid"))});
 }
 
 function init_cardTarget() {
@@ -104,7 +70,9 @@ function init_cardTarget() {
                         if (data['success'] == true) {
                             _load_table_targets(_domainId);
                         } else {
-                            console.log(data);
+                            msg_Error(
+                                placeholder=_placeholder,
+                                text=data['message'] || "Er ging iets niet goed.");
                         }
                     })
 
@@ -139,7 +107,6 @@ function init_cardTarget() {
                                         } else {
                                             msg_Error(
                                                 placeholder=$("#placeholder_FrmUpdateTarget"),
-                                                identifier=undefined,
                                                 text=data['message'] || "Er ging iets niet goed.");
 
                                         }
@@ -152,23 +119,7 @@ function init_cardTarget() {
             });
     }
     init_table_targets();
-
-    _btn
-        .unbind("click")
-        .click(function(e) {
-            e.preventDefault();
-            $.post("/actions/addTarget", _frm.serialize())
-                .done(function(data) {
-                    if (data['success'] == true) {
-                        form_resetBordersAndDisabled(_frm, _btn, true);
-                        _load_table_targets(_frm.data("domainid"));
-                    } else {
-                        msg_Error(placeholder=$("#placeholder_FrmCreateTarget"), identifier=undefined, text=data['message']);
-                    }
-                })
-        });
-    form_setBordersAndDisabled(_frm, _btn);
-    form_resetBordersAndDisabled(_frm, _btn);
+    form_init(_frm, "/actions/addTarget", _btn, $("#placeholder_FrmCreateTarget"), function() {_load_table_targets(_frm.data("domainid"))});
 }
 
 function init_cardMapping() {
@@ -237,7 +188,6 @@ function init_cardMapping() {
                                         } else {
                                             msg_Error(
                                                 placeholder=$("#placeholder_FrmUpdateMapping"),
-                                                identifier=undefined,
                                                 text=data['message'] || "Er ging iets niet goed.");
                                         }
                                     });
@@ -250,43 +200,11 @@ function init_cardMapping() {
             });
     }
     init_table_mappings();
-    _btn
-        .unbind("click")
-        .click(function(e) {
-            e.preventDefault();
-            $.post("/actions/addMapping", _frm.serialize())
-                .done(function(data) {
-                    if (data['success'] == true) {
-                        form_resetBordersAndDisabled(_frm, _btn, true);
-                        _load_table_mappings(_frm.data("domainid"));
-                    } else {
-                        msg_Error(placeholder=$("#placeholder_FrmCreateMapping"), identifier=undefined, text=data['message']);
-                    }
-                })
-        })
-    form_setBordersAndDisabled(_frm, _btn);
-    form_resetBordersAndDisabled(_frm, _btn);
+    form_init(_frm, "/actions/addMapping", _btn, $("#placeholder_FrmCreateMapping"), function() {_load_table_mappings(_frm.data("domainid"))});
 }
 
 function init_cardFieldDefinition() {
-    var _frm = $("#FrmFieldDefinition");
-    var _btn = $("#BtnFieldDefinition");
-
-    _btn
-        .unbind("click")
-        .click(function(e) {
-            e.preventDefault();
-            $.post("/actions/updateFieldDefinition", _frm.serialize())
-                .done(function(data) {
-                    if (data['success'] == true) {
-                        form_resetBordersAndDisabled(_frm, _btn, true);
-                    } else {
-                        msg_Error(placeholder=$("#placeholder_FrmFieldDefinition"), identifier=undefined, text=data['message']);
-                    }
-                })
-        })
-    form_setBordersAndDisabled(_frm, _btn);
-    form_resetBordersAndDisabled(_frm, _btn);
+    form_init( $("#FrmFieldDefinition"), "/actions/updateFieldDefinition", $("#BtnFieldDefinition"), $("#placeholder_FrmFieldDefinition"));
 }
 
 $(document).ready(function() {

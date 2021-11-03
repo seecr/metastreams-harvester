@@ -113,6 +113,7 @@ def renderMenu(tag, user):
                                     with tag("a.nav-link.dropdown-toggle", href="", role="button", **{
                                             "data-bs-toggle": "dropdown",
                                             "aria-expanded": "false"}):
+                                        with tag("i.bi.bi-shield.pe-1.text-success"): yield ''
                                         yield user.name
                                     with tag("ul.dropdown-menu.dropdown-menu-end"):
                                         with tag("li"):

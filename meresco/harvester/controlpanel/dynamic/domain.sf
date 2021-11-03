@@ -83,7 +83,7 @@ def card_domainAttributes(tag, domain, **kwargs):
     domainId = domain.get("identifier")
     uniqueId = uuid()
     with tag("div", id_="placeholder_FrmDomainAttributes"):
-        with tag("form.form", id_="FrmDomainAttributes"):
+        with tag("form.form", id_="FrmDomainAttributes", ):
             with tag("input", type_="hidden", name="identifier", value=domainId): pass
             with tag("div.row.mb-2"):
                 with tag("div.col"):
@@ -97,7 +97,7 @@ def card_domainRepositoryGroups(tag, domain, **kwargs):
     domainId = domain.get("identifier")
     uniqueId = uuid()
     with tag("div", id_="placeholder_FrmCreateRepositoryGroup"):
-        with tag("form.form", id_="FrmCreateRepositoryGroup", **{'data-domainId': domainId}):
+        with tag("form.form", id_="FrmCreateRepositoryGroup", **{'data-domainId': domainId, 'data-reset-on-submit': 'True'}):
             with tag("input", type_="hidden", name="domainId", value=domainId): pass
             with tag("div.d-flex.flex-row"):
                 with tag("div.flex-fill.me-2"):
@@ -155,7 +155,7 @@ def table_repositoryGroups(tag, domain=None, **kwargs):
 def card_domainTargets(tag, domain, **kwargs):
     domainId = domain.get("identifier")
     with tag("div", id_="placeholder_FrmCreateTarget"):
-        with tag("form.form", id_="FrmCreateTarget", **{'data-domainId': domainId}):
+        with tag("form.form", id_="FrmCreateTarget", **{'data-domainId': domainId, 'data-reset-on-submit': 'True'}):
             with tag("input", type_="hidden", name="domainId", value=domainId): pass
             with tag("div.row"):
                 with tag("div.col"):
@@ -266,7 +266,7 @@ def popup_target(tag, arguments, **kwargs):
 def card_domainMappings(tag, domain, **kwargs):
     domainId = domain.get("identifier")
     with tag("div", id_="placeholder_FrmCreateMapping"):
-        with tag("form.form", id_="FrmCreateMapping", **{'data-domainId': domainId}):
+        with tag("form.form", id_="FrmCreateMapping", **{'data-domainId': domainId, 'data-reset-on-submit': 'True'}):
             with tag("input", type_="hidden", name="domainId", value=domainId): pass
             with tag("div.row"):
                 with tag("div.col"):
