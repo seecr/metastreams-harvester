@@ -167,7 +167,7 @@ class HarvesterData(object):
             'complete',
             'userAgent',
             'authorizationKey',
-            'action',
+            'repositoryAction',
         ]
         for each in mandatory:
             if not each in kwargs:

@@ -209,6 +209,52 @@ class HarvesterDataActionsTest(SeecrTestCase):
             'mappingId': None,
             'targetId': None}, self.observable.calledMethods[1].kwargs)
 
+    def testUpdateRepositoryActionForm(self):
+        header, body = parseResponse(asBytes(self.dna.all.handleRequest(
+            user=CallTrace(returnValues=dict(isAdmin=True)),
+            Method='POST',
+            path='/actions/updateRepositoryActionAttributes',
+            Body=bUrlencode(dict(
+                identifier='repo-id',
+                domainId='domain-id',
+                maximumIgnore="42",
+                ), doseq=True))))
+        self.assertEqual('200', header['StatusCode'])
+        self.assertEqual(dict(success=True), JsonDict.loads(body))
+        self.assertEqual(1, len(self.observable.calledMethods))
+        self.assertEqual('updateRepositoryAttributes', self.observable.calledMethods[0].name)
+        self.assertEqual({
+            'complete': False,
+            'continuous': None,
+            'domainId': 'domain-id',
+            'identifier': 'repo-id',
+            'maximumIgnore': '42',
+            'repositoryAction': None,
+            'use': False}, self.observable.calledMethods[0].kwargs)
+
+    def testUpdateRepositoryActionForm_booleanFields(self):
+        header, body = parseResponse(asBytes(self.dna.all.handleRequest(
+            user=CallTrace(returnValues=dict(isAdmin=True)),
+            Method='POST',
+            path='/actions/updateRepositoryActionAttributes',
+            Body=bUrlencode(dict(
+                identifier='repo-id',
+                domainId='domain-id',
+                complete="on",
+                ), doseq=True))))
+        self.assertEqual('200', header['StatusCode'])
+        self.assertEqual(dict(success=True), JsonDict.loads(body))
+        self.assertEqual(1, len(self.observable.calledMethods))
+        self.assertEqual('updateRepositoryAttributes', self.observable.calledMethods[0].name)
+        self.assertEqual({
+            'complete': True,
+            'continuous': None,
+            'domainId': 'domain-id',
+            'identifier': 'repo-id',
+            'maximumIgnore': None,
+            'repositoryAction': None,
+            'use': False}, self.observable.calledMethods[0].kwargs)
+
     def testAddClosingHours(self):
         header, body = parseResponse(asBytes(self.dna.all.handleRequest(
             user=CallTrace(returnValues=dict(isAdmin=True)),

@@ -91,35 +91,19 @@ function init_cardTarget() {
                         _modal_body
                             .empty()
                             .append(data);
-                        var _frm = _modal_body.find("#FrmUpdateTarget");
-                        var _btn = _modal_body.find("#BtnUpdateTarget");
-
-                        _btn
-                            .unbind("click")
-                            .click(function(e) {
-                                e.preventDefault();
-                                $.post("/action/updateTarget", _frm.serialize())
-                                    .done(function(data) {
-                                        if (data['success'] == true) {
-                                            _load_table_targets(_row.data('domainid'));
-                                            form_setBordersAndDisabled(_frm, _btn);
-                                            form_resetBordersAndDisabled(_frm, _btn);
-                                        } else {
-                                            msg_Error(
-                                                placeholder=$("#placeholder_FrmUpdateTarget"),
-                                                text=data['message'] || "Er ging iets niet goed.");
-
-                                        }
-                                    });
-                            });
-                        form_setBordersAndDisabled(_frm, _btn);
-                        form_resetBordersAndDisabled(_frm, _btn);
+                        form_init(
+                            $("#FrmUpdateTarget"), "/action/updateTarget",
+                            $("#BtnUpdateTarget"), $("#placeholder_FrmUpdateTarget"),
+                            function() {_load_table_targets(_row.data('domainid'))})
                         _modal.modal('show');
                    })
             });
     }
     init_table_targets();
-    form_init(_frm, "/actions/addTarget", _btn, $("#placeholder_FrmCreateTarget"), function() {_load_table_targets(_frm.data("domainid"))});
+    form_init(
+        _frm, "/actions/addTarget", _btn,
+        $("#placeholder_FrmCreateTarget"),
+        function() {_load_table_targets(_frm.data("domainid"))});
 }
 
 function init_cardMapping() {
@@ -171,40 +155,24 @@ function init_cardMapping() {
                             .empty()
                             .append(data);
 
-
-                        var _frm = _modal_body.find("#FrmUpdateMapping");
-                        var _btn = _modal_body.find("#BtnUpdateMapping");
-
-                        _btn
-                            .unbind("click")
-                            .click(function(e) {
-                                e.preventDefault();
-                                $.post("/action/updateMapping", _frm.serialize())
-                                    .done(function(data) {
-                                        if (data['success'] == true) {
-                                            _load_table_mappings(_row.data('domainid'));
-                                            form_setBordersAndDisabled(_frm, _btn);
-                                            form_resetBordersAndDisabled(_frm, _btn);
-                                        } else {
-                                            msg_Error(
-                                                placeholder=$("#placeholder_FrmUpdateMapping"),
-                                                text=data['message'] || "Er ging iets niet goed.");
-                                        }
-                                    });
-                            });
-                        form_setBordersAndDisabled(_frm, _btn);
-                        form_resetBordersAndDisabled(_frm, _btn);
-
+                        form_init(
+                            $("#FrmUpdateMapping"), "/action/updateMapping",
+                            $("#BtnUpdateMapping"), $("#placeholder_FrmUpdateMapping"),
+                            function() {_load_table_mappings(_row.data('domainid'))})
                         _modal.modal('show');
                    })
             });
     }
     init_table_mappings();
-    form_init(_frm, "/actions/addMapping", _btn, $("#placeholder_FrmCreateMapping"), function() {_load_table_mappings(_frm.data("domainid"))});
+    form_init(
+        _frm, "/actions/addMapping", _btn, $("#placeholder_FrmCreateMapping"),
+        function() {_load_table_mappings(_frm.data("domainid"))});
 }
 
 function init_cardFieldDefinition() {
-    form_init( $("#FrmFieldDefinition"), "/actions/updateFieldDefinition", $("#BtnFieldDefinition"), $("#placeholder_FrmFieldDefinition"));
+    form_init(
+        $("#FrmFieldDefinition"), "/actions/updateFieldDefinition",
+        $("#BtnFieldDefinition"), $("#placeholder_FrmFieldDefinition"));
 }
 
 $(document).ready(function() {

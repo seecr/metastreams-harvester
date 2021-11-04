@@ -218,10 +218,7 @@ function form_init(frm, action, btn, placeholder, callback) {
         })
     form_setBordersAndDisabled(frm, btn);
     form_resetBordersAndDisabled(frm, btn);
-    console.log("form_init");
 }
-
-
 
 $(document).ready(function () {
     init_login_button();

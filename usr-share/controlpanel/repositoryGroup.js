@@ -1,28 +1,12 @@
 function init_domainAttributes() {
-    var _frm = $("#FrmRepositoryGroupAttributes");
-    var _btn = $("#BtnRepositoryGroupAttributes");
-    _btn
-        .prop("disabled", true)
-        .unbind("click")
-        .click(function(e) {
-            e.preventDefault();
-            $.post("/actions/updateRepositoryGroup", _frm.serialize())
-                .done(function(data) {
-                    if (data['success'] == true) {
-                        form_resetBordersAndDisabled(_frm, _btn);
-                    } else {
-                        alert("Something went wrong!");
-                    }
-                })
-        });
-    form_setBordersAndDisabled(_frm, _btn);
-    form_resetBordersAndDisabled(_frm, _btn);
+    form_init(
+        $("#FrmRepositoryGroupAttributes"), "/actions/updateRepositoryGroup",
+        $("#BtnRepositoryGroupAttributes"), $("iplaceholder_FrmRepositoryGroupAttributes"));
 }
 
 function init_cardRepositories() {
     var _frm = $("#FrmCreateRepository");
     var _btn = $("#BtnCreateRepository");
-    console.log(_btn);
 
     function _load_table_repositories(domainId, repositoryGroupId) {
         var _placeholder = $("#placeholder_table_repositories");
@@ -58,23 +42,10 @@ function init_cardRepositories() {
     }
     init_table_repositories();
 
-    _btn
-        .prop("disabled", true)
-        .unbind("click")
-        .click(function(e) {
-            e.preventDefault();
-            $.post("/actions/addRepository", _frm.serialize())
-                .done(function(data) {
-                    if (data['success'] == true) {
-                        form_resetBordersAndDisabled(_frm, _btn, true);
-                        _load_table_repositories(_frm.data("domainid"), _frm.data("repositorygroupid"));
-                    } else {
-                        msg_Error(placeholder=$("#placeholder_FrmCreateRepository"), identifier=undefined, text=data['message']);
-                    }
-                })
-        });
-    form_setBordersAndDisabled(_frm, _btn);
-    form_resetBordersAndDisabled(_frm, _btn);
+    form_init(
+        _frm, "/actions/addRepository",
+        _btn, $("#placeholder_FrmCreateRepository"),
+        function() {_load_table_repositories(_frm.data("domainid"), _frm.data("repositorygroupid"))});
 }
 
 $(document).ready(function() {

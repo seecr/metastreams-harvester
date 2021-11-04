@@ -50,13 +50,14 @@ def _contents(tag, arguments, **kwargs):
 def cardDomains(tag, **kwargs):
     user = kwargs.get("user", None)
     if user and user.isAdmin():
-        with tag("form.form", id_="FrmCreateDomain"):
-            with tag("div.d-flex.flex-row"):
-                with tag("div.flex-fill.me-2"):
-                    yield page2.textInput(tag, label="Naam", name="identifier", value="")
-                with tag("div.d-flex.flex-column.flex-shrink-1.justify-content-end"):
-                    with tag("button.btn.btn-small.btn-primary", type_="submit", id_="BtnCreateDomain"):
-                        yield "Aanmaken"
+        with tag("div", id_="placeholder_FrmCreateDomain"):
+            with tag("form.form", id_="FrmCreateDomain", **{'data-reset-on-submit': 'True'}):
+                with tag("div.d-flex.flex-row"):
+                    with tag("div.flex-fill.me-2"):
+                        yield page2.textInput(tag, label="Naam", name="identifier", value="")
+                    with tag("div.d-flex.flex-column.flex-shrink-1.justify-content-end"):
+                        with tag("button.btn.btn-small.btn-primary", type_="submit", id_="BtnCreateDomain"):
+                            yield "Aanmaken"
 
     with tag("div", id_="placeholder_domains"):
         yield table_domains(tag, **kwargs)
