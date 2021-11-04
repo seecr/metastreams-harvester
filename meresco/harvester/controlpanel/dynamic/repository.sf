@@ -72,9 +72,9 @@ def _content(tag, arguments, **kwargs):
     yield page2.card(f"Repository Gegevens - {repositoryId}", card_repositoryAttributes, **cardKwargs)
     yield page2.card("Uitvoering", card_repositoryActions, **cardKwargs)
     fieldDefinition = observable.call.getFieldDefinition(domainId=domainId)
-    if len(fieldDefinition) > 0:
-        yield page2.card("Field Definitions", card_fieldDefinitions, fieldDefinition=fieldDefinition, **cardKwargs)
-    yield page2.card("Closing Hours", card_closingHours, **cardKwargs)
+    if len(fieldDefinition) > 0 and 'repository_fields' in fieldDefinition:
+        yield page2.card("Aanvullende gegevens", card_fieldDefinitions, fieldDefinition=fieldDefinition.get("repository_fields"), **cardKwargs)
+    yield page2.card("Tijden niet beschikbaar", card_closingHours, **cardKwargs)
 
 
 def card_repositoryAttributes(tag, domain, repository, repositoryGroupId, **kwargs):
@@ -167,11 +167,21 @@ def card_repositoryActions(tag, domain, repository, repositoryGroupId, **kwargs)
                     with tag("button.btn.btn-small.btn-primary.float-end", type_="submit", id_="BtnRepositoryActions"):
                         yield "Aanpassen"
 
-def card_fieldDefinitions(tag, domain, repository, **kwargs):
+def card_fieldDefinitions(tag, domain, repository, fieldDefinition, **kwargs):
     with tag("div", id_="placeholder_FrmFieldDefinition"):
         with tag("form.form", id_="FrmFieldDefinition"):
-            pass
-
+            for each in fieldDefinition:
+                fieldName = "extra_{}".format(each['name'])
+                with tag("div.row.mb-2"):
+                    with tag("div.col.pe-0"):
+                        if each['type'] == "text":
+                            yield page2.textInput(tag, label=each['label'], name=fieldName, value=repository.get(fieldName) or '')
+                        elif each['type'] == "bool":
+                            yield page2.checkbox(tag, label=each['label'], name=fieldName,
+                                checked=repository.get(fieldName, False))
+                        elif each['type'] == "textarea":
+                            yield page2.textarea(tag, label=each['label'], name=fieldName,
+                                value=repository.get(fieldName) or '',height="10em")
 
 def card_closingHours(tag, domain, repository, **kwargs):
     weeks = [(str(x), x) for x in range(1, 54)]
