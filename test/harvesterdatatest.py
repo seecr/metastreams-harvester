@@ -532,6 +532,48 @@ class _HarvesterDataTest(SeecrTestCase):
         else:
             self.assertEqual({'my': 'definition'}, definition)
 
+
+    def testUpdateRepositoryFieldDefinitions(self):
+        self.hd.updateFieldDefinition('adomain', { "repository_fields": [
+            {
+              "export": True,
+              "label": "Naam",
+              "name": "name",
+              "type": "text"
+            },{
+              "export": True,
+              "label": "Truth",
+              "name": "truth",
+              "type": "bool"
+            }
+            ]})
+        repository = self.hd.getRepository('repository1', 'adomain')
+        self.assertFalse('extra_name' in repository, repository)
+        self.assertFalse('extra_fake' in repository, repository)
+        self.assertFalse('extra_truth' in repository, repository)
+        self.hd.updateRepositoryFieldDefinitions(domainId='adomain', identifier='repository1', extra_name='Herman', extra_fake="Karel")
+
+        repository = self.hd.getRepository('repository1', 'adomain')
+        self.assertTrue('extra_name' in repository, repository)
+        self.assertFalse('extra_fake' in repository, repository)
+        self.assertTrue('extra_truth' in repository, repository)
+
+        # Test boolean attribute
+        self.hd.updateRepositoryFieldDefinitions(domainId='adomain', identifier='repository1', extra_truth=None)
+        repository = self.hd.getRepository('repository1', 'adomain')
+        self.assertTrue('extra_truth' in repository, repository)
+        self.assertFalse(repository['extra_truth'], repository)
+
+        self.hd.updateRepositoryFieldDefinitions(domainId='adomain', identifier='repository1', extra_truth='on')
+        repository = self.hd.getRepository('repository1', 'adomain')
+        self.assertTrue('extra_truth' in repository, repository)
+        self.assertTrue(repository['extra_truth'], repository)
+
+        self.hd.updateRepositoryFieldDefinitions(domainId='adomain', identifier='repository1', extra_truth=None)
+        repository = self.hd.getRepository('repository1', 'adomain')
+        self.assertTrue('extra_truth' in repository, repository)
+        self.assertFalse(repository['extra_truth'], repository)
+
     def testAddClosingHours(self):
         self.hd.addClosingHours('repository1', 'adomain', week="*", day="1", startHour="10", endHour="13")
 

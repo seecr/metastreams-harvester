@@ -167,7 +167,7 @@ class HarvesterData(object):
             'complete',
             'userAgent',
             'authorizationKey',
-            'repositoryAction',
+            'action',
         ]
         for each in mandatory:
             if not each in kwargs:
@@ -181,6 +181,21 @@ class HarvesterData(object):
             if each in allowed:
                 repository[each] = kwargs[each]
         self._store.addData(id_combine(domainId, identifier), 'repository', repository)
+
+    def updateRepositoryFieldDefinitions(self, **kwargs):
+        domainId = kwargs.get("domainId")
+        identifier = kwargs.get("identifier")
+        repository = self.getRepository(identifier, domainId)
+        fd = self.getFieldDefinition(domainId)
+        for definition in fd.get("repository_fields", []):
+            key = 'extra_{}'.format(definition['name'])
+            if definition['type'] == 'bool':
+                value = kwargs.get(key, None)
+                repository[key] = not value is None
+            elif key in kwargs:
+                repository[key] = kwargs[key]
+        self._store.addData(id_combine(domainId, identifier), 'repository', repository)
+
 
     def addClosingHours(self, identifier, domainId, week, day, startHour, endHour):
         repository = self.getRepository(identifier, domainId)

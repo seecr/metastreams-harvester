@@ -54,6 +54,7 @@ class HarvesterDataActions(PostActions):
         self.registerAction('deleteRepository', self._deleteRepository)
         self.registerAction('updateRepositoryAttributes', self._updateRepositoryAttributes)
         self.registerAction('updateRepositoryActionAttributes', self._updateRepositoryActionAttributes)
+        self.registerAction('updateRepositoryFieldDefinitions', self._updateRepositoryFieldDefinitions)
 
         self.registerAction('addRepositoryClosingHours', self._addRepositoryClosingHours)
         self.registerAction('deleteRepositoryClosingHours', self._deleteReppositoryClosingHours)
@@ -139,8 +140,8 @@ class HarvesterDataActions(PostActions):
             return
         yield response(True)
 
-
-    @check_and_parse('identifier', 'domainId', "baseurl", "set", "metadataPrefix", "userAgent", "authorizationKey", "collection", "mappingId", "targetId", userCheck='user')
+    @check_and_parse('identifier', 'domainId', "baseurl", "set", "metadataPrefix", "userAgent",
+                     "authorizationKey", "collection", "mappingId", "targetId", userCheck='user')
     def _updateRepositoryAttributes(self, data, **kwargs):
         try:
             self.call.updateRepositoryAttributes(**data.asDict())
@@ -149,17 +150,20 @@ class HarvesterDataActions(PostActions):
             return
         yield response(True)
 
-    @check_and_parse('identifier', 'domainId', "maximumIgnore", "use", "repositoryAction", "continuous", "complete", userCheck='user')
+    @check_and_parse('identifier', 'domainId', "maximumIgnore", "use", "action", "continuous", "complete", userCheck='user')
     def _updateRepositoryActionAttributes(self, data, **kwargs):
         try:
             values = data.asDict()
             values['use'] = not values['use'] is None
             values['complete'] = not values['complete'] is None
+            if values['maximumIgnore'] is None:
+                values['maximumIgnore'] = 0
             self.call.updateRepositoryAttributes(**values)
         except Exception as e:
             yield response(False, message=str(e))
             return
         yield response(True)
+
     @check_and_parse('identifier', 'domainId', 'repositoryGroupId', userCheck='user')
     def _deleteRepository(self, data, **kwargs):
         try:
@@ -300,6 +304,16 @@ class HarvesterDataActions(PostActions):
         except Exception as e:
             yield response(False, message=str(e))
             return
+        yield response(True)
+
+    @check_and_parse('domainId', 'identifier', 'extra_*', userCheck='user')
+    def _updateRepositoryFieldDefinitions(self, data, **kwargs):
+        try:
+            self.call.updateRepositoryFieldDefinitions(**data.asDict())
+        except Exception as e:
+            yield response(False, message=str(e))
+            return
+
         yield response(True)
 
 

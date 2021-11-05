@@ -86,9 +86,16 @@ function init_cardRepositoryActions() {
         $("#BtnRepositoryActions"), $("#placeholder_FrmRepositoryActions"));
 }
 
+function init_cardRepositoryFieldDefinitions() {
+    form_init(
+        $("#FrmFieldDefinition"), "/actions/updateRepositoryFieldDefinitions",
+        $("#BtnFieldDefinition"), $("#placeholder_FrmFieldDefinition"));
+}
+
 $(document).ready(function() {
     init_cardRepositoryAttributes();
     init_cardRepositoryActions();
+    init_cardRepositoryFieldDefinitions();
     init_cardClosingHours();
 
     $("button.helpText").each(function(index) {

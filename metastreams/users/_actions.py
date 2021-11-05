@@ -37,7 +37,16 @@ def parse_arguments(Body, wanted):
     data = parse_qs(str(Body, encoding='utf-8'))
     def getValue(value):
         return value[0] if len(value) == 1 else value
-    return Bucket(**{key:getValue(data.get(key, [None])) for key in wanted})
+    result = {}
+    for key in wanted:
+        if key.endswith('*'):
+            for k,v in data.items():
+                if k.startswith(key[:-1]):
+                    result[k] = getValue(v)
+        else:
+            result[key] = getValue(data.get(key, [None]))
+    return Bucket(**result)
+    #return Bucket(**{key:getValue(data.get(key, [None])) for key in wanted if '*' not in key})
 
 
 checks = {

@@ -201,7 +201,6 @@ function form_init(frm, action, btn, placeholder, callback) {
             msg_clear(placeholder);
             $.post(action, frm.serialize())
                 .done(function(data) {
-                    console.log(data);
                     if (data['success'] == true) {
                         form_resetBordersAndDisabled(frm, btn, !(frm.data('reset-on-submit') == undefined));
                         if (callback != undefined) {

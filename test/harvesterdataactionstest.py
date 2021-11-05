@@ -229,7 +229,7 @@ class HarvesterDataActionsTest(SeecrTestCase):
             'domainId': 'domain-id',
             'identifier': 'repo-id',
             'maximumIgnore': '42',
-            'repositoryAction': None,
+            'action': None,
             'use': False}, self.observable.calledMethods[0].kwargs)
 
     def testUpdateRepositoryActionForm_booleanFields(self):
@@ -251,8 +251,8 @@ class HarvesterDataActionsTest(SeecrTestCase):
             'continuous': None,
             'domainId': 'domain-id',
             'identifier': 'repo-id',
-            'maximumIgnore': None,
-            'repositoryAction': None,
+            'maximumIgnore': 0,
+            'action': None,
             'use': False}, self.observable.calledMethods[0].kwargs)
 
     def testAddClosingHours(self):
@@ -330,6 +330,26 @@ class HarvesterDataActionsTest(SeecrTestCase):
         self.assertEqual(dict(success=False, message='Ongeldige JSON'), JsonDict.loads(body))
         self.assertEqual(0, len(self.observable.calledMethods))
 
+    def testUpdateRepositoryFieldDefinition(self):
+        header, body = parseResponse(asBytes(self.dna.all.handleRequest(
+            user=CallTrace(returnValues=dict(isAdmin=True)),
+            Method='POST',
+            path='/actions/updateRepositoryFieldDefinitions',
+            Body=bUrlencode(dict(
+                identifier='repo-id',
+                domainId='domain-id',
+                extra_name="Herman in de zon op een terras",
+                extra_no_such_field="Bestaat niet"
+                ), doseq=True))))
+        self.assertEqual('200', header['StatusCode'])
+        self.assertEqual(dict(success=True), JsonDict.loads(body))
+        self.assertEqual(1, len(self.observable.calledMethods))
+        self.assertEqual('updateRepositoryFieldDefinitions', self.observable.calledMethods[0].name)
+
+        self.assertEqual({
+            'identifier': 'repo-id',
+            'domainId': 'domain-id',
+            'extra_name': "Herman in de zon op een terras"}, self.observable.calledMethods[0].kwargs)
 
     def updateTheRepository(self, baseurl='', set='', metadataPrefix='', mappingId='', targetId='', collection='', maximumIgnore=0, use=False, continuous=False, complete=True, action='', shopclosed=None):
         self.hd.updateRepositoryAttributes(
