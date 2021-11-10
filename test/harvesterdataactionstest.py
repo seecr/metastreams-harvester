@@ -349,6 +349,7 @@ class HarvesterDataActionsTest(SeecrTestCase):
         self.assertEqual({
             'identifier': 'repo-id',
             'domainId': 'domain-id',
+            'extra_no_such_field': 'Bestaat niet',
             'extra_name': "Herman in de zon op een terras"}, self.observable.calledMethods[0].kwargs)
 
     def updateTheRepository(self, baseurl='', set='', metadataPrefix='', mappingId='', targetId='', collection='', maximumIgnore=0, use=False, continuous=False, complete=True, action='', shopclosed=None):
