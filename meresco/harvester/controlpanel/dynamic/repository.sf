@@ -181,7 +181,6 @@ def card_fieldDefinitions(tag, domain, repository, fieldDefinition, **kwargs):
                             yield page2.textInput(tag,
                                 label=each['label'], name=fieldName, value=repository.get(fieldName) or '')
                         elif each['type'] == "bool":
-                            yield repository.get(fieldName)
                             yield page2.checkbox(tag, label=each['label'], name=fieldName,
                                 checked=repository.get(fieldName, False) == True)
                         elif each['type'] == "textarea":
