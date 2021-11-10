@@ -35,13 +35,15 @@ from urllib.parse import parse_qs, urlparse
 from functools import partial
 from json import loads, JSONDecodeError
 
-from meresco.components.http.utils import redirectHttp, badRequestHtml, Ok
+from meresco.components.http.utils import redirectHttp, badRequestHtml, Ok, okPlainText
 from meresco.html import PostActions
 
 from meresco.harvester.timeslot import Timeslot
 from metastreams.users._actions import check_and_parse, response
 
 class HarvesterDataActions(PostActions):
+    VERSION = '2'
+
     def __init__(self, **kwargs):
         PostActions.__init__(self, **kwargs)
         self.registerAction('addDomain', self._addDomain)
@@ -71,6 +73,14 @@ class HarvesterDataActions(PostActions):
 
         self.registerAction('repositoryDone', self._repositoryDone)
         self.defaultAction(lambda path, **kwargs: badRequestHtml + "Invalid action: " + path)
+
+
+    def handleRequest(self, Method, path, **kwargs):
+        if Method == 'GET' and path.endswith('/version'):
+            yield okPlainText
+            yield self.VERSION
+            return
+        yield super().handleRequest(Method=Method, path=path, **kwargs)
 
     @check_and_parse('identifier', userCheck='admin')
     def _addDomain(self, data, **kwargs):
