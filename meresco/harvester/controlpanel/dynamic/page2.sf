@@ -49,13 +49,8 @@ def render(func, showMenu=True, **kwargs):
             with tag("meta", content="no-cache", **{'http-equiv': 'Cache-Control'}): pass
             with tag("meta", content="-1", **{'http-equiv': 'Expires'}): pass
             with tag('meta', name="viewport", content="width=device-width, initial-scale=1"): pass
-            with tag('link', href="https://cdn.jsdelivr.net/npm/bootstrap@5.0.0-beta3/dist/css/bootstrap.min.css",
-                    rel="stylesheet",
-                    integrity="sha384-eOJMYsd53ii+scO/bJGFsiCZc+5NDVN2yr8+0RDqr0Ql0h+rP48ckxlpbzKgwra6",
-                    crossorigin="anonymous"): pass
-            with tag("link",
-                    rel="stylesheet",
-                    href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.4.1/font/bootstrap-icons.css"): pass
+            with tag("link", href="/css/bootstrap/bootstrap.min.css", rel="stylesheet"): pass
+            with tag("link", href="/css/bootstrap-icons/bootstrap-icons.css", rel="stylesheet"): pass
 
             for css in csss:
                 with tag("link", rel="stylesheet", type_="text/css", href=css): pass
@@ -74,9 +69,7 @@ def render(func, showMenu=True, **kwargs):
                 #
             for src in scripts:
                 with tag('script', type_='text/javascript', src=src): pass
-            with tag('script', src="https://cdn.jsdelivr.net/npm/bootstrap@5.0.0-beta3/dist/js/bootstrap.bundle.min.js",
-                    integrity="sha384-JEW9xMcG8R+pH31jmWH6WWP0WintQrMb4s7ZOdauHnUtxwoG2vI5DkLtS3qm9Ekf",
-                    crossorigin="anonymous"): pass
+            with tag("script", src="/js/bootstrap/bootstrap.bundle.min.js"): pass
             yield renderModal(tag)
 
 

@@ -113,6 +113,9 @@ def dna(reactor, port, dataPath, logPath, statePath, externalUrl, customerLogoUr
     staticFilePaths = []
     staticFiles = Transparent()
     for path, libdir in [
+            ('/js/bootstrap', '/usr/share/javascript/bootstrap5/js'),
+            ('/css/bootstrap', '/usr/share/javascript/bootstrap5/css'),
+            ('/css/bootstrap-icons', '/usr/share/javascript/bootstrap-icons'),
             ('/js/jquery', '/usr/share/javascript/jquery'),
             ('/js/jquery-tablesorter', '/usr/share/javascript/jquery-tablesorter'),
             ('/css/jquery-tablesorter', '/usr/share/javascript/jquery-tablesorter/css'),

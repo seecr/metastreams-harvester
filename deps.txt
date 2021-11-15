@@ -26,3 +26,5 @@ libjs-jquery-tablesorter (>= 1:2.31.1+dfsg1)
 libjs-jquery-tablesorter (<< 12.32)
 libjs-autosize (>= 4.0.2~dfsg1)
 libjs-autosize (<< 4.1)
+libjs-bootstrap5
+libjs-bootstrap-icons
