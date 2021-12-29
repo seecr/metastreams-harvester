@@ -1,0 +1,29 @@
+import page2
+
+def main(tag, **kwargs):
+    data = page2.findPath("data", dict(status=render_data_status), **kwargs)
+    if not data is None:
+        yield data(tag=tag, **kwargs)
+        return
+    
+    with tag("div"):
+        with tag("table", id_="status-table"):
+            with tag("thead"):
+                with tag("tr"):
+                    for each in ["Repository", "Datum", "# Geharvest", "# Uploads", "# Deletes"]:
+                        with tag("th"):
+                            yield each
+
+def render_data_status(arguments, **kwargs):
+    domainId = arguments.get('domainId', [None])[0]
+    repositoryGroupId = arguments.get('repositoryGroupId', [None])[0]
+    repositoryId = arguments.get('repositoryId', [None])[0]
+    statuses = observable.call.getStatus(domainId=domainId, repositoryGroupId=repositoryGroupId, repositoryId=repositoryId)
+
+    data = {"data": []}
+    for each in statuses:
+        data['data'].append([each[i] for i in ['repositoryId', 'lastHarvestDate', 'harvested', 'uploaded', 'deleted']])
+    yield "HTTP/1.0 200 OK\r\n"
+    yield "Content-Type: application/json\r\n"
+    yield "\r\n"
+    yield dumps(data)

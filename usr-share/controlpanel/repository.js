@@ -98,6 +98,9 @@ $(document).ready(function() {
     init_cardRepositoryFieldDefinitions();
     init_cardClosingHours();
 
+
+    init_button_status(); // from common.js
+
     $("button.helpText").each(function(index) {
         var _btn = $(this);
         _btn

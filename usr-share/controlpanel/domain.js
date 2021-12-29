@@ -181,4 +181,6 @@ $(document).ready(function() {
     init_cardTarget();
     init_cardMapping();
     init_cardFieldDefinition();
+
+    init_button_status(); // from common.js
 })

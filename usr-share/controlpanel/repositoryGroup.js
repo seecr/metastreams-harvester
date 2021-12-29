@@ -51,4 +51,6 @@ function init_cardRepositories() {
 $(document).ready(function() {
     init_domainAttributes();
     init_cardRepositories();
+    
+    init_button_status(); // from common.js
 })

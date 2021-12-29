@@ -68,6 +68,7 @@ from metastreams.users import initializeUserGroupManagement
 
 from time import localtime, strftime, time
 from uuid import uuid4
+from json import dumps
 
 myPath = dirname(abspath(__file__))
 usrSharePath = '/usr/share/metastreams'
@@ -157,6 +158,7 @@ def dna(reactor, port, dataPath, logPath, statePath, externalUrl, customerLogoUr
                                                             'externalUrl': externalUrl,
                                                             'escapeXml': escapeXml,
                                                             'compose': compose,
+                                                            'dumps': dumps,
                                                             'VERSION': VERSION,
                                                             'CONFIG': configDict,
                                                             'Timeslot': Timeslot,

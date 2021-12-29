@@ -54,6 +54,7 @@ def main(**kwargs):
     yield page2.render(
         _content,
         additionalScripts=[
+            '/static/status.js',
             '/static/domain.js',
         ],
         **kwargs)
@@ -69,7 +70,12 @@ def _content(tag, arguments, **kwargs):
         dict(label=domainId, active=True)
     ])
     yield page2.card(f"Domein Gegevens - {domainId}", card_domainAttributes, tag=tag, domain=domain, **kwargs)
-    yield page2.card("Repository Groepen", card_domainRepositoryGroups, tag=tag, domain=domain, **kwargs)
+    yield page2.card("Repository Groepen",
+        card_domainRepositoryGroups, tag=tag, domain=domain,
+        link=dict(
+            func=btn_status,
+            kwargs=dict(tag=tag, domainId=domainId)),
+        **kwargs)
     with tag("div.row"):
         with tag("div.col"):
             yield page2.card("Targets", card_domainTargets, tag=tag, domain=domain, **kwargs)
@@ -78,6 +84,14 @@ def _content(tag, arguments, **kwargs):
     if user.isAdmin():
         yield page2.card("Field definition", card_fieldDefinition, tag=tag, domain=domain, **kwargs)
 
+def btn_status(tag, domainId):
+    with tag("div"):
+        with tag("button.btn.seecr-btn.p-0.button-status", title="Status", **{
+            'data-caption': f'Status domein {domainId}',
+            'data-domainid': domainId,
+            }):
+            with tag("i.bi.bi-graph-up"):
+                yield ''
 
 def card_domainAttributes(tag, domain, **kwargs):
     domainId = domain.get("identifier")

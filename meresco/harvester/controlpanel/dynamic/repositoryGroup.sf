@@ -41,6 +41,7 @@ def main(**kwargs):
     yield page2.render(
         _content,
         additionalScripts=[
+            '/static/status.js',
             '/static/repositoryGroup.js',
         ],
         **kwargs)
@@ -58,7 +59,24 @@ def _content(tag, **kwargs):
         dict(label=groupName, active=True)
     ])
     yield page2.card(f"Repository Groep Gegevens - {groupName}", card_repositoryGroupAttributes, tag=tag, domain=domain, group=group, **kwargs)
-    yield page2.card("Repositories", card_repositories, tag=tag, domain=domain, group=group, **kwargs)
+    yield page2.card("Repositories", 
+        card_repositories, tag=tag, domain=domain, group=group, 
+        link=dict(
+            func=btn_status,
+            kwargs=dict(
+                tag=tag,
+                domainId=domainId,
+                repositoryGroupId=group.get("identifier"))),
+            **kwargs)
+
+def btn_status(tag, domainId, repositoryGroupId):
+    with tag("div"):
+        with tag("button.btn.seecr-btn.p-0.button-status", title="Status", **{
+            'data-caption': f'Status repository groep {repositoryGroupId}',
+            'data-domainid': domainId,
+            'data-repositorygroupid': repositoryGroupId}):
+            with tag("i.bi.bi-graph-up"):
+                yield ''
 
 def card_repositoryGroupAttributes(tag, domain, group, **kwargs):
     groupId = group.get("identifier")

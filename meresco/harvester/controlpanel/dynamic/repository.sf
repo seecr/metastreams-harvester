@@ -50,6 +50,7 @@ def main(**kwargs):
     yield page2.render(
         _content,
         additionalScripts=[
+            '/static/status.js',
             '/static/repository.js',
         ],
         **kwargs)
@@ -70,12 +71,33 @@ def _content(tag, arguments, **kwargs):
     cardKwargs = dict(tag=tag, domain=domain, repository=repository, repositoryGroupId=repositoryGroupId)
     cardKwargs.update(kwargs)
     yield page2.card(f"Repository Gegevens - {repositoryId}", card_repositoryAttributes, **cardKwargs)
-    yield page2.card("Uitvoering", card_repositoryActions, **cardKwargs)
+
+    yield page2.card("Uitvoering",
+        card_repositoryActions,
+        link=dict(
+            func=btn_status,
+            kwargs=dict(
+                tag=tag,
+                domainId=domainId,
+                repositoryId=repository.get("identifier"))),
+        **cardKwargs)
+
     fieldDefinition = observable.call.getFieldDefinition(domainId=domainId)
     if len(fieldDefinition) > 0 and 'repository_fields' in fieldDefinition:
-        yield page2.card("Aanvullende gegevens", card_fieldDefinitions, fieldDefinition=fieldDefinition.get("repository_fields"), **cardKwargs)
+        yield page2.card("Aanvullende gegevens",
+            card_fieldDefinitions,
+            fieldDefinition=fieldDefinition.get("repository_fields"),
+            **cardKwargs)
     yield page2.card("Tijden niet beschikbaar", card_closingHours, **cardKwargs)
 
+def btn_status(tag, domainId, repositoryId):
+    with tag("div"):
+        with tag("button.btn.seecr-btn.p-0.button-status", title="Status", **{
+            'data-caption': f'Status repository {repositoryId}',
+            'data-domainid': domainId,
+            'data-repositoryid': repositoryId}):
+            with tag("i.bi.bi-graph-up"):
+                yield ''
 
 def card_repositoryAttributes(tag, domain, repository, repositoryGroupId, **kwargs):
     domainId = domain.get("identifier")
