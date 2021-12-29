@@ -1,4 +1,4 @@
-seecr-test (>= 1.1)
-seecr-test (<< 1.2)
-python-meresco-oai
-python-meresco-sequentialstore
+python3-seecr-test (>= 2.2.3.3)
+python3-seecr-test (<< 2.3)
+python3-meresco-oai
+python3-meresco-sequentialstore
