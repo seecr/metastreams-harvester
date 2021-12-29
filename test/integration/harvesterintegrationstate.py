@@ -37,9 +37,7 @@ from os import listdir, walk
 
 from seecr.test.utils import getRequest
 from urllib.request import urlopen
-from urllib.parse import urlencode
-from urllib.parse import urlparse
-from cgi import parse_qs
+from urllib.parse import urlencode, urlparse, parse_qs
 from shutil import copytree
 
 from seecr.test.integrationtestcase import IntegrationState
