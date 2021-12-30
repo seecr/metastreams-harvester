@@ -26,29 +26,87 @@
 import page2
 
 def main(tag, **kwargs):
-    data = page2.findPath("data", dict(status=render_data_status), **kwargs)
-    if not data is None:
+    if not (data := page2.findPath("data", dict(error=render_data_error), **kwargs)) is None:
         yield data(tag=tag, **kwargs)
         return
-    
-    with tag("div"):
-        with tag("table", id_="status-table"):
-            with tag("thead"):
-                with tag("tr"):
-                    for each in ["Repository", "Datum", "# Geharvest", "# Uploads", "# Deletes"]:
-                        with tag("th"):
-                            yield each
-
-def render_data_status(arguments, **kwargs):
+   
+    arguments = kwargs['arguments']
     domainId = arguments.get('domainId', [None])[0]
     repositoryGroupId = arguments.get('repositoryGroupId', [None])[0]
     repositoryId = arguments.get('repositoryId', [None])[0]
     statuses = observable.call.getStatus(domainId=domainId, repositoryGroupId=repositoryGroupId, repositoryId=repositoryId)
 
+    with tag("div"):
+        with tag("div.modal", tabindex="-1", role="dialog", id_="modal_error"):
+            with tag("div.modal-dialog.modal-xl"):
+                with tag("div.modal-content"):
+                    with tag("div.modal-header"):
+                        with tag("h5.modal-title", id_="placeholder_modal-error-title"):
+                            yield ""
+                        with tag("button.btn-close", type_="button", **{"data-bs-dismiss": 'modal', 'aria-label': 'Close'}):
+                            pass
+                    with tag("div.modal-body", id_="placeholder_modal-error-body"):
+                        pass
+
+        with tag("table.table.table-hover", id_="status-table"):
+            with tag("thead"):
+                with tag("tr"):
+                    for each in ["Repository", "Laatste harvest", "# Geharvest", "# Uploads", "# Deletes", "# Ongeldig", "# Fouten"]:
+                        with tag("th"):
+                            yield each
+            with tag("tbody"):
+                for each in sorted(statuses, key=lambda i: i['repositoryId']):
+                    with tag("tr"):
+                        with tag("td"):
+                            yield each['repositoryId']
+                        with tag("td"):
+                            yield each['lastHarvestDate'] or "---"
+                        with tag("td"):
+                            yield each['harvested']
+                        with tag("td"):
+                            yield each['uploaded']
+                        with tag("td"):
+                            yield each['deleted']
+                        with tag("td"):
+                            invalid =  each['invalid']
+                            yield invalid
+                        with tag("td"):
+                            errors = each['totalerrors']
+                            with tag("div.d-flex.flex-row"):
+                                with tag("span.flex-fill"): yield errors
+                                if errors > 0:
+                                    with tag("span.flex-fill"):
+                                        with tag("button.seecr-btn.seecr-show-error", **{
+                                                'data-domainid': domainId,
+                                                'data-repositorygroupid': each['repositoryGroupId'],
+                                                'data-repositoryid': each['repositoryId']}):
+                                            with tag("i.bi.bi-eye-fill"): yield ""
+
+    return 
     data = {"data": []}
     for each in statuses:
-        data['data'].append([each[i] for i in ['repositoryId', 'lastHarvestDate', 'harvested', 'uploaded', 'deleted']])
+
+        data['data'].append([each[i] for i in ['repositoryId', 'lastHarvestDate', 'harvested', 'uploaded', 'deleted', 'invalid', 'totalerrors']])
     yield "HTTP/1.0 200 OK\r\n"
     yield "Content-Type: application/json\r\n"
     yield "\r\n"
     yield dumps(data)
+
+def render_data_error(tag, arguments, **kwargs):
+
+    domainId = arguments.get('domainId', [None])[0]
+    repositoryGroupId = arguments.get('repositoryGroupId', [None])[0]
+    repositoryId = arguments.get('repositoryId', [None])[0]
+    statuses = observable.call.getStatus(domainId=domainId, repositoryGroupId=repositoryGroupId, repositoryId=repositoryId)
+
+    with tag("div.d-flex.flex-column"):
+        for each in statuses:
+            if len(errors := each.get('recenterrors', [])) == 0:
+                continue
+            for error in errors:
+                print(error['error'])
+                with tag("h3"): yield error['date']
+                with tag("pre"):
+                    yield error['error'].replace("|", "\n")
+        
+

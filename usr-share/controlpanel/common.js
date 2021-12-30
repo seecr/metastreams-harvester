@@ -239,16 +239,16 @@ function init_button_status() {
                 e.preventDefault();
                 var _modal = get_modal("xl");
                 _modal.find("#placeholder_modal-title").html(_btn.data('caption'));
-                $.get("/status").done(function(data) {
+                $.get("/status?" + $.param({
+                        domainId: _btn.data("domainid"),
+                        repositoryGroupId: _btn.data('repositorygroupid'),
+                        repositoryId: _btn.data('repositoryid'),
+                    })).done(function(data) {
                     _modal.find("#placeholder_modal-body")
                         .empty()
                         .append(data);
-                    init_status_table(
-                        _btn.data("domainid"),
-                        _btn.data("repositorygroupid"),
-                        _btn.data("repositoryid"));
-
-                    _modal.find("button")
+                    _init_status_table();
+                    _modal.find("button.btn-close")
                         .unbind("click")
                         .click(function(e) {
                             e.preventDefault();
