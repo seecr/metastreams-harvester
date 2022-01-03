@@ -178,7 +178,7 @@ def card_repositoryActions(tag, domain, repository, repositoryGroupId, **kwargs)
                         minValue=60,
                         maxValue=7200,
                         name="continuous",
-                        value=repository.get("continuous") or 1200)
+                        value=repository.get("continuous") or '')
                 with tag("div.col"):
                     yield page2.checkbox(tag, label="Aansluitend harvesten",
                         name="complete",
