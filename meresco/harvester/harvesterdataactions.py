@@ -163,6 +163,7 @@ class HarvesterDataActions(PostActions):
             values = data.asDict()
             values['use'] = not values['use'] is None
             values['complete'] = not values['complete'] is None
+            values['action'] = values['action'] if values['action'] != "-" else None
             if values['maximumIgnore'] is None:
                 values['maximumIgnore'] = 0
             self.call.updateRepositoryAttributes(**values)

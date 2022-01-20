@@ -251,6 +251,29 @@ class HarvesterDataActionsTest(SeecrTestCase):
             'maximumIgnore': 0,
             'action': None,
             'use': False}, self.observable.calledMethods[0].kwargs)
+    
+    def testUpdateRepositoryActionForm_Action(self):
+        header, body = parseResponse(asBytes(self.dna.all.handleRequest(
+            user=CallTrace(returnValues=dict(isAdmin=True)),
+            Method='POST',
+            path='/actions/updateRepositoryActionAttributes',
+            Body=bUrlencode(dict(
+                identifier='repo-id',
+                domainId='domain-id',
+                action="-",
+                ), doseq=True))))
+        self.assertEqual('200', header['StatusCode'])
+        self.assertEqual(dict(success=True), JsonDict.loads(body))
+        self.assertEqual(1, len(self.observable.calledMethods))
+        self.assertEqual('updateRepositoryAttributes', self.observable.calledMethods[0].name)
+        self.assertEqual({
+            'complete': False,
+            'continuous': None,
+            'domainId': 'domain-id',
+            'identifier': 'repo-id',
+            'maximumIgnore': 0,
+            'action': None,
+            'use': False}, self.observable.calledMethods[0].kwargs)
 
     def testAddClosingHours(self):
         header, body = parseResponse(asBytes(self.dna.all.handleRequest(
