@@ -95,6 +95,7 @@ class Repository(SaharaObject):
         return Action.create(self, stateDir=stateDir, logDir=logDir, generalHarvestLog=generalHarvestLog)
 
     def do(self, stateDir, logDir, generalHarvestLog=nillogger, gustosClient=None):
+        gustosReport = _prepareGustosReport(gustosClient, self.domainId, self.repositoryGroupId, self.id)
         try:
             if not (stateDir or logDir):
                 raise RepositoryException('Missing stateDir and/or logDir')
@@ -110,10 +111,10 @@ class Repository(SaharaObject):
             completeHarvest = hasResumptionToken and self.complete == True
             if completeHarvest:
                 generalHarvestLog.logInfo('Repository will be completed in one attempt', id=self.id)
-            gustosReport(gustosClient, self.domainId, self.repositoryGroupId, nrOfErrors=0)
+            gustosReport(nrOfErrors=0)
             return message, completeHarvest
         except OAIError as e:
-            gustosReport(gustosClient, self.domainId, self.repositoryGroupId, nrOfErrors=1)
+            gustosReport(nrOfErrors=1)
             errorMessage = _errorMessage()
             generalHarvestLog.logError(errorMessage, id=self.id)
             if e.errorCode() == 'badResumptionToken':
@@ -121,16 +122,17 @@ class Repository(SaharaObject):
                 return errorMessage, self.complete == True
             return errorMessage, False
         except:
-            gustosReport(gustosClient, self.domainId, self.repositoryGroupId, nrOfErrors=1)
+            gustosReport(nrOfErrors=1)
             errorMessage = _errorMessage()
             generalHarvestLog.logError(errorMessage, id=self.id)
             return errorMessage, False
 
-
-def gustosReport(client, domain_id, repositoryGroupId, nrOfErrors):
-    if not client:
-        return
-    client.report(values={f'Harvester ({domain_id})': { repositoryGroupId: { "errors": { COUNT: nrOfErrors}}}})
+def _prepareGustosReport(client, domain_id, repo_group_id, repo_id):
+    if client is None:
+        return lambda *_, **__: None
+    def gustosReport(nrOfErrors):
+        client.report(values={f'Harvester ({domain_id})': { f'{repo_group_id}:{repo_id}': { "errors": { COUNT: nrOfErrors}}}})
+    return gustosReport
 
 class RepositoryException(Exception):
     pass

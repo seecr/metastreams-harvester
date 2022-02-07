@@ -107,7 +107,7 @@ class RepositoryTest(SeecrTestCase):
         self.assertTrue(action.called)
         self.assertEqual(False, self.repo.use)
         self.assertEqual(None, self.repo.action)
-        self.assertEqual([call.report(values={'Harvester (domainId)': {'groupId': {'errors': {'count': 0}}}})], gustos.mock_calls)
+        self.assertEqual([call.report(values={'Harvester (domainId)': {'groupId:rep': {'errors': {'count': 0}}}})], gustos.mock_calls)
 
     def testHarvestWithBadResumptionToken(self):
         self.repo.use = True
@@ -122,7 +122,7 @@ class RepositoryTest(SeecrTestCase):
         self.assertTrue('resumptionToken expired' in message)
         self.assertEqual(['info', 'do', 'resetState'], [m.name for m in action.calledMethods])
         self.assertTrue(again)
-        self.assertEqual([call.report(values={'Harvester (domainId)': {'groupId': {'errors': {'count': 1}}}})], gustos.mock_calls)
+        self.assertEqual([call.report(values={'Harvester (domainId)': {'groupId:rep': {'errors': {'count': 1}}}})], gustos.mock_calls)
 
     def testDoHarvest(self):
         self.repo.use = True
@@ -135,7 +135,7 @@ class RepositoryTest(SeecrTestCase):
         self.assertTrue(action.called)
         self.assertEqual(True, self.repo.use)
         self.assertEqual(None, self.repo.action)
-        self.assertEqual([call.report(values={'Harvester (domainId)': {'groupId': {'errors': {'count': 0}}}})], gustos.mock_calls)
+        self.assertEqual([call.report(values={'Harvester (domainId)': {'groupId:rep': {'errors': {'count': 0}}}})], gustos.mock_calls)
 
     def testDoHarvestWithCompleteHarvestingEnabled(self):
         self.repo.use = True
