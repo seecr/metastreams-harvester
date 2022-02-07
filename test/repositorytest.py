@@ -44,6 +44,8 @@ from meresco.harvester.oairequest import OAIError
 from meresco.harvester.timeslot import Wildcard
 from os.path import join
 
+from unittest.mock import Mock, call
+
 class RepositoryTest(SeecrTestCase):
     def setUp(self):
         super(RepositoryTest, self).setUp()
@@ -56,6 +58,7 @@ class RepositoryTest(SeecrTestCase):
             return self.oaiRequestMock
 
         self.repo = Repository('domainId','rep', oaiRequestClass=mockOaiRequest)
+        self.repo.repositoryGroupId = 'groupId'
         self.repo._proxy = self
         self.logAndStateDir = join(self.tempdir, 'repositorytest')
 
@@ -98,11 +101,13 @@ class RepositoryTest(SeecrTestCase):
         self.repo.action = None
         action = MockAction()
         self.repo._createAction=lambda stateDir,logDir,generalHarvestLog: action
-        result = self.repo.do(stateDir=self.logAndStateDir, logDir=self.logAndStateDir)
+        gustos = Mock()
+        result = self.repo.do(stateDir=self.logAndStateDir, logDir=self.logAndStateDir, gustosClient=gustos)
         self.assertEqual(('', False), result)
         self.assertTrue(action.called)
         self.assertEqual(False, self.repo.use)
         self.assertEqual(None, self.repo.action)
+        self.assertEqual([call.report(values={'Harvester (domainId)': {'groupId': {'errors': {'count': 0}}}})], gustos.mock_calls)
 
     def testHarvestWithBadResumptionToken(self):
         self.repo.use = True
@@ -112,21 +117,25 @@ class RepositoryTest(SeecrTestCase):
         oaiError = OAIError('url', 'resumptionToken expired', 'badResumptionToken', 'lxmlResponse')
         action.exceptions['do'] = oaiError
         self.repo._createAction = lambda **kwargs: action
-        message, again = self.repo.do(stateDir=self.logAndStateDir, logDir=self.logAndStateDir)
+        gustos = Mock()
+        message, again = self.repo.do(stateDir=self.logAndStateDir, logDir=self.logAndStateDir, gustosClient=gustos)
         self.assertTrue('resumptionToken expired' in message)
         self.assertEqual(['info', 'do', 'resetState'], [m.name for m in action.calledMethods])
         self.assertTrue(again)
+        self.assertEqual([call.report(values={'Harvester (domainId)': {'groupId': {'errors': {'count': 1}}}})], gustos.mock_calls)
 
     def testDoHarvest(self):
         self.repo.use = True
         self.repo.action = None
         action = MockAction(DONE)
         self.repo._createAction=lambda stateDir,logDir,generalHarvestLog: action
-        result = self.repo.do(stateDir=self.logAndStateDir, logDir=self.logAndStateDir)
+        gustos = Mock()
+        result = self.repo.do(stateDir=self.logAndStateDir, logDir=self.logAndStateDir, gustosClient=gustos)
         self.assertEqual((DONE, False), result)
         self.assertTrue(action.called)
         self.assertEqual(True, self.repo.use)
         self.assertEqual(None, self.repo.action)
+        self.assertEqual([call.report(values={'Harvester (domainId)': {'groupId': {'errors': {'count': 0}}}})], gustos.mock_calls)
 
     def testDoHarvestWithCompleteHarvestingEnabled(self):
         self.repo.use = True
@@ -224,6 +233,8 @@ class MockAction(Action):
     def do(self):
         self.called = True
         return self.done, self.message, self.hasResumptionToken
+
+
 
 GETREPOSITORY = {
     "use": True,

@@ -473,7 +473,13 @@ class HarvesterTest(IntegrationTestCase):
         t.start()
 
         sleepWheel(5)
-        self.assertEqual(errorCount + 1, len(self.gustosUdpListener.log()))
+        last_logs = [JsonDict.loads(l)['data'] for l in self.gustosUdpListener.log()[errorCount:]]
+        for data in last_logs:
+            my_group_log = data.get(f'Harvester ({DOMAIN})', {}).get(REPOSITORYGROUP)
+            if my_group_log is not None:
+                break
+        self.assertEqual({"errors": {"count": 1}}, my_group_log)
+
 
     def testConcurrencyAtLeastOne(self):
         stdouterrlog = self.startHarvester(concurrency=0, expectedReturnCode=2)

@@ -110,9 +110,10 @@ class Repository(SaharaObject):
             completeHarvest = hasResumptionToken and self.complete == True
             if completeHarvest:
                 generalHarvestLog.logInfo('Repository will be completed in one attempt', id=self.id)
+            gustosReport(gustosClient, self.domainId, self.repositoryGroupId, nrOfErrors=0)
             return message, completeHarvest
         except OAIError as e:
-            gustosClient and gustosClient.report(values={ "Harvester": { "Events": { "errors": { COUNT: 1 } } } })
+            gustosReport(gustosClient, self.domainId, self.repositoryGroupId, nrOfErrors=1)
             errorMessage = _errorMessage()
             generalHarvestLog.logError(errorMessage, id=self.id)
             if e.errorCode() == 'badResumptionToken':
@@ -120,11 +121,16 @@ class Repository(SaharaObject):
                 return errorMessage, self.complete == True
             return errorMessage, False
         except:
-            gustosClient and gustosClient.report(values={ "Harvester": { "Events": { "errors": { COUNT: 1 } } } })
+            gustosReport(gustosClient, self.domainId, self.repositoryGroupId, nrOfErrors=1)
             errorMessage = _errorMessage()
             generalHarvestLog.logError(errorMessage, id=self.id)
             return errorMessage, False
 
+
+def gustosReport(client, domain_id, repositoryGroupId, nrOfErrors):
+    if not client:
+        return
+    client.report(values={f'Harvester ({domain_id})': { repositoryGroupId: { "errors": { COUNT: nrOfErrors}}}})
 
 class RepositoryException(Exception):
     pass
