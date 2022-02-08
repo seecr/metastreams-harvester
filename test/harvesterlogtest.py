@@ -37,7 +37,7 @@ from time import strftime, gmtime, time
 from os import makedirs
 from os.path import isfile, join
 
-from meresco.harvester._harvesterlog import HarvesterLog
+from meresco.harvester._state import State
 from meresco.harvester.eventlogger import LOGLINE_RE
 from seecr.zulutime import ZuluTime
 from seecr.test import SeecrTestCase
@@ -45,7 +45,7 @@ from seecr.test import SeecrTestCase
 from contextlib import contextmanager
 @contextmanager
 def harvesterLog(*args, **kwargs):
-    _harvesterLog = HarvesterLog(*args, **kwargs)
+    _harvesterLog = State(*args, **kwargs).getHarvesterLog()
     try:
         yield _harvesterLog
     finally:
@@ -206,7 +206,7 @@ class HarvesterLogTest(SeecrTestCase):
             self.assertEqual(1, logger.totalIds())
 
     def testLogInvalidData(self):
-        with harvesterLog(stateDir=self.stateDir, logDir=self.logDir, name='name') as logger:
+        with harvesterLog(stateDir=self.stateDir, logDir=self.logDir, name='repo/id') as logger:
             logger.startRepository()
             logger.notifyHarvestedRecord('repo/id:oai:bla/bla')
             logger.logInvalidData('repo/id:oai:bla/bla', "Error")
@@ -226,25 +226,6 @@ class HarvesterLogTest(SeecrTestCase):
             logger.notifyHarvestedRecord('id:2')
             logger.logInvalidData('id:2', 'exception message')
             self.assertEqual(['id:1', 'id:2'], logger.invalidIds())
-
-    def testClearInvalidData(self):
-        with harvesterLog(stateDir=self.stateDir, logDir=self.logDir, name='name') as logger:
-            logger.startRepository()
-            logger.notifyHarvestedRecord('repoid:oai:bla/bla')
-            logger.logInvalidData('repoid:oai:bla/bla', "Error")
-            self.assertTrue(isfile(self.logDir + '/invalid/repoid/oai:bla%2Fbla'))
-            logger.notifyHarvestedRecord('repoid:recordid')
-            logger.logInvalidData('repoid:recordid', "Error")
-            self.assertTrue(isfile(self.logDir + '/invalid/repoid/recordid'))
-            logger.notifyHarvestedRecord('repo2:1')
-            logger.logInvalidData('repo2:1', "Error")
-            self.assertTrue(isfile(self.logDir + '/invalid/repo2/1'))
-            self.assertEqual(['repoid:oai:bla/bla', 'repoid:recordid', 'repo2:1'], logger.invalidIds())
-            logger.clearInvalidData('repoid')
-            self.assertEqual(['repo2:1'], logger.invalidIds())
-            self.assertFalse(isfile(self.logDir + '/invalid/repoid/oai:bla%2Fbla'))
-            self.assertFalse(isfile(self.logDir + '/invalid/repoid/recordid'))
-            self.assertTrue(isfile(self.logDir + '/invalid/repo2/1'))
 
     def testMarkDeleted(self):
         with open(self.stateDir+'/name.stats','w') as f:

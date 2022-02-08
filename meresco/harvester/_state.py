@@ -34,22 +34,60 @@ from os import SEEK_END, SEEK_SET
 import re
 from meresco.components.json import JsonDict
 from seecr.zulutime import ZuluTime
+from ._harvesterlog import HarvesterLog
+from .ids import Ids
+from escaping import escapeFilename
+import pathlib
+from .constants import INVALID_DATA_MESSAGES_DIR
 
 class State(object):
-    def __init__(self, stateDir, name):
-        self._statsfilename = join(stateDir, '%s.stats' % name)
+    def __init__(self, stateDir, logDir, name):
+        self._statePath = pathlib.Path(stateDir)
+        self.logPath = pathlib.Path(logDir)
+        self._statePath.mkdir(parents=True, exist_ok=True)
+        self.logPath.mkdir(parents=True, exist_ok=True)
+        esc_name = escapeFilename(name)
+        self.invalidLogPath = self.logPath / INVALID_DATA_MESSAGES_DIR / esc_name
+        self._name = name
+
+        self._ids =        Ids(self._statePath / f'{esc_name}.ids')
+        self._invalidIds = Ids(self._statePath / f'{esc_name}_invalid.ids')
+        self._oldIds =     Ids(self._statePath / f'{esc_name}.ids.old')
+
+        self._statsfilepath = self._statePath / f'{esc_name}.stats'
         self._forceFinalNewlineOnStatsFile()
-        self._resumptionFilename = join(stateDir, '%s.next' % name)
-        self._runningFilename = join(stateDir, '%s.running' % name)
+        self._resumptionFilepath = self._statePath / f'{esc_name}.next'
+        self._runningFilepath = self._statePath / f'{esc_name}.running'
         self.from_ = None
         self.token = None
         self.lastSuccessfulHarvest = None
         self._readState()
-        self._statsfile = open(self._statsfilename, 'a')
+        self._statsfile = open(self._statsfilepath, 'a')
+
+    @property
+    def name(self):
+        return self._name
+
+    @property
+    def ids(self):
+        return self._ids
+
+    @property
+    def invalidIds(self):
+        return self._invalidIds
+
+    @property
+    def oldIds(self):
+        return self._oldIds
+
+    def getHarvesterLog(self):
+        return HarvesterLog(self)
 
     def close(self):
         self._statsfile.close()
         self._forceFinalNewlineOnStatsFile()
+        self._ids.close()
+        self._invalidIds.close()
 
     def markStarted(self):
         self._write('Started: %s, Harvested/Uploaded/Deleted/Total: ' % self.getTime())
@@ -72,9 +110,9 @@ class State(object):
         self._markRunningState("Error", str(exValue))
 
     def _markRunningState(self, status, message=""):
-        runningDict = JsonDict.load(self._runningFilename) if isfile(self._runningFilename) else {}
+        runningDict = JsonDict.load(self._runningFilepath) if self._runningFilepath.is_file() else {}
         if status != runningDict.get('status', None) or message != runningDict.get('message', None):
-            JsonDict({'changedate': self.getTime(),'status': status, 'message': message}).dump(self._runningFilename)
+            JsonDict({'changedate': self.getTime(),'status': status, 'message': message}).dump(self._runningFilepath)
 
     def getLastSuccessfulHarvestTime(self):
         if self.lastSuccessfulHarvest:
@@ -94,16 +132,16 @@ class State(object):
         self._writeResumptionValues(None, self.from_)
 
     def _readState(self):
-        if isfile(self._resumptionFilename):
-            values = JsonDict.load(self._resumptionFilename)
+        if self._resumptionFilepath.is_file():
+            values = JsonDict.loads(self._resumptionFilepath.read_text())
             self.token = values.get('resumptionToken', None) or None
             self.from_ = values.get('from', '') or None
             self.lastSuccessfulHarvest = values.get('lastSuccessfulHarvest', '') or None
             return
 
         # The mechanism below will only be carried out once in case the resumption file does not yet exist.
-        if isfile(self._statsfilename):
-            self._statsfile = open(self._statsfilename)
+        if self._statsfilepath.is_file():
+            self._statsfile = self._statsfilepath.open()
             logline = None
             for logline in self._filterNonErrorLogLine(self._statsfile):
                 if not self.token:
@@ -115,8 +153,8 @@ class State(object):
             self._statsfile.close()
 
     def _forceFinalNewlineOnStatsFile(self):
-        if isfile(self._statsfilename):
-            with open(self._statsfilename, 'r+') as statsfile:
+        if self._statsfilepath.is_file():
+            with self._statsfilepath.open('r+') as statsfile:
                 statsfile.seek(0, SEEK_END)
                 if statsfile.tell() == 0:
                     return
@@ -139,7 +177,11 @@ class State(object):
             lastSuccessfulHarvest = None
         else:
             lastSuccessfulHarvest = self.getZTime().zulu()
-        JsonDict({'resumptionToken': newToken, 'from': newFrom, 'lastSuccessfulHarvest': lastSuccessfulHarvest}).dump(self._resumptionFilename)
+        self._resumptionFilepath.write_text(JsonDict({
+                'resumptionToken': newToken,
+                'from': newFrom,
+                'lastSuccessfulHarvest': lastSuccessfulHarvest
+            }).dumps())
 
     @staticmethod
     def _filterNonErrorLogLine(iterator):

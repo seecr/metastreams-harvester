@@ -38,28 +38,15 @@ import traceback
 from os.path import join, isdir, isfile, dirname
 from os import makedirs, remove
 from shutil import rmtree
-from ._state import State
 from escaping import escapeFilename
 from seecr.zulutime import ZuluTime
 from meresco.harvester.constants import INVALID_DATA_MESSAGES_DIR
 
 
-def idfilename(stateDir, repositorykey):
-    return join(stateDir, repositorykey+'.ids')
-
-def ensureDirectory(directoryPath):
-    isdir(directoryPath) or makedirs(directoryPath)
-
 class HarvesterLog(object):
-    def __init__(self, stateDir, logDir, name):
-        self._name = name
-        self._logDir = logDir
-        ensureDirectory(logDir)
-        ensureDirectory(stateDir)
-        self._ids = Ids(stateDir, name)
-        self._invalidIds = Ids(stateDir, name + "_invalid")
-        self._state = State(stateDir, name)
-        self._eventlogger = EventLogger(logDir + '/' + name +'.events')
+    def __init__(self, repositoryState):
+        self._state = repositoryState
+        self._eventlogger = EventLogger(self._state.logPath / f'{self._state.name}.events')
         self._resetCounts()
 
     def isCurrentDay(self, date):
@@ -75,36 +62,36 @@ class HarvesterLog(object):
         self._deletedCount = 0
 
     def totalIds(self):
-        return len(self._ids)
+        return len(self._state.ids)
 
     def totalInvalidIds(self):
-        return len(self._invalidIds)
+        return len(self._state.invalidIds)
 
     def eventLogger(self):
         # Should be removed, but is still used in Harvester.
         return self._eventlogger
 
     def markDeleted(self):
-        self._ids.clear()
+        self._state.ids.clear()
         self._state.markDeleted()
-        self._eventlogger.logSuccess('Harvested/Uploaded/Deleted/Total: 0/0/0/0, Done: Deleted all ids.', id=self._name)
+        self._eventlogger.logSuccess('Harvested/Uploaded/Deleted/Total: 0/0/0/0, Done: Deleted all ids.', id=self._state.name)
 
     def endRepository(self, token, responseDate):
         self._state.markHarvested(self.countsSummary(), token, responseDate)
-        self._eventlogger.logSuccess('Harvested/Uploaded/Deleted/Total: %s, ResumptionToken: %s' % (self.countsSummary(), token), id=self._name)
+        self._eventlogger.logSuccess('Harvested/Uploaded/Deleted/Total: %s, ResumptionToken: %s' % (self.countsSummary(), token), id=self._state.name)
 
     def endWithException(self, exType, exValue, exTb):
         self._state.markException(exType, exValue, self.countsSummary())
         error = '|'.join(str.strip(s) for s in traceback.format_exception(exType, exValue, exTb))
-        self._eventlogger.logError(error, id=self._name)
+        self._eventlogger.logError(error, id=self._state.name)
 
     def countsSummary(self):
         return '%d/%d/%d/%d' % (self._harvestedCount, self._uploadedCount, self._deletedCount, self.totalIds())
 
     def close(self):
         self._eventlogger.close()
-        self._ids.close()
-        self._invalidIds.close()
+        self._state.ids.close()
+        self._state.invalidIds.close()
         self._state.close()
 
     def notifyHarvestedRecord(self, uploadid):
@@ -112,40 +99,34 @@ class HarvesterLog(object):
         self._harvestedCount += 1
 
     def uploadIdentifier(self, uploadid):
-        self._ids.add(uploadid)
+        self._state.ids.add(uploadid)
         self._uploadedCount += 1
 
     def deleteIdentifier(self, uploadid):
-        self._ids.remove(uploadid)
+        self._state.ids.remove(uploadid)
         self._deletedCount += 1
 
     def getIds(self, invalid=False, deleteIds=False):
         if deleteIds:
-            return self._ids.getDeleteIds()
-        idsFile = self._invalidIds if invalid else self._ids
+            return self._state.ids.getDeleteIds()
+        idsFile = self._state.invalidIds if invalid else self._state.ids
         return idsFile.getIds()
 
     def flushIds(self, invalid=False, deleteIds=False):
         if deleteIds:
             return
-        idsFile = self._invalidIds if invalid else self._ids
+        idsFile = self._state.invalidIds if invalid else self._state.ids
         idsFile.reopen()
 
     def logInvalidData(self, uploadid, message):
-        self._invalidIds.add(uploadid)
+        self._state.invalidIds.add(uploadid)
         filePath = self._invalidDataMessageFilePath(uploadid)
-        ensureDirectory(dirname(filePath))
+        filePath.parent.mkdir(parents=True, exist_ok=True)
         with open(filePath, 'w') as fp:
             fp.write(message)
 
     def logIgnoredIdentifierWarning(self, uploadid):
         self._eventlogger.logWarning('IGNORED', uploadid)
-
-    def clearInvalidData(self, repositoryId):
-        for id in list(self._invalidIds):
-            if id.startswith("%s:" % repositoryId):
-                self._invalidIds.remove(id)
-        rmtree(join(self._logDir, INVALID_DATA_MESSAGES_DIR, repositoryId))
 
     def hasWork(self, continuousInterval=None):
         if self._state.token:
@@ -162,16 +143,15 @@ class HarvesterLog(object):
         return self._state
 
     def invalidIds(self):
-        return list(self._invalidIds)
+        return list(self._state.invalidIds)
 
     def _removeFromInvalidData(self, uploadid):
-        self._invalidIds.remove(uploadid)
+        self._state.invalidIds.remove(uploadid)
         invalidDataMessageFilePath = self._invalidDataMessageFilePath(uploadid)
-        if isfile(invalidDataMessageFilePath):
-            remove(invalidDataMessageFilePath)
+        invalidDataMessageFilePath.unlink(missing_ok=True)
 
     def _invalidDataMessageFilePath(self, uploadid):
         repositoryId, recordId = uploadid.split(":", 1)
-        return join(self._logDir, INVALID_DATA_MESSAGES_DIR, escapeFilename(repositoryId), escapeFilename(recordId))
+        return self._state.invalidLogPath / escapeFilename(recordId)
 
 

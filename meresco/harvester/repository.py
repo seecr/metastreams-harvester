@@ -9,7 +9,7 @@
 # Copyright (C) 2007-2009 Stichting Kennisnet Ict op school. http://www.kennisnetictopschool.nl
 # Copyright (C) 2009 Tilburg University http://www.uvt.nl
 # Copyright (C) 2010-2011, 2015, 2020-2021 Stichting Kennisnet https://www.kennisnet.nl
-# Copyright (C) 2015, 2017, 2020-2021 Seecr (Seek You Too B.V.) https://seecr.nl
+# Copyright (C) 2015, 2017, 2020-2022 Seecr (Seek You Too B.V.) https://seecr.nl
 # Copyright (C) 2020-2021 Data Archiving and Network Services https://dans.knaw.nl
 # Copyright (C) 2020-2021 SURF https://www.surf.nl
 # Copyright (C) 2020-2021 The Netherlands Institute for Sound and Vision https://beeldengeluid.nl
@@ -91,15 +91,16 @@ class Repository(SaharaObject):
     def oairequest(self):
         return self._oaiRequestClass(self.baseurl, userAgent=self.userAgent or None, authorizationKey=self.authorizationKey or None)
 
-    def _createAction(self, stateDir, logDir, generalHarvestLog):
-        return Action.create(self, stateDir=stateDir, logDir=logDir, generalHarvestLog=generalHarvestLog)
+    def _createAction(self, repoState, generalHarvestLog):
+        return Action.create(self, repositoryState=repoState, logDir=logDir, generalHarvestLog=generalHarvestLog)
 
     def do(self, stateDir, logDir, generalHarvestLog=nillogger, gustosClient=None):
         gustosReport = _prepareGustosReport(gustosClient, self.domainId, self.repositoryGroupId, self.id)
         try:
             if not (stateDir or logDir):
                 raise RepositoryException('Missing stateDir and/or logDir')
-            action = self._createAction(stateDir=stateDir, logDir=logDir, generalHarvestLog=generalHarvestLog)
+            repoState = State(stateDir, logDir, self.repositoryId)
+            action = self._createAction(repoState, generalHarvestLog=generalHarvestLog)
             if action.info():
                 generalHarvestLog.logLine('START',action.info(), id=self.id)
             actionIsDone, message, hasResumptionToken = action.do()

@@ -46,15 +46,13 @@ from .ids import readIds, writeIds
 
 
 class Action(object):
-    def __init__(self, repository, stateDir, logDir, generalHarvestLog):
+    def __init__(self, repository, state, generalHarvestLog):
         self._repository = repository
-        self._stateDir = stateDir
-        self._logDir = logDir
+        self._state = state
         self._generalHarvestLog = generalHarvestLog
-        self.invalidIdsFilename = join(self._stateDir, self._repository.id + '_invalid.ids')
 
     @staticmethod
-    def create(repository, stateDir, logDir, generalHarvestLog):
+    def create(repository, state, generalHarvestLog):
         actionUse2Class = {
             'clear': lambda use: DeleteIdsAction,
             'refresh': lambda use: SmoothAction,
@@ -62,7 +60,7 @@ class Action(object):
         }
         try:
             actionClass = actionUse2Class[repository.action](repository.use)
-            return actionClass(repository, stateDir=stateDir, logDir=logDir, generalHarvestLog=generalHarvestLog)
+            return actionClass(repository, state=state, generalHarvestLog=generalHarvestLog)
         except KeyError:
             raise ActionException("Action '%s' not supported." % repository.action)
 
@@ -77,7 +75,7 @@ class Action(object):
         return  str(self.__class__.__name__)
 
     def _createHarvester(self):
-        harvesterLog = HarvesterLog(self._stateDir, self._logDir, self._repository.id)
+        harvesterLog = self._state.getHarvesterLog()
         eventlogger = CompositeLogger([
             (['*'], harvesterLog.eventLogger()),
             (['ERROR', 'INFO', 'WARN'], self._generalHarvestLog)
@@ -98,7 +96,7 @@ class Action(object):
         return [harvesterLog], be(helix)
 
     def _createDeleteIds(self):
-        harvesterLog = HarvesterLog(self._stateDir, self._logDir, self._repository.id)
+        harvesterLog = self._state.getHarvesterLog()
         deleteIdsLog = EventLogger(join(self._logDir, 'deleteids.log'))
         eventlogger = CompositeLogger([
             (['*'], deleteIdsLog),
@@ -158,8 +156,8 @@ class DeleteIdsAction(Action):
 
 
 class SmoothAction(Action):
-    def __init__(self, repository, stateDir, logDir, generalHarvestLog):
-        Action.__init__(self, repository, stateDir, logDir, generalHarvestLog)
+    def __init__(self, repository, state, generalHarvestLog):
+        Action.__init__(self, repository, state, generalHarvestLog)
         self.filename = join(self._stateDir, self._repository.id + '.ids')
         self.oldfilename = self.filename + ".old"
 
