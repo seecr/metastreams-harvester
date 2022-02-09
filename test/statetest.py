@@ -46,9 +46,9 @@ import pathlib
 class StateTest(SeecrTestCase):
     def setUp(self):
         SeecrTestCase.setUp(self)
-        self.statePath = pathlib.Path(self.tempdir) / 'state'
+        self.statePath = self.tmp_path / 'state'
         self.statePath.mkdir()
-        self.logPath = pathlib.Path(self.tempdir) / 'log'
+        self.logPath = self.tmp_path / 'log'
 
     @contextmanager
     def _State(self, name):

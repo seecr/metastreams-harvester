@@ -88,6 +88,7 @@ class State(object):
         self._forceFinalNewlineOnStatsFile()
         self._ids.close()
         self._invalidIds.close()
+        self._oldIds.close()
 
     def markStarted(self):
         self._write('Started: %s, Harvested/Uploaded/Deleted/Total: ' % self.getTime())

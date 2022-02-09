@@ -55,6 +55,9 @@ def readIds(filename):
 
 def writeIds(filename, ids):
     path = pathlib.Path(filename)
+    if ids is None or len(ids) == 0:
+        path.unlink()
+        return
     idfilenew = path.with_name(path.name + '.new')
     with idfilenew.open('w') as fp:
         for anId in ids:
@@ -65,18 +68,19 @@ class Ids(object):
     def __init__(self, path):
         self._filepath = pathlib.Path(path)
         self._filepath.parent.mkdir(parents=True, exist_ok=True)
-        self._idsfile = None
+        self.__idsfile = None
         self.__ids = None
 
-    def reopen(self):
-        self._idsfile and self.close()
-        self.__ids = readIds(self._filepath)
-        self.open()
+    @property
+    def _idsfile(self):
+        if self.__idsfile is None:
+            self.__idsfile = self._filepath.open('a')
+        return self.__idsfile
 
     @property
     def _ids(self):
         if self.__ids is None:
-            self.reopen()
+            self.__ids = readIds(self._filepath)
         return self.__ids
 
     def __len__(self):
@@ -87,14 +91,18 @@ class Ids(object):
             yield unescapeFilename(id)
 
     def clear(self):
-        self._ids = []
+        del self._ids[:]
 
     def open(self):
-        self._idsfile = self._filepath.open('a')
+        pass
 
     def close(self):
-        self._idsfile.close()
-        writeIds(str(self._filepath), self._ids)
+        self.__idsfile and self.__idsfile.close()
+        writeIds(self._filepath, self._ids)
+        self.__idsfile = None
+        self.__ids = None
+
+    reopen = close
 
     def getIds(self):
         return self._ids[:]
@@ -114,6 +122,13 @@ class Ids(object):
         if uploadid in self._ids:
             self._ids.remove(uploadid)
             self.close()
-            self.open()
+
+    def moveTo(self, dest):
+        for i in self._ids:
+            dest.add(i)
+        dest.close()
+        self.clear()
+        self.close()
+
 
 

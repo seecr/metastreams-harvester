@@ -35,6 +35,7 @@
 from seecr.test import SeecrTestCase
 from meresco.harvester.ids import Ids, readIds, writeIds
 from os.path import join
+import pathlib
 
 from contextlib import contextmanager
 @contextmanager
@@ -60,6 +61,8 @@ class IdsTest(SeecrTestCase):
                 self.assertEqual(1, len(f.readlines()))
 
     def testInit(self):
+        with _Ids(self.tmp_path / 'none') as ids:
+            self.assertEqual(0, len(ids))
         self.writeTestIds('one', ['id:1'])
         with _Ids(self.tempdir + '/one') as ids:
             self.assertEqual(1, len(ids))
@@ -122,23 +125,55 @@ class IdsTest(SeecrTestCase):
             self.assertEqual('uploadId1\n%0A  uploadId2\n   uploadId3\n', fp.read())
 
     def testEscaping(self):
-        ids = Ids(self.tempdir + "/pruebo.ids")
+        idsPath = self.tmp_path / 'pruebo.ids'
+        ids = Ids(idsPath)
         try:
             ids.add("needs_\n_escape")
-            with open(join(self.tempdir, "pruebo.ids")) as fp:
-                self.assertEqual('needs_%0A_escape\n', fp.read())
+            self.assertEqual('needs_%0A_escape\n', idsPath.read_text())
             self.assertEqual(['needs_\n_escape'], ids.getIds())
             ids.reopen()
-            with open(join(self.tempdir, "pruebo.ids")) as fp:
-                self.assertEqual('needs_%0A_escape\n', fp.read())
+            self.assertEqual('needs_%0A_escape\n', idsPath.read_text())
             self.assertEqual(['needs_\n_escape'], ids.getIds())
             ids.reopen()
             self.assertEqual(['needs_\n_escape'], ids.getIds())
         finally:
             ids.close()
 
+    def testClear(self):
+        # Wondering if this is what we really want.
+        idsPath = self.tmp_path / 'ids'
+        with _Ids(idsPath) as ids:
+            ids.add('one')
+            ids.add('two')
+            ids.clear()
+            self.assertEqual([], ids.getIds())
+        self.assertFalse(idsPath.is_file())
+
+
+    def testNoIdsNoFile(self):
+        myidsPath = self.tmp_path / 'my.ids'
+        ids = Ids(myidsPath)
+        ids.add('some:id')
+        ids.close()
+        self.assertTrue(myidsPath.is_file())
+        ids.remove('some:id')
+        ids.close()
+        self.assertFalse(myidsPath.is_file())
+
+    def testMoveTo(self):
+        ids1path = self.tmp_path / 'one'
+        ids2path = self.tmp_path / 'two'
+        self.writeTestIds(ids1path, ['one:1', 'one:2'])
+        self.writeTestIds(ids2path, ['two:1', 'two:2'])
+        with _Ids(ids1path) as one:
+            with _Ids(ids2path) as two:
+                one.moveTo(two)
+                self.assertEqual(0, len(one))
+                self.assertEqual(['two:1', 'two:2', 'one:1', 'one:2'], two.getIds())
+
 
     def writeTestIds(self, name, ids):
-        with open("{}/{}".format(self.tempdir, name), 'w') as w:
+        p = name if hasattr(name, 'parent') else (self.tmp_path / name)
+        with p.open('w') as w:
             for anId in ids:
                 w.write(anId + '\n')
