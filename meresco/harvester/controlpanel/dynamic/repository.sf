@@ -26,8 +26,9 @@
 #
 ## end license ##
 
-import page, common
+import common
 import page2
+import status
 
 WEEKDAYS = list(enumerate(["Maandag", "Dinsdag", "Woensdag", "Donderdag", "Vrijdag", "Zaterdag", "Zondag"]))
 
@@ -99,6 +100,8 @@ def btn_status(tag, domainId, repositoryId):
             'data-repositoryid': repositoryId}):
             with tag("i.bi.bi-graph-up"):
                 yield ''
+            if status.totalErrors(domainId, None, repositoryId) > 0:
+                with tag("span.position-absolute.top-1.end-1.translate-middle.p-1.bg-danger.border.border-light.rounded-circle"): pass
 
 def card_repositoryAttributes(tag, domain, repository, repositoryGroupId, **kwargs):
     domainId = domain.get("identifier")

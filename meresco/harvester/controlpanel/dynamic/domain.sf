@@ -25,6 +25,7 @@
 
 
 import page2
+import status
 
 TARGET_TYPES = dict(
     sruUpdate="SRU Update Target",
@@ -93,6 +94,8 @@ def btn_status(tag, domainId):
             }):
             with tag("i.bi.bi-graph-up"):
                 yield ''
+            if status.totalErrors(domainId) > 0:
+                with tag("span.position-absolute.top-1.end-1.translate-middle.p-1.bg-danger.border.border-light.rounded-circle"): pass
 
 def card_domainAttributes(tag, domain, **kwargs):
     domainId = domain.get("identifier")

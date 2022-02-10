@@ -25,6 +25,13 @@
 
 import page2
 
+def getStatus(domainId, repositoryGroupId, repositoryId):
+    statuses = observable.call.getStatus(domainId=domainId, repositoryGroupId=repositoryGroupId, repositoryId=repositoryId)
+    return statuses
+
+def totalErrors(domainId, repositoryGroupId=None, repositoryId=None):
+    return sum(int(each['totalerrors']) for each in getStatus(domainId, repositoryGroupId, repositoryId))
+
 def main(tag, **kwargs):
     if not (data := page2.findPath("data", dict(error=render_data_error), **kwargs)) is None:
         yield data(tag=tag, **kwargs)
@@ -34,7 +41,7 @@ def main(tag, **kwargs):
     domainId = arguments.get('domainId', [None])[0]
     repositoryGroupId = arguments.get('repositoryGroupId', [None])[0]
     repositoryId = arguments.get('repositoryId', [None])[0]
-    statuses = observable.call.getStatus(domainId=domainId, repositoryGroupId=repositoryGroupId, repositoryId=repositoryId)
+    statuses = getStatus(domainId=domainId, repositoryGroupId=repositoryGroupId, repositoryId=repositoryId)
 
     with tag("div"):
         with tag("div.modal", tabindex="-1", role="dialog", id_="modal_error"):
