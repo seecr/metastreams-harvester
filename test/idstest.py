@@ -171,6 +171,30 @@ class IdsTest(SeecrTestCase):
                 self.assertEqual(0, len(one))
                 self.assertEqual(['two:1', 'two:2', 'one:1', 'one:2'], two.getIds())
 
+    def testExcludeIdsFrom(self):
+        ids1path = self.tmp_path / 'one'
+        ids2path = self.tmp_path / 'two'
+        self.writeTestIds(ids1path, ['a', 'b', 'c', 'd'])
+        self.writeTestIds(ids2path, ['b', 'd', 'f', 'g'])
+        with _Ids(ids1path) as one:
+            with _Ids(ids2path) as two:
+                one.excludeIdsFrom(two)
+                self.assertEqual(2, len(one))
+                self.assertEqual(['a', 'c'], one.getIds())
+                self.assertEqual(['b', 'd', 'f', 'g'], two.getIds())
+
+    def testIterAndDelete(self):
+        ids1path = self.tmp_path / 'one'
+        self.writeTestIds(ids1path, ['a', 'b', 'c', 'd'])
+        d = []
+        with _Ids(ids1path) as one:
+            for i in one:
+                d.append(i)
+                one.remove(i)
+            one.close()
+            self.assertEqual([], one.getIds())
+            self.assertEqual(['a','b','c','d'], d)
+
 
     def writeTestIds(self, name, ids):
         p = name if hasattr(name, 'parent') else (self.tmp_path / name)

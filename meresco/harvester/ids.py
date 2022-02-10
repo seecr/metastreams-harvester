@@ -87,7 +87,7 @@ class Ids(object):
         return len(self._ids)
 
     def __iter__(self):
-        for id in self._ids:
+        for id in iter(self._ids[:]):
             yield unescapeFilename(id)
 
     def clear(self):
@@ -128,6 +128,12 @@ class Ids(object):
             dest.add(i)
         dest.close()
         self.clear()
+        self.close()
+
+    def excludeIdsFrom(self, other):
+        remove_this = set(other.getIds())
+        new_ids = [i for i in self if not i in remove_this]
+        self._ids[:] = new_ids
         self.close()
 
 

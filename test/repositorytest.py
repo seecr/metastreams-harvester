@@ -1,10 +1,7 @@
 ## begin license ##
 #
-# "Meresco Harvester" consists of two subsystems, namely an OAI-harvester and
-# a web-control panel.
-# "Meresco Harvester" is originally called "Sahara" and was developed for
-# SURFnet by:
-# Seek You Too B.V. (CQ2) http://www.cq2.nl
+# "Metastreams Harvester" is a fork of Meresco Harvester that demonstrates
+# the translation of traditional metadata into modern events streams.
 #
 # Copyright (C) 2006-2007 SURFnet B.V. http://www.surfnet.nl
 # Copyright (C) 2007-2008 SURF Foundation. http://www.surf.nl
@@ -12,25 +9,25 @@
 # Copyright (C) 2007-2009 Stichting Kennisnet Ict op school. http://www.kennisnetictopschool.nl
 # Copyright (C) 2009 Tilburg University http://www.uvt.nl
 # Copyright (C) 2010-2011, 2015, 2020-2021 Stichting Kennisnet https://www.kennisnet.nl
-# Copyright (C) 2013, 2015, 2020-2021 Seecr (Seek You Too B.V.) https://seecr.nl
+# Copyright (C) 2013, 2015, 2020-2022 Seecr (Seek You Too B.V.) https://seecr.nl
 # Copyright (C) 2020-2021 Data Archiving and Network Services https://dans.knaw.nl
 # Copyright (C) 2020-2021 SURF https://www.surf.nl
 # Copyright (C) 2020-2021 The Netherlands Institute for Sound and Vision https://beeldengeluid.nl
 #
-# This file is part of "Meresco Harvester"
+# This file is part of "Metastreams Harvester"
 #
-# "Meresco Harvester" is free software; you can redistribute it and/or modify
+# "Metastreams Harvester" is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
 # the Free Software Foundation; either version 2 of the License, or
 # (at your option) any later version.
 #
-# "Meresco Harvester" is distributed in the hope that it will be useful,
+# "Metastreams Harvester" is distributed in the hope that it will be useful,
 # but WITHOUT ANY WARRANTY; without even the implied warranty of
 # MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 # GNU General Public License for more details.
 #
 # You should have received a copy of the GNU General Public License
-# along with "Meresco Harvester"; if not, write to the Free Software
+# along with "Metastreams Harvester"; if not, write to the Free Software
 # Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 #
 ## end license ##
@@ -39,7 +36,7 @@ from seecr.test import SeecrTestCase, CallTrace
 
 from meresco.harvester.eventlogger import NilEventLogger
 from meresco.harvester.repository import Repository
-from meresco.harvester.action import Action, DONE, ActionException
+from meresco.harvester.action import Action, DONE, ActionException, State
 from meresco.harvester.oairequest import OAIError
 from meresco.harvester.timeslot import Wildcard
 from os.path import join
@@ -100,7 +97,7 @@ class RepositoryTest(SeecrTestCase):
         self.repo.use = False
         self.repo.action = None
         action = MockAction()
-        self.repo._createAction=lambda stateDir,logDir,generalHarvestLog: action
+        self.repo._createAction=lambda state,generalHarvestLog: action
         gustos = Mock()
         result = self.repo.do(stateDir=self.logAndStateDir, logDir=self.logAndStateDir, gustosClient=gustos)
         self.assertEqual(('', False), result)
@@ -116,10 +113,10 @@ class RepositoryTest(SeecrTestCase):
         action = CallTrace('Action')
         oaiError = OAIError('url', 'resumptionToken expired', 'badResumptionToken', 'lxmlResponse')
         action.exceptions['do'] = oaiError
-        self.repo._createAction = lambda **kwargs: action
+        self.repo._createAction = lambda *args, **kwargs: action
         gustos = Mock()
         message, again = self.repo.do(stateDir=self.logAndStateDir, logDir=self.logAndStateDir, gustosClient=gustos)
-        self.assertTrue('resumptionToken expired' in message)
+        self.assertTrue('resumptionToken expired' in message, message)
         self.assertEqual(['info', 'do', 'resetState'], [m.name for m in action.calledMethods])
         self.assertTrue(again)
         self.assertEqual([call.report(values={'Harvester (domainId)': {'groupId:rep': {'errors': {'count': 1}}}})], gustos.mock_calls)
@@ -128,7 +125,7 @@ class RepositoryTest(SeecrTestCase):
         self.repo.use = True
         self.repo.action = None
         action = MockAction(DONE)
-        self.repo._createAction=lambda stateDir,logDir,generalHarvestLog: action
+        self.repo._createAction=lambda state,generalHarvestLog: action
         gustos = Mock()
         result = self.repo.do(stateDir=self.logAndStateDir, logDir=self.logAndStateDir, gustosClient=gustos)
         self.assertEqual((DONE, False), result)
@@ -142,7 +139,7 @@ class RepositoryTest(SeecrTestCase):
         self.repo.action = None
         self.repo.complete = True
         action = MockAction(DONE, hasResumptionToken=True)
-        self.repo._createAction=lambda stateDir,logDir,generalHarvestLog: action
+        self.repo._createAction=lambda state,generalHarvestLog: action
         result = self.repo.do(stateDir=self.logAndStateDir, logDir=self.logAndStateDir)
         self.assertEqual((DONE, True), result)
 
@@ -151,7 +148,7 @@ class RepositoryTest(SeecrTestCase):
         self.repo.action = None
         self.repo.complete = False
         action = MockAction(DONE, hasResumptionToken=True)
-        self.repo._createAction=lambda stateDir,logDir,generalHarvestLog: action
+        self.repo._createAction=lambda state,generalHarvestLog: action
         result = self.repo.do(stateDir=self.logAndStateDir, logDir=self.logAndStateDir)
         self.assertEqual((DONE, False), result)
 
@@ -159,7 +156,7 @@ class RepositoryTest(SeecrTestCase):
         self.repo._saharaget = self
         self.repo.action = 'someaction'
         action = MockAction(DONE)
-        self.repo._createAction=lambda stateDir,logDir,generalHarvestLog: action
+        self.repo._createAction=lambda state,generalHarvestLog: action
         result = self.repo.do(stateDir=self.logAndStateDir, logDir=self.logAndStateDir)
         self.assertEqual((DONE, False), result)
         self.assertTrue(action.called)
@@ -171,29 +168,38 @@ class RepositoryTest(SeecrTestCase):
         self.repo.use = True
         self.repo.action = 'someaction'
         action = MockAction('Not yet done!', False)
-        self.repo._createAction=lambda stateDir,logDir,generalHarvestLog: action
+        self.repo._createAction=lambda state,generalHarvestLog: action
         result, hasResumptionToken = self.repo.do(stateDir=self.logAndStateDir, logDir=self.logAndStateDir)
         self.assertEqual('Not yet done!', result)
         self.assertTrue(action.called)
         self.assertEqual(True, self.repo.use)
         self.assertEqual('someaction', self.repo.action)
 
-    def _testAction(self, use, action, expectedTypeName):
-        self.repo.use = use
-        self.repo.action = action
-        createdAction = self.repo._createAction(stateDir=self.logAndStateDir, logDir=self.logAndStateDir, generalHarvestLog=NilEventLogger())
-        self.assertEqual(expectedTypeName, createdAction.__class__.__name__)
+        def _testAction(self, use, action, expectedTypeName):
+            self.repo.use = use
+            self.repo.action = action
+            createdAction = self.repo._createAction(stateDir=self.logAndStateDir, logDir=self.logAndStateDir, generalHarvestLog=NilEventLogger())
+            self.assertEqual(expectedTypeName, createdAction.__class__.__name__)
 
     def testCreateAction(self):
-        self._testAction(False, None, 'NoneAction')
-        self._testAction(None, None, 'NoneAction')
-        self._testAction(True, None, 'HarvestAction')
-        self._testAction(False, 'clear', 'DeleteIdsAction')
-        self._testAction(True, 'clear', 'DeleteIdsAction')
-        self._testAction(False, 'refresh', 'SmoothAction')
-        self._testAction(True, 'refresh', 'SmoothAction')
+        def testAction(use, action, expectedTypeName):
+            self.repo.use = use
+            self.repo.action = action
+            try:
+                state = State(self.logAndStateDir, self.logAndStateDir, self.repo.id)
+                createdAction = self.repo._createAction(state, generalHarvestLog=NilEventLogger())
+                self.assertEqual(expectedTypeName, createdAction.__class__.__name__)
+            finally:
+                state.close()
+        testAction(False, None, 'NoneAction')
+        testAction(None, None, 'NoneAction')
+        testAction(True, None, 'HarvestAction')
+        testAction(False, 'clear', 'DeleteIdsAction')
+        testAction(True, 'clear', 'DeleteIdsAction')
+        testAction(False, 'refresh', 'SmoothAction')
+        testAction(True, 'refresh', 'SmoothAction')
         try:
-            self._testAction(True, 'nonexisting', 'ignored')
+            testAction(True, 'nonexisting', 'ignored')
             self.fail()
         except ActionException as afe:
             self.assertEqual("Action 'nonexisting' not supported.", str(afe))

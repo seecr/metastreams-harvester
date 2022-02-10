@@ -36,7 +36,7 @@ from sys import exc_info
 from traceback import format_exception
 from time import localtime
 
-from .action import Action
+from .action import Action, State
 from .eventlogger import NilEventLogger
 from .oairequest import OAIError, OaiRequest
 from .saharaobject import SaharaObject
@@ -92,14 +92,15 @@ class Repository(SaharaObject):
         return self._oaiRequestClass(self.baseurl, userAgent=self.userAgent or None, authorizationKey=self.authorizationKey or None)
 
     def _createAction(self, repoState, generalHarvestLog):
-        return Action.create(self, repositoryState=repoState, logDir=logDir, generalHarvestLog=generalHarvestLog)
+        return Action.create(self, repoState, generalHarvestLog=generalHarvestLog)
 
     def do(self, stateDir, logDir, generalHarvestLog=nillogger, gustosClient=None):
         gustosReport = _prepareGustosReport(gustosClient, self.domainId, self.repositoryGroupId, self.id)
+        repoState = None
         try:
             if not (stateDir or logDir):
                 raise RepositoryException('Missing stateDir and/or logDir')
-            repoState = State(stateDir, logDir, self.repositoryId)
+            repoState = State(stateDir, logDir, self.id)
             action = self._createAction(repoState, generalHarvestLog=generalHarvestLog)
             if action.info():
                 generalHarvestLog.logLine('START',action.info(), id=self.id)
@@ -127,6 +128,8 @@ class Repository(SaharaObject):
             errorMessage = _errorMessage()
             generalHarvestLog.logError(errorMessage, id=self.id)
             return errorMessage, False
+        finally:
+            repoState is None or repoState.close()
 
 def _prepareGustosReport(client, domain_id, repo_group_id, repo_id):
     if client is None:

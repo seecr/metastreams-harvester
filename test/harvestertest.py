@@ -46,7 +46,7 @@ from seecr.test import CallTrace
 
 from meresco.components.json import JsonDict
 from meresco.harvester.harvester import Harvester
-from meresco.harvester._harvesterlog import HarvesterLog
+from meresco.harvester.action import State
 from meresco.harvester.oairequest import OaiRequest
 from meresco.harvester.virtualuploader import InvalidDataException, TooMuchInvalidDataException
 from meresco.harvester.mapping import Mapping, DEFAULT_CODE, Upload
@@ -98,8 +98,8 @@ class HarvesterTest(unittest.TestCase):
             self.logger.close()
         rmtree(self.logDir)
 
-    def createLogger(self):
-        self.logger=HarvesterLog(stateDir=self.stateDir, logDir=self.logDir, name='tud')
+    def createLogger(self, name='tud'):
+        self.logger=State(stateDir=self.stateDir, logDir=self.logDir, name=name).getHarvesterLog()
         return self.logger
 
     def createServer(self, url='http://repository.tudelft.nl/oai'):
@@ -136,7 +136,7 @@ class HarvesterTest(unittest.TestCase):
             self.assertEqual('tud:oai:tudelft.nl:007193',idsfile.readline().strip())
 
     def createHarvesterWithMockUploader(self, name, set=None, mockRequest=None):
-        self.logger = HarvesterLog(stateDir=self.stateDir, logDir=self.logDir, name=name)
+        self.logger = self.createLogger(name)
         repository = self.MockRepository(name, set)
         uploader = repository.createUploader(self.logger.eventLogger())
         self.mapper = repository.mapping()
@@ -178,7 +178,7 @@ class HarvesterTest(unittest.TestCase):
         self.assertEqual(' ResumptionToken: TestToken', stats[3])
 
     def testOtherMetadataPrefix(self):
-        self.logger=HarvesterLog(stateDir=self.stateDir, logDir=self.logDir, name='tud')
+        self.logger=self.createLogger('tud')
         repository = self.MockRepository('tud', None)
         repository.metadataPrefix='lom'
         harvester = Harvester(repository)

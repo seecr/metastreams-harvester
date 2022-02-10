@@ -36,6 +36,7 @@ from sys import exc_info
 from os.path import join
 
 from seecr.test import CallTrace, SeecrTestCase
+from meresco.harvester.action import State
 from meresco.harvester._harvesterlog import HarvesterLog
 from seecr.zulutime import ZuluTime
 
@@ -55,7 +56,7 @@ class ActionTestCase(SeecrTestCase):
         self.writeLogLine(2010, 3, 3, exception='Exception')
 
         with  self.newHarvesterLog() as h:
-            with open(h._state._statsfilename) as fp:
+            with open(h._state._statsfilepath) as fp:
                 self.assertEqualsWS("""Started: 2010-03-01 12:15:00, Harvested/Uploaded/Deleted/Total: 1/1/0/1, Done: 2010-03-01 12:15:00, ResumptionToken: resumptionToken
     Started: 2010-03-02 12:15:00, Harvested/Uploaded/Deleted/Total: 1/1/0/1, Done: 2010-03-02 12:15:00, ResumptionToken:
     Started: 2010-03-03 12:15:00, Harvested/Uploaded/Deleted/Total: 1/1/0/1, Error: <class 'Exception'>: Exception
@@ -63,7 +64,8 @@ class ActionTestCase(SeecrTestCase):
 
     @contextmanager
     def newHarvesterLog(self):
-        harvesterLog =  HarvesterLog(stateDir=self.tempdir, logDir=self.tempdir, name=self.repository.id)
+        state = State(self.tmp_path / 'state', self.tmp_path / 'log', self.repository.id)
+        harvesterLog = state.getHarvesterLog()
         try:
             yield harvesterLog
         finally:

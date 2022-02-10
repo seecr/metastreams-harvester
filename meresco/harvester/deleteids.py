@@ -41,34 +41,19 @@ from meresco.core import Observable
 from .mapping import Upload
 
 class DeleteIds(Observable):
-    def __init__(self, repository, stateDir, batchSize=1000):
+    def __init__(self, repository):
         Observable.__init__(self)
-        self._stateDir = stateDir
         self._repository = repository
-        self._batchSize = batchSize
         self._invalid = self._deleteIds = False
 
-    def ids(self):
-        return self.call.getIds(invalid=self._invalid, deleteIds=self._deleteIds)
-
-    def delete(self):
+    def delete(self, ids):
         self.do.start()
         try:
-            self._delete()
+            self._delete(ids)
         finally:
             self.do.stop()
 
-    def deleteFile(self, filename):
-        self._invalid = filename.endswith("_invalid.ids")
-        self._deleteIds = filename.endswith(".delete")
-        try:
-            self.delete()
-        finally:
-            self._invalid = False
-            self._deleteIds = False
-
-    def _delete(self):
-        ids = self.ids()
+    def _delete(self, ids):
         processed = 0
         try:
             for id in ids:
@@ -77,18 +62,16 @@ class DeleteIds(Observable):
                     anUpload.id = id
                     self.do.notifyHarvestedRecord(anUpload.id)
                     self.do.delete(anUpload)
-                    if not self._invalid and not self._deleteIds:
-                        self.do.deleteIdentifier(id)
+                    self.do.deleteIdentifier(id)
                     processed += 1
-                    if processed % self._batchSize == 0 and processed > 0:
-                        self.call.flushIds(invalid=self._invalid, deleteIds=self._deleteIds)
+                    ids.remove(id)
                 except:
                     xtype, xval, xtb = sys.exc_info()
                     errorMessage = '|'.join(map(str.strip,format_exception(xtype, xval, xtb)))
                     self.do.logError(errorMessage, id=id)
                     raise
         finally:
-            self.call.flushIds(invalid=self._invalid, deleteIds=self._deleteIds)
+            ids.close()
 
     def markDeleted(self):
         self.do.markDeleted()

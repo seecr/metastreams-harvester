@@ -112,12 +112,6 @@ class HarvesterLog(object):
         idsFile = self._state.invalidIds if invalid else self._state.ids
         return idsFile.getIds()
 
-    def flushIds(self, invalid=False, deleteIds=False):
-        if deleteIds:
-            return
-        idsFile = self._state.invalidIds if invalid else self._state.ids
-        idsFile.reopen()
-
     def logInvalidData(self, uploadid, message):
         self._state.invalidIds.add(uploadid)
         filePath = self._invalidDataMessageFilePath(uploadid)
