@@ -41,10 +41,10 @@ from seecr.test.utils import sleepWheel, getRequest
 from meresco.components.json import JsonDict
 from meresco.components import lxmltostring
 from meresco.harvester.harvesterdata import HarvesterData
-from meresco.harvester.state import getResumptionToken
-from meresco.harvester.harvesterlog import HarvesterLog
+from meresco.harvester._state import getResumptionToken, State
 from meresco.harvester.namespaces import xpath
 from meresco.xml import xpathFirst
+import pathlib
 
 BATCHSIZE=10
 DOMAIN='adomain'
@@ -60,7 +60,10 @@ class HarvesterTest(IntegrationTestCase):
         system("rm -rf %s" % self.filesystemDir)
         self.controlHelper(action='reset')
         self.emptyDumpDir()
-        system("mkdir -p %s" % join(self.harvesterStateDir, DOMAIN))
+        self.domainStatePath = pathlib.Path(self.harvesterStateDir)/DOMAIN
+        self.domainLogPath = pathlib.Path(self.harvesterLogDir)/DOMAIN
+        self.domainStatePath.mkdir(parents=True)
+        self.domainLogPath.mkdir(parents=True)
         self.harvesterData = HarvesterData(join(self.integrationTempdir, 'data'))
         try:
             self.harvesterData.addRepositoryGroup(identifier=REPOSITORYGROUP, domainId=DOMAIN)
@@ -114,15 +117,22 @@ class HarvesterTest(IntegrationTestCase):
         finally:
             self.removeRepository(DOMAIN, 'repo_invalid_metadataPrefix', REPOSITORYGROUP)
 
+    def get_ids(self, ids_name, repository=REPOSITORY):
+        state = State(self.domainStatePath, self.domainLogPath, repository)
+        try:
+            return getattr(state, ids_name)
+        finally:
+            state.close()
+
     def testHarvestToSruUpdate(self):
         # initial harvest
         oldlogs = self.getLogs()
         self.startHarvester(repository=REPOSITORY)
         self.assertEqual(BATCHSIZE, self.sizeDumpDir())
         self.assertEqual(2, len([f for f in listdir(self.dumpDir) if "info:srw/action/1/delete" in open(join(self.dumpDir, f)).read()]))
-        ids = open(join(self.harvesterStateDir, DOMAIN, "%s.ids" % REPOSITORY)).readlines()
+        ids = self.get_ids('ids')
         self.assertEqual(8, len(ids))
-        invalidIds = open(join(self.harvesterStateDir, DOMAIN, "%s_invalid.ids" % REPOSITORY)).readlines()
+        invalidIds = self.get_ids('invalidIds')
         self.assertEqual(0, len(invalidIds))
         logs = self.getLogs()[len(oldlogs):]
         self.assertEqual(1, len(logs))
@@ -134,7 +144,7 @@ class HarvesterTest(IntegrationTestCase):
         # resumptionToken
         self.startHarvester(repository=REPOSITORY)
         self.assertEqual(15, self.sizeDumpDir())
-        ids = open(join(self.harvesterStateDir, DOMAIN, "%s.ids" % REPOSITORY)).readlines()
+        ids = self.get_ids('ids')
         self.assertEqual(13, len(ids))
         logs = self.getLogs()[len(oldlogs):]
         self.assertEqual(2, len(logs))
@@ -195,9 +205,9 @@ class HarvesterTest(IntegrationTestCase):
 
     def testRefresh(self):
         oldlogs = self.getLogs()
-        log = HarvesterLog(
+        log = State(
             stateDir=join(self.harvesterStateDir, DOMAIN),
-            logDir=join(self.harvesterLogDir, DOMAIN), name=REPOSITORY)
+            logDir=join(self.harvesterLogDir, DOMAIN), name=REPOSITORY).getHarvesterLog()
         log.startRepository()
         for uploadId in ['%s:oai:record:%02d' % (REPOSITORY, i) for i in [1,7,120,121]]:
             log.notifyHarvestedRecord(uploadId)
@@ -242,9 +252,8 @@ class HarvesterTest(IntegrationTestCase):
         nrOfDeleted = 2
         self.startHarvester(repository=REPOSITORY)
         self.assertEqual(nrOfDeleted, self.sizeDumpDir())
-        ids = open(join(self.harvesterStateDir, DOMAIN, "%s.ids" % REPOSITORY)).readlines()
-        self.assertEqual(0, len(ids))
-        invalidIds = open(join(self.harvesterStateDir, DOMAIN, "%s_invalid.ids" % REPOSITORY)).readlines()
+        self.assertEqual(0, len(self.get_ids('ids')))
+        invalidIds = self.get_ids('invalidIds')
         self.assertEqual(maxIgnore + 1, len(invalidIds), invalidIds)
         invalidDataMessagesDir = join(self.harvesterLogDir, DOMAIN, "invalid", REPOSITORY)
         self.assertEqual(maxIgnore + 1, len(listdir(invalidDataMessagesDir)))
@@ -253,9 +262,9 @@ class HarvesterTest(IntegrationTestCase):
         self.controlHelper(action='noneInvalid')
         self.startHarvester(repository=REPOSITORY)
         self.assertEqual(nrOfDeleted + BATCHSIZE, self.sizeDumpDir())
-        ids = open(join(self.harvesterStateDir, DOMAIN, "%s.ids" % REPOSITORY)).readlines()
+        ids = self.get_ids('ids')
         self.assertEqual(BATCHSIZE - nrOfDeleted, len(ids))
-        invalidIds = open(join(self.harvesterStateDir, DOMAIN, "%s_invalid.ids" % REPOSITORY)).readlines()
+        invalidIds = self.get_ids('invalidIds')
         self.assertEqual(0, len(invalidIds), invalidIds)
         self.assertEqual(0, len(listdir(invalidDataMessagesDir)))
 
@@ -317,7 +326,7 @@ class HarvesterTest(IntegrationTestCase):
         self.assertEqual(len(deletesTodo), self.sizeDumpDir())
 
     def testRefreshWithIgnoredRecords(self):
-        log = HarvesterLog(stateDir=join(self.harvesterStateDir, DOMAIN), logDir=join(self.harvesterLogDir, DOMAIN), name=REPOSITORY)
+        log = State(stateDir=join(self.harvesterStateDir, DOMAIN), logDir=join(self.harvesterLogDir, DOMAIN), name=REPOSITORY).getHarvesterLog()
         log.startRepository()
         for uploadId in ['%s:oai:record:%02d' % (REPOSITORY, i) for i in [1,2,120,121]]:
             if uploadId == '%s:oai:record:02' % (REPOSITORY):
@@ -347,37 +356,38 @@ class HarvesterTest(IntegrationTestCase):
         self.assertEqual(totalRecords, self.sizeDumpDir())
         self.startHarvester(repository=REPOSITORY) # Smooth finish
         self.assertEqual(totalRecords + oldUploads + oldIgnoreds, self.sizeDumpDir())
-        invalidIds = open(join(self.harvesterStateDir, DOMAIN, "%s_invalid.ids" % REPOSITORY)).readlines()
+        invalidIds = self.get_ids('invalidIds')
         self.assertEqual(0, len(invalidIds), invalidIds)
-        ids = open(join(self.harvesterStateDir, DOMAIN, "%s.ids" % REPOSITORY)).readlines()
-        self.assertEqual(13, len(ids), ids)
+        self.assertEqual(13, len(self.get_ids('ids')))
 
     def testClearWithInvalidRecords(self):
-        log = HarvesterLog(stateDir=join(self.harvesterStateDir, DOMAIN), logDir=join(self.harvesterLogDir, DOMAIN), name=REPOSITORY)
-        log.startRepository()
-        for uploadId in ['%s:oai:record:%02d' % (REPOSITORY, i) for i in [1,2,120,121]]:
-            log.notifyHarvestedRecord(uploadId)
-            log.uploadIdentifier(uploadId)
-        for uploadId in ['%s:oai:record:%02d' % (REPOSITORY, i) for i in [4,5,122,123,124]]:
-            log.notifyHarvestedRecord(uploadId)
-            log.deleteIdentifier(uploadId)
-        for uploadId in ['%s:oai:record:%02d' % (REPOSITORY, i) for i in [7,8,125,126,127,128]]:
-            log.notifyHarvestedRecord(uploadId)
-            log.logInvalidData(uploadId, 'ignored message')
-            log.logIgnoredIdentifierWarning(uploadId)
-        log.endRepository('token', '2012-01-01T09:00:00Z')
-        log.close()
-        oldUploads = 4
-        oldDeletes = 5
-        oldInvalids = 6
-        self.saveRepository(DOMAIN, REPOSITORY, REPOSITORYGROUP, action='clear')
+        state = State(stateDir=join(self.harvesterStateDir, DOMAIN), logDir=join(self.harvesterLogDir, DOMAIN), name=REPOSITORY)
+        try:
+            log = state.getHarvesterLog()
+            log.startRepository()
+            for uploadId in ['%s:oai:record:%02d' % (REPOSITORY, i) for i in [1,2,120,121]]:
+                log.notifyHarvestedRecord(uploadId)
+                log.uploadIdentifier(uploadId)
+            for uploadId in ['%s:oai:record:%02d' % (REPOSITORY, i) for i in [4,5,122,123,124]]:
+                log.notifyHarvestedRecord(uploadId)
+                log.deleteIdentifier(uploadId)
+            for uploadId in ['%s:oai:record:%02d' % (REPOSITORY, i) for i in [7,8,125,126,127,128]]:
+                log.notifyHarvestedRecord(uploadId)
+                log.logInvalidData(uploadId, 'ignored message')
+                log.logIgnoredIdentifierWarning(uploadId)
+            log.endRepository('token', '2012-01-01T09:00:00Z')
+            log.close()
+            oldUploads = 4
+            oldDeletes = 5
+            oldInvalids = 6
+            self.saveRepository(DOMAIN, REPOSITORY, REPOSITORYGROUP, action='clear')
 
-        self.startHarvester(repository=REPOSITORY)
-        self.assertEqual(oldUploads+oldInvalids, self.sizeDumpDir())
-        invalidIds = open(join(self.harvesterStateDir, DOMAIN, "%s_invalid.ids" % REPOSITORY)).readlines()
-        self.assertEqual(0, len(invalidIds), invalidIds)
-        ids = open(join(self.harvesterStateDir, DOMAIN, "%s.ids" % REPOSITORY)).readlines()
-        self.assertEqual(0, len(ids), ids)
+            self.startHarvester(repository=REPOSITORY)
+            self.assertEqual(oldUploads+oldInvalids, self.sizeDumpDir())
+            self.assertEqual(0, len(state.invalidIds), state.invalidIds.getIds())
+            self.assertEqual(0, len(state.ids), state.ids.getIds())
+        finally:
+            state.close()
 
     def testConcurrentHarvestToSruUpdate(self):
         self.startHarvester(concurrency=3)
