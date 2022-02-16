@@ -37,7 +37,7 @@ from seecr.zulutime import ZuluTime
 from ._harvesterlog import HarvesterLog
 from .ids import Ids
 from escaping import escapeFilename
-import pathlib
+import pathlib, json
 from .constants import INVALID_DATA_MESSAGES_DIR
 
 class State(object):
@@ -47,19 +47,21 @@ class State(object):
         self._statePath.mkdir(parents=True, exist_ok=True)
         self.logPath.mkdir(parents=True, exist_ok=True)
         esc_name = escapeFilename(name)
-        self.invalidLogPath = self.logPath / INVALID_DATA_MESSAGES_DIR / esc_name
+        self.invalidLogPath = self.logPath/INVALID_DATA_MESSAGES_DIR/esc_name
         self._name = name
 
-        self._ids =        Ids(self._statePath / f'{esc_name}.ids')
-        self._invalidIds = Ids(self._statePath / f'{esc_name}_invalid.ids')
-        self._oldIds =     Ids(self._statePath / f'{esc_name}.ids.old')
+        self._ids =        Ids(self._statePath/f'{esc_name}.ids')
+        self._invalidIds = Ids(self._statePath/f'{esc_name}_invalid.ids')
+        self._oldIds =     Ids(self._statePath/f'{esc_name}.ids.old')
 
-        self._statsfilepath = self._statePath / f'{esc_name}.stats'
+        self._statsfilepath = self._statePath/f'{esc_name}.stats'
         self._forceFinalNewlineOnStatsFile()
-        self._resumptionFilepath = self._statePath / f'{esc_name}.next'
-        self._runningFilepath = self._statePath / f'{esc_name}.running'
+        self._resumptionFilepath = self._statePath/f'{esc_name}.next'
+        self._runningFilepath = self._statePath/f'{esc_name}.running'
+        self._countFilepath = self._statePath/f'{esc_name}.count'
         self.from_ = None
         self.token = None
+        self._counts = None
         self.lastSuccessfulHarvest = None
         self._readState()
         self._statsfile = open(self._statsfilepath, 'a')
@@ -91,22 +93,34 @@ class State(object):
         self._oldIds.close()
 
     def markStarted(self):
+        self.up_count('started')
         self._write('Started: %s, Harvested/Uploaded/Deleted/Total: ' % self.getTime())
 
     def markHarvested(self, countsSummary, token, responseDate):
-        self._write(countsSummary)
+        self.up_count('harvested')
+        harvested, uploaded, deleted, total = countsSummary
+        self.up_count('records_harvested', harvested)
+        self.up_count('records_uploaded', uploaded)
+        self.up_count('records_deleted', deleted)
+        self._write('/'.join(map(str, countsSummary)))
         self._write(', Done: %s, ResumptionToken: %s' % (self.getTime(), token))
         self._writeResumptionValues(token, responseDate)
         self._markRunningState("Ok")
 
     def markDeleted(self):
+        self.up_count('deleted')
         self._write("Started: %s, Harvested/Uploaded/Deleted/Total: 0/0/0/0, Done: Deleted all ids." % self.getTime())
         self._writeResumptionValues(None, None)
         self._markRunningState("Ok")
 
     def markException(self, exType, exValue, countsSummary):
+        self.up_count('errors')
+        harvested, uploaded, deleted, total = countsSummary
+        self.up_count('records_harvested', harvested)
+        self.up_count('records_uploaded', uploaded)
+        self.up_count('records_deleted', deleted)
         error = str(exType) + ': ' + str(exValue)
-        self._write(countsSummary)
+        self._write('/'.join(map(str, countsSummary)))
         self._write( ', Error: ' + error)
         self._markRunningState("Error", str(exValue))
 
@@ -133,6 +147,7 @@ class State(object):
         self._writeResumptionValues(None, self.from_)
 
     def _readState(self):
+        self._counts = JsonDict.load(self._countFilepath) if self._countFilepath.is_file() else JsonDict()
         if self._resumptionFilepath.is_file():
             values = JsonDict.loads(self._resumptionFilepath.read_text())
             self.token = values.get('resumptionToken', None) or None
@@ -197,6 +212,19 @@ class State(object):
     def getZTime():
         return ZuluTime()
 
+    def up_count(self, event, size=1):
+        size = max(1, size)
+        if event in EVENTS:
+            self._counts[event] = self._counts.get(event, 0) + size
+            self._counts.dump(self._countFilepath)
+            return self._counts[event]
+        return 0
+
+    def eventCounts(self):
+        return {k:self._counts.get(k,0) for k in EVENTS}
+
+EVENTS = ['errors', 'deleted', 'harvested', 'started',
+        'records_harvested', 'records_uploaded', 'records_deleted']
 
 def getStartDate(logline):
     matches = re.search('Started: (\d{4}-\d{2}-\d{2})', logline)

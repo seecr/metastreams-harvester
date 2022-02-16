@@ -35,7 +35,7 @@
 from seecr.test import SeecrTestCase, CallTrace
 
 from meresco.harvester.eventlogger import NilEventLogger
-from meresco.harvester.repository import Repository
+from meresco.harvester.repository import Repository, RepositoryException
 from meresco.harvester.action import Action, DONE, ActionException, State
 from meresco.harvester.oairequest import OAIError
 from meresco.harvester.timeslot import Wildcard
@@ -104,35 +104,37 @@ class RepositoryTest(SeecrTestCase):
         self.assertTrue(action.called)
         self.assertEqual(False, self.repo.use)
         self.assertEqual(None, self.repo.action)
-        self.assertEqual([call.report(values={'Harvester (domainId)': {'groupId:rep': {'errors': {'count': 0}}}})], gustos.mock_calls)
 
     def testHarvestWithBadResumptionToken(self):
         self.repo.use = True
         self.repo.action = None
         self.repo.complete = True
         action = CallTrace('Action')
+        state = CallTrace('State', returnValues={'eventCounts': {'errors':42}})
         oaiError = OAIError('url', 'resumptionToken expired', 'badResumptionToken', 'lxmlResponse')
         action.exceptions['do'] = oaiError
         self.repo._createAction = lambda *args, **kwargs: action
+        self.repo._initState = lambda *args, **kwargs: state
         gustos = Mock()
         message, again = self.repo.do(stateDir=self.logAndStateDir, logDir=self.logAndStateDir, gustosClient=gustos)
         self.assertTrue('resumptionToken expired' in message, message)
         self.assertEqual(['info', 'do', 'resetState'], [m.name for m in action.calledMethods])
         self.assertTrue(again)
-        self.assertEqual([call.report(values={'Harvester (domainId)': {'groupId:rep': {'errors': {'count': 1}}}})], gustos.mock_calls)
+        self.assertEqual([call.report(values={'Harvester (domainId)':
+            {'groupId:rep': {
+                'errors': {'count': 42},
+            }}})], gustos.mock_calls)
 
     def testDoHarvest(self):
         self.repo.use = True
         self.repo.action = None
         action = MockAction(DONE)
         self.repo._createAction=lambda state,generalHarvestLog: action
-        gustos = Mock()
-        result = self.repo.do(stateDir=self.logAndStateDir, logDir=self.logAndStateDir, gustosClient=gustos)
+        result = self.repo.do(stateDir=self.logAndStateDir, logDir=self.logAndStateDir)
         self.assertEqual((DONE, False), result)
         self.assertTrue(action.called)
         self.assertEqual(True, self.repo.use)
         self.assertEqual(None, self.repo.action)
-        self.assertEqual([call.report(values={'Harvester (domainId)': {'groupId:rep': {'errors': {'count': 0}}}})], gustos.mock_calls)
 
     def testDoHarvestWithCompleteHarvestingEnabled(self):
         self.repo.use = True
@@ -204,14 +206,9 @@ class RepositoryTest(SeecrTestCase):
         except ActionException as afe:
             self.assertEqual("Action 'nonexisting' not supported.", str(afe))
 
-    def testDoWithoutLogpath(self):
+    def testLogPathAndStatePathMandatory(self):
         generalHarvestLog = CallTrace('Log')
-        message, again = self.repo.do('','', generalHarvestLog=generalHarvestLog)
-        self.assertFalse(again)
-        self.assertTrue('RepositoryException: Missing stateDir and/or logDir' in message)
-        self.assertEqual((message,), generalHarvestLog.calledMethods[-1].args)
-        self.assertEqual({'id':self.repo.id}, generalHarvestLog.calledMethods[-1].kwargs)
-        self.assertEqual('logError', generalHarvestLog.calledMethods[-1].name)
+        self.assertRaises(RepositoryException, lambda: self.repo.do('','', generalHarvestLog=generalHarvestLog))
 
     # mock saharaget
     def repositoryActionDone(self, domainId, repositoryId):

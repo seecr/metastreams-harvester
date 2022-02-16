@@ -170,8 +170,11 @@ Started: 2005-01-07 16:18:56, Harvested/Uploaded/Deleted/Total: 0/0/0/0, Done: D
     def testMarkHarvested(self):
         with self._State('repo') as state:
             state.getZTime = lambda: ZuluTime('2012-08-13T12:15:00Z')
+            self.assertEqual([0, 0], event_counts(state, 'started', 'harvested'))
             state.markStarted()
-            state.markHarvested("9999/9999/9999/9999", "resumptionToken", "2012-08-13T12:14:00")
+            self.assertEqual([1, 0], event_counts(state, 'started', 'harvested'))
+            state.markHarvested((9999,9999,9999,9999), "resumptionToken", "2012-08-13T12:14:00")
+            self.assertEqual([1, 1], event_counts(state, 'started', 'harvested'))
 
         self.assertRepoStats('Started: 2012-08-13 12:15:00, Harvested/Uploaded/Deleted/Total: 9999/9999/9999/9999, Done: 2012-08-13 12:15:00, ResumptionToken: resumptionToken\n')
         self.assertEqual({"from": "2012-08-13T12:14:00", "resumptionToken": "resumptionToken", 'lastSuccessfulHarvest':'2012-08-13T12:15:00Z'}, JsonDict.load(self.statePath / 'repo.next'))
@@ -182,8 +185,11 @@ Started: 2005-01-07 16:18:56, Harvested/Uploaded/Deleted/Total: 0/0/0/0, Done: D
             self.assertEqual('resumptionToken', state.token)
 
             state.getZTime = lambda: ZuluTime('2012-08-13T12:17:00Z')
+            self.assertEqual([1, 1], event_counts(state, 'started', 'harvested'))
             state.markStarted()
-            state.markHarvested("9999/9999/9999/9999", "newToken", "2012-08-13T12:16:00Z")
+            self.assertEqual([2, 1], event_counts(state, 'started', 'harvested'))
+            state.markHarvested((9999,9999,9999,9999), "newToken", "2012-08-13T12:16:00Z")
+            self.assertEqual([2, 2], event_counts(state, 'started', 'harvested'))
 
         self.assertRepoStats("""Started: 2012-08-13 12:15:00, Harvested/Uploaded/Deleted/Total: 9999/9999/9999/9999, Done: 2012-08-13 12:15:00, ResumptionToken: resumptionToken
 Started: 2012-08-13 12:17:00, Harvested/Uploaded/Deleted/Total: 9999/9999/9999/9999, Done: 2012-08-13 12:17:00, ResumptionToken: newToken
@@ -199,7 +205,8 @@ Started: 2012-08-13 12:17:00, Harvested/Uploaded/Deleted/Total: 9999/9999/9999/9
             state.getZTime = lambda: ZuluTime('2012-08-13T12:20:00Z')
             state.verbose = True
             state.markStarted()
-            state.markHarvested("9999/9999/9999/9999", token=None, responseDate="2012-08-13T12:19:00Z")
+            state.markHarvested((9999,9999,9999,9999), token=None, responseDate="2012-08-13T12:19:00Z")
+            self.assertEqual([3, 3], event_counts(state, 'started', 'harvested'))
 
         self.assertEqual({"from": "2012-08-13T12:14:00", "resumptionToken": "", 'lastSuccessfulHarvest':'2012-08-13T12:20:00Z'}, JsonDict.load(join(self.statePath, 'repo.next')))
         self.assertEqual({"changedate": "2012-08-13 12:15:00", "status": "Ok", "message": ""}, JsonDict.load(join(self.statePath, 'repo.running')))
@@ -208,7 +215,8 @@ Started: 2012-08-13 12:17:00, Harvested/Uploaded/Deleted/Total: 9999/9999/9999/9
         with self._State('repo') as state:
             state.getZTime = lambda: ZuluTime('2012-08-13T12:15:00Z')
             state.markStarted()
-            state.markHarvested("9999/9999/9999/9999", "resumptionToken", "2012-08-13T12:14:00")
+            state.markHarvested((9999,9999,9999,9999), "resumptionToken", "2012-08-13T12:14:00")
+            self.assertEqual([1, 0], event_counts(state, 'harvested', 'deleted'))
 
         self.assertRepoStats('Started: 2012-08-13 12:15:00, Harvested/Uploaded/Deleted/Total: 9999/9999/9999/9999, Done: 2012-08-13 12:15:00, ResumptionToken: resumptionToken\n')
         self.assertEqual(
@@ -231,11 +239,11 @@ Started: 2012-08-13 12:17:00, Harvested/Uploaded/Deleted/Total: 0/0/0/0, Done: D
         with self._State('repo') as state:
             state.getZTime = lambda: ZuluTime('2012-08-13T12:15:00Z')
             state.markStarted()
-            state.markHarvested("9999/9999/9999/9999", "", "2012-08-13T12:14:00")
+            state.markHarvested((9999,9999,9999,9999), "", "2012-08-13T12:14:00")
         with self._State('repo') as state:
             state.getZTime = lambda: ZuluTime('2012-08-14T12:17:00Z')
             state.markStarted()
-            state.markHarvested("9999/9999/9999/9999", "resumptionToken", "2012-08-14T12:16:00")
+            state.markHarvested((9999,9999,9999,9999), "resumptionToken", "2012-08-14T12:16:00")
         with self._State('repo') as state:
             state.getZTime = lambda: ZuluTime('2012-08-15T12:19:00Z')
             state.setToLastCleanState()
@@ -249,7 +257,8 @@ Started: 2012-08-15 12:19:00, Done: Reset to last clean state. ResumptionToken: 
         with self._State('repo') as state:
             state.getZTime = lambda: ZuluTime('2012-08-13T12:15:00Z')
             state.markStarted()
-            state.markHarvested("9999/9999/9999/9999", "resumptionToken", "2012-08-13T12:14:00")
+            state.markHarvested((9999,9999,9999,9999), "resumptionToken", "2012-08-13T12:14:00")
+            self.assertEqual([1,0,1], event_counts(state, 'started', 'errors', 'harvested'))
 
         self.assertRepoStats('Started: 2012-08-13 12:15:00, Harvested/Uploaded/Deleted/Total: 9999/9999/9999/9999, Done: 2012-08-13 12:15:00, ResumptionToken: resumptionToken\n')
         self.assertEqual({"from": "2012-08-13T12:14:00", "resumptionToken": "resumptionToken", 'lastSuccessfulHarvest':'2012-08-13T12:15:00Z'}, JsonDict.load(join(self.statePath, 'repo.next')))
@@ -264,7 +273,8 @@ Started: 2012-08-15 12:19:00, Done: Reset to last clean state. ResumptionToken: 
                 raise ValueError("whatever")
             except:
                 exType, exValue, exTraceback = exc_info()
-                state.markException(exType, exValue, "9999/9999/9999/9999")
+                state.markException(exType, exValue, (9999,9999,9999,9999))
+            self.assertEqual([2,1,1], event_counts(state, 'started', 'errors', 'harvested'))
         self.assertRepoStats("""Started: 2012-08-13 12:15:00, Harvested/Uploaded/Deleted/Total: 9999/9999/9999/9999, Done: 2012-08-13 12:15:00, ResumptionToken: resumptionToken
 Started: 2012-08-13 12:17:00, Harvested/Uploaded/Deleted/Total: 9999/9999/9999/9999, Error: <class 'ValueError'>: whatever
 """)
@@ -280,7 +290,8 @@ Started: 2012-08-13 12:17:00, Harvested/Uploaded/Deleted/Total: 9999/9999/9999/9
                 raise ValueError("whatever")
             except:
                 exType, exValue, exTraceback = exc_info()
-                state.markException(exType, exValue, "9999/9999/9999/9999")
+                state.markException(exType, exValue, (100,80,20,93))
+            self.assertEqual([100,80,20], event_counts(state, 'records_harvested', 'records_uploaded', 'records_deleted'))
         self.assertEqual(
             {"changedate": "2012-08-13 12:15:00", "status": "Error", "message": "whatever"},
             JsonDict.load(join(self.statePath, 'repo.running')))
@@ -288,7 +299,8 @@ Started: 2012-08-13 12:17:00, Harvested/Uploaded/Deleted/Total: 9999/9999/9999/9
         with self._State('repo') as state:
             state.getZTime = lambda: ZuluTime('2012-08-13T12:17:00Z')
             state.markStarted()
-            state.markHarvested("9999/9999/9999/9999", "resumptionToken", "2012-08-13T12:14:00")
+            state.markHarvested((42,31,11,135), "resumptionToken", "2012-08-13T12:14:00")
+            self.assertEqual([142,111,31], event_counts(state, 'records_harvested', 'records_uploaded', 'records_deleted'))
         self.assertEqual(
             {"changedate": "2012-08-13 12:17:00", "status": "Ok", "message": ""},
             JsonDict.load(join(self.statePath, 'repo.running')))
@@ -301,7 +313,7 @@ Started: 2012-08-13 12:17:00, Harvested/Uploaded/Deleted/Total: 9999/9999/9999/9
                 raise ValueError("whatever")
             except:
                 exType, exValue, exTraceback = exc_info()
-                state.markException(exType, exValue, "9999/9999/9999/9999")
+                state.markException(exType, exValue, (9999,9999,9999,9999))
         self.assertEqual(
             {"changedate": "2012-08-13 12:15:00", "status": "Error", "message": "whatever"},
             JsonDict.load(join(self.statePath, 'repo.running')))
@@ -322,7 +334,7 @@ Started: 2012-08-13 12:17:00, Harvested/Uploaded/Deleted/Total: 9999/9999/9999/9
                 raise ValueError("the same exception")
             except:
                 exType, exValue, exTraceback = exc_info()
-                state.markException(exType, exValue, "9999/9999/9999/9999")
+                state.markException(exType, exValue, (9999,9999,9999,9999))
         self.assertEqual(
             {"changedate": "2012-08-13 12:15:00", "status": "Error", "message": "the same exception"},
             JsonDict.load(join(self.statePath, 'repo.running')))
@@ -334,7 +346,7 @@ Started: 2012-08-13 12:17:00, Harvested/Uploaded/Deleted/Total: 9999/9999/9999/9
                 raise ValueError("the same exception")
             except:
                 exType, exValue, exTraceback = exc_info()
-                state.markException(exType, exValue, "9999/9999/9999/9999")
+                state.markException(exType, exValue, (9999,9999,9999,9999))
         self.assertEqual(
             {"changedate": "2012-08-13 12:15:00", "status": "Error", "message": "the same exception"},
             JsonDict.load(join(self.statePath, 'repo.running')))
@@ -346,7 +358,7 @@ Started: 2012-08-13 12:17:00, Harvested/Uploaded/Deleted/Total: 9999/9999/9999/9
                 raise ValueError("the other exception")
             except:
                 exType, exValue, exTraceback = exc_info()
-                state.markException(exType, exValue, "9999/9999/9999/9999")
+                state.markException(exType, exValue, (9999,9999,9999,9999))
         self.assertEqual(
             {"changedate": "2012-08-13 12:19:00", "status": "Error", "message": "the other exception"},
             JsonDict.load(join(self.statePath, 'repo.running')))
@@ -361,4 +373,7 @@ Started: 2012-08-13 12:17:00, Harvested/Uploaded/Deleted/Total: 9999/9999/9999/9
             state.from_ = "2019-01-01"
             self.assertEqual(ZuluTime("2019-01-01T00:00:00Z"), state.getLastSuccessfulHarvestTime())
 
+def event_counts(state, *keys):
+    e = state.eventCounts()
+    return [e[k] for k in keys]
 

@@ -148,6 +148,7 @@ class SmoothActionTest(ActionTestCase):
         action.resetState()
 
         self.assertEqual((None, None), (self.state.from_, self.state.token))
+        self.assertEqual(1, self.state.eventCounts()['deleted'])
 
     def testResetState_ToPreviousCleanState(self):
         self.writeLogLine(2010, 3, 2, token='')

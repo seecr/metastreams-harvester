@@ -6,7 +6,7 @@
 #
 # Copyright (C) 2011 Seek You Too (CQ2) http://www.cq2.nl
 # Copyright (C) 2011-2012, 2015, 2020-2021 Stichting Kennisnet https://www.kennisnet.nl
-# Copyright (C) 2012-2013, 2015, 2020-2021 Seecr (Seek You Too B.V.) https://seecr.nl
+# Copyright (C) 2012-2013, 2015, 2020-2022 Seecr (Seek You Too B.V.) https://seecr.nl
 # Copyright (C) 2020-2021 Data Archiving and Network Services https://dans.knaw.nl
 # Copyright (C) 2020-2021 SURF https://www.surf.nl
 # Copyright (C) 2020-2021 The Netherlands Institute for Sound and Vision https://beeldengeluid.nl
@@ -488,7 +488,7 @@ class HarvesterTest(IntegrationTestCase):
             my_group_log = data.get(f'Harvester ({DOMAIN})', {}).get(f'{REPOSITORYGROUP}:{REPOSITORY}')
             if my_group_log is not None:
                 break
-        self.assertEqual({"errors": {"count": 1}}, my_group_log)
+        self.assertEqual({"count": 1}, my_group_log['errors'])
 
 
     def testConcurrencyAtLeastOne(self):

@@ -41,7 +41,7 @@ from shutil import rmtree
 from escaping import escapeFilename
 from seecr.zulutime import ZuluTime
 from meresco.harvester.constants import INVALID_DATA_MESSAGES_DIR
-
+from collections import namedtuple
 
 class HarvesterLog(object):
     def __init__(self, repositoryState):
@@ -78,7 +78,7 @@ class HarvesterLog(object):
 
     def endRepository(self, token, responseDate):
         self._state.markHarvested(self.countsSummary(), token, responseDate)
-        self._eventlogger.logSuccess('Harvested/Uploaded/Deleted/Total: %s, ResumptionToken: %s' % (self.countsSummary(), token), id=self._state.name)
+        self._eventlogger.logSuccess('Harvested/Uploaded/Deleted/Total: %s, ResumptionToken: %s' % ('/'.join(map(str, self.countsSummary())), token), id=self._state.name)
 
     def endWithException(self, exType, exValue, exTb):
         self._state.markException(exType, exValue, self.countsSummary())
@@ -86,7 +86,7 @@ class HarvesterLog(object):
         self._eventlogger.logError(error, id=self._state.name)
 
     def countsSummary(self):
-        return '%d/%d/%d/%d' % (self._harvestedCount, self._uploadedCount, self._deletedCount, self.totalIds())
+        return CountsSummary(self._harvestedCount, self._uploadedCount, self._deletedCount, self.totalIds())
 
     def close(self):
         self._eventlogger.close()
@@ -148,4 +148,5 @@ class HarvesterLog(object):
         repositoryId, recordId = uploadid.split(":", 1)
         return self._state.invalidLogPath / escapeFilename(recordId)
 
+CountsSummary = namedtuple('CountsSummary', ['harvested', 'uploaded', 'deleted', 'total'])
 
