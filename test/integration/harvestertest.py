@@ -484,7 +484,7 @@ class HarvesterTest(IntegrationTestCase):
 
         sleepWheel(5)
         last_logs = [JsonDict.loads(l)['data'] for l in self.gustosUdpListener.log()[errorCount:]]
-        for data in last_logs:
+        for data in reversed(last_logs):
             my_group_log = data.get(f'Harvester ({DOMAIN})', {}).get(f'{REPOSITORYGROUP}:{REPOSITORY}')
             if my_group_log is not None:
                 break
