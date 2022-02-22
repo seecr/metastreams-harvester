@@ -1,10 +1,7 @@
 ## begin license ##
 #
-# "Meresco Harvester" consists of two subsystems, namely an OAI-harvester and
-# a web-control panel.
-# "Meresco Harvester" is originally called "Sahara" and was developed for
-# SURFnet by:
-# Seek You Too B.V. (CQ2) http://www.cq2.nl
+# "Metastreams Harvester" is a fork of Meresco Harvester that demonstrates
+# the translation of traditional metadata into modern events streams.
 #
 # Copyright (C) 2006-2007 SURFnet B.V. http://www.surfnet.nl
 # Copyright (C) 2007-2008 SURF Foundation. http://www.surf.nl
@@ -12,25 +9,25 @@
 # Copyright (C) 2007-2009 Stichting Kennisnet Ict op school. http://www.kennisnetictopschool.nl
 # Copyright (C) 2009, 2011 Tilburg University http://www.uvt.nl
 # Copyright (C) 2011, 2015, 2020-2021 Stichting Kennisnet https://www.kennisnet.nl
-# Copyright (C) 2015, 2020-2021 Seecr (Seek You Too B.V.) https://seecr.nl
+# Copyright (C) 2015, 2020-2022 Seecr (Seek You Too B.V.) https://seecr.nl
 # Copyright (C) 2020-2021 Data Archiving and Network Services https://dans.knaw.nl
 # Copyright (C) 2020-2021 SURF https://www.surf.nl
 # Copyright (C) 2020-2021 The Netherlands Institute for Sound and Vision https://beeldengeluid.nl
 #
-# This file is part of "Meresco Harvester"
+# This file is part of "Metastreams Harvester"
 #
-# "Meresco Harvester" is free software; you can redistribute it and/or modify
+# "Metastreams Harvester" is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
 # the Free Software Foundation; either version 2 of the License, or
 # (at your option) any later version.
 #
-# "Meresco Harvester" is distributed in the hope that it will be useful,
+# "Metastreams Harvester" is distributed in the hope that it will be useful,
 # but WITHOUT ANY WARRANTY; without even the implied warranty of
 # MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 # GNU General Public License for more details.
 #
 # You should have received a copy of the GNU General Public License
-# along with "Meresco Harvester"; if not, write to the Free Software
+# along with "Metastreams Harvester"; if not, write to the Free Software
 # Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 #
 ## end license ##
@@ -110,13 +107,13 @@ class EventLogger(BasicEventLogger):
     def _clearExcessLogLines(self):
         if self._numberOfLogLines >= self._maxLogLines:
             self._logfile.seek(0)
-            tmpFile = open(self._logfilePath + ".tmp", 'w')
-            for i, line in enumerate(self._logfile):
-                if i >= self._maxLogLines // 2:
-                    tmpFile.write(line)
-            tmpFile.close()
+            tmp = self._logfilePath.with_name(self._logfilePath.name + '.tmp')
+            with tmp.open('w') as tmpFile:
+                for i, line in enumerate(self._logfile):
+                    if i >= self._maxLogLines // 2:
+                        tmpFile.write(line)
             self.close()
-            rename(self._logfilePath + ".tmp", self._logfilePath)
+            tmp.rename(self._logfilePath)
             self._logfile = self._openlogfile(self._logfilePath)
 
     def logLine(self, *args, **kwargs):
