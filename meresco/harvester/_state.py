@@ -64,7 +64,7 @@ class State(object):
         self._counts = None
         self.lastSuccessfulHarvest = None
         self._readState()
-        self._statsfile = open(self._statsfilepath, 'a')
+        self._statsfile = None
 
     @property
     def name(self):
@@ -86,7 +86,9 @@ class State(object):
         return HarvesterLog(self)
 
     def close(self):
-        self._statsfile.close()
+        if not self._statsfile is None:
+            self._statsfile.close()
+            self._statsfile = None
         self._forceFinalNewlineOnStatsFile()
         self._ids.close()
         self._invalidIds.close()
@@ -167,6 +169,7 @@ class State(object):
                 self.from_ = None
                 self.token = None
             self._statsfile.close()
+            self._statsfile = None
 
     def _forceFinalNewlineOnStatsFile(self):
         if self._statsfilepath.is_file():
@@ -180,6 +183,8 @@ class State(object):
                     statsfile.write('\n')
 
     def _write(self, *args):
+        if self._statsfile is None:
+            self._statsfile = open(self._statsfilepath, 'a')
         self._statsfile.write(*args)
         self._statsfile.flush()
 

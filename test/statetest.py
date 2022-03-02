@@ -46,9 +46,9 @@ import pathlib
 class StateTest(SeecrTestCase):
     def setUp(self):
         SeecrTestCase.setUp(self)
-        self.statePath = self.tmp_path / 'state'
+        self.statePath = self.tmp_path/'state'
         self.statePath.mkdir()
-        self.logPath = self.tmp_path / 'log'
+        self.logPath = self.tmp_path/'log'
 
     @contextmanager
     def _State(self, name):
@@ -85,21 +85,16 @@ class StateTest(SeecrTestCase):
     def testNoRepeatedNewlines(self):
         with self._State('repository'):
             pass
-        with open(join(self.statePath, 'repository.stats')) as fp:
-            data = fp.read()
-        self.assertEqual('', data)
+        repoStatFile = self.statePath/'repository.stats'
+        self.assertFalse(repoStatFile.is_file())
 
         with self._State('repository') as s:
             s._write('line')
-        with open(join(self.statePath, 'repository.stats')) as fp:
-            data = fp.read()
-        self.assertEqual('line\n', data)
+        self.assertEqual('line\n', repoStatFile.read_text())
 
         with self._State('repository'):
             pass
-        with open(join(self.statePath, 'repository.stats')) as fp:
-            data = fp.read()
-        self.assertEqual('line\n', data)
+        self.assertEqual('line\n', repoStatFile.read_text())
 
     def testStartDateFromLastFirstBatch(self):
         with open(join(self.statePath, 'repository.stats'), 'w') as f:
@@ -372,6 +367,15 @@ Started: 2012-08-13 12:17:00, Harvested/Uploaded/Deleted/Total: 9999/9999/9999/9
 
             state.from_ = "2019-01-01"
             self.assertEqual(ZuluTime("2019-01-01T00:00:00Z"), state.getLastSuccessfulHarvestTime())
+
+    def testClosedAndReopen(self):
+        with self._State('repo') as state:
+            log = state.getHarvesterLog()
+            log.close()
+            state.markDeleted()
+            state.close()
+            # do not crash
+
 
 def event_counts(state, *keys):
     e = state.eventCounts()
