@@ -166,6 +166,9 @@ class HarvesterData(object):
             'authorizationKey',
             'action',
         ]
+        conversions = dict(
+            continuous=int
+        )
         for each in mandatory:
             if not each in kwargs:
                 raise KeyError(f"'{each}' is mandatory")
@@ -176,7 +179,8 @@ class HarvesterData(object):
         repository = self.getRepository(identifier, domainId)
         for each in kwargs:
             if each in allowed:
-                repository[each] = kwargs[each]
+                value = conversions.get(each, lambda x:x)(kwargs[each])
+                repository[each] = value
         self._store.addData(id_combine(domainId, identifier), 'repository', repository)
 
     def updateRepositoryFieldDefinitions(self, **kwargs):
