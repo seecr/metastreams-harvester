@@ -101,6 +101,9 @@ class HarvesterLogTest(SeecrTestCase):
         with harvesterLog(stateDir=self.stateDir, logDir=self.logDir, name= 'name') as logger:
             self.assertFalse(logger.hasWork(continuousInterval=65))
             self.assertTrue(logger.hasWork(continuousInterval=60))
+            self.assertFalse(logger.hasWork())
+            self.assertFalse(logger.hasWork(continuousInterval=0))
+            self.assertFalse(logger.hasWork(continuousInterval=-1))
 
     def testHasWorkWithResumptionTokenContinuous(self):
         with harvesterLog(stateDir=self.stateDir, logDir=self.logDir, name= 'name') as logger:

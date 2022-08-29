@@ -123,13 +123,14 @@ class HarvesterLog(object):
         self._eventlogger.logWarning('IGNORED', uploadid)
 
     def hasWork(self, continuousInterval=None):
+        continuousInterval = 0 if continuousInterval is None else continuousInterval
         if self._state.token:
             return True
         lastTime = self._state.getLastSuccessfulHarvestTime()
         if not lastTime:
             return True
         now = self._state.getZTime()
-        if continuousInterval is None:
+        if continuousInterval <= 0:
             return lastTime.zulu().split('T')[0] != now.zulu().split('T')[0]
         return now.epoch - lastTime.epoch > continuousInterval
 
