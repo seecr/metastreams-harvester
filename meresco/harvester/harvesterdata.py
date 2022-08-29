@@ -167,7 +167,7 @@ class HarvesterData(object):
             'action',
         ]
         conversions = dict(
-            continuous=int
+            continuous=int_or_None,
         )
         for each in mandatory:
             if not each in kwargs:
@@ -341,5 +341,6 @@ upload.parts['meta'] = """<meta xmlns="http://meresco.org/namespace/harvester/me
 
 id_combine = lambda *ids: '.'.join(ids)
 
+int_or_None = lambda i: int(i) if i else 0
 
 XMLHEADER = compileRe(r'(?s)^(?P<header>\<\?.*\?\>\s+)?(?P<body>.*)$')

@@ -382,6 +382,14 @@ class _HarvesterDataTest(SeecrTestCase):
         repository = self.hd.getRepository('repository1', 'adomain')
         self.assertEqual(3600, repository['continuous'])
 
+        self.hd.updateRepositoryAttributes(identifier='repository1', domainId='adomain', continuous="")
+        repository = self.hd.getRepository('repository1', 'adomain')
+        self.assertEqual(0, repository['continuous'])
+
+        self.hd.updateRepositoryAttributes(identifier='repository1', domainId='adomain', continuous=None)
+        repository = self.hd.getRepository('repository1', 'adomain')
+        self.assertEqual(0, repository['continuous'])
+
     def testRepositoryDone(self):
         self.hd.updateRepositoryAttributes(
                 identifier='repository1',
