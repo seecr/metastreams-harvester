@@ -102,7 +102,7 @@ def renderMenu(tag, user):
                             else:
                                 with tag("a.nav-link.pe3", href="/domains"): yield 'Domeinen'
                         else:
-                            with tag("button.btn.nav-link", id_="BtnLogin"): yield "Inloggen"
+                            with tag("a.btn.nav-link", id_="BtnLogin", href='/login'): yield "Inloggen"
                         if user:
                             with tag("ul.navbar-nav"):
                                 with tag("li.nav-item.dropdown"):

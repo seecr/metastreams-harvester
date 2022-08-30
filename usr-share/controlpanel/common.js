@@ -261,7 +261,7 @@ function init_button_status() {
 }
 
 $(document).ready(function () {
-    init_login_button();
+    // init_login_button();
 
     $(document).ajaxStart(function () {
         $("html").addClass("wait");
