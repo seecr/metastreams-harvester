@@ -64,7 +64,7 @@ class EnrichedUser(object):
         return sorted(set(d for g in self.listAllGroups() for d in g.domainIds))
 
     def getAllUserData(self):
-        return {name:self._observer.call.getUserInfo(name) for name in self.listAllUsernames()}
+        return {name:self._observer.call.getUserInfo(name) | dict(groups=sorted([dict(name=group.name, adminGroup=group.adminGroup, domainIds=group.domainIds) for group in self._observer.call.groupsForUser(name)], key=lambda i:i['name'])) for name in self.listAllUsernames()}
 
     def getFullname(self):
         return self._observer.call.getUserInfo(self._name).get('fullname', self._name)

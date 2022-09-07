@@ -78,6 +78,11 @@ def table_users(tag, user, **kwargs):
         with tag("thead"):
             for label in ['Naam', "Volledige naam"]:
                 with tag("th"): yield label
+            with tag("th"):
+                with tag("div.row"):
+                    with tag("div.col-1"): yield 'Admin'
+                    with tag("div.col-6"): yield 'Groepnaam'
+                    with tag("div.col-5"): yield 'Domeinen'
         with tag("tbody"):
             for each in sorted(allUserData.values(), key=lambda each: each['username'].lower()):
                 username = each['username']
@@ -86,6 +91,17 @@ def table_users(tag, user, **kwargs):
                         yield username
                     with tag("td"):
                         yield each.get('fullname', '')
+                    with tag('td.m-0'):
+                        for group in each['groups']:
+                            isLast = group is each['groups'][-1]
+                            with tag("div.row", class_=['border-bottom' if not isLast else '']):
+                                with tag("div.col-1"):
+                                    shield = 'bi-shield-check' if group['adminGroup'] else 'bi-shield'
+                                    with tag(f"i.bi.{shield}.pe-1.text-success"): yield ''
+
+                                with tag("div.col-6"): yield group['name']
+                                with tag("div.col-5"): 
+                                    yield ",".join(group['domainIds'])
 
 def _form_userdetails(tag, editingUser, editedUsername):
     userToEdit = editingUser.getAllUserData()[editedUsername]

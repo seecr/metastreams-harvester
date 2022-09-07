@@ -77,8 +77,25 @@ class EnrichUserTest(SeecrTestCase):
         self.assertEqual("Metastreams Administrator", adm.getFullname())
         self.assertTrue(adm.isAdmin())
         self.assertEqual({
-            'admin': {'username': 'admin', 'fullname': 'Metastreams Administrator'},
-            'user1': {'username': 'user1', 'fullname': 'Nr. 1.'},
+            'admin': {
+                'username': 'admin',
+                'fullname': 'Metastreams Administrator',
+                'groups': [
+                    {'name': 'Admin', 'adminGroup': True, 'domainIds': []},
+                ]},
+            'user1': {
+                'username': 'user1',
+                'fullname': 'Nr. 1.',
+                'groups': [
+                    {
+                        'name': 'Group 1',
+                        'adminGroup': False,
+                        'domainIds': ['d1', 'd2']}, 
+                    {
+                        'name': 'Group 2',
+                        'adminGroup': False,
+                        'domainIds': ['d2']},
+                ]},
             }, adm.getAllUserData())
         self.assertEqual(['d1', 'd2', 'd3', 'd4', 'd5'], adm.listDomainIds())
 
@@ -91,6 +108,31 @@ class EnrichUserTest(SeecrTestCase):
 
         self.assertTrue(user1.isAdmin())
 
+    @stdout_replaced
+    def testShowUserInfo(self):
+        harvesterData = CallTrace(returnValues={'getDomainIds':['d1', 'd2', 'd3', 'd4', 'd5']})
+        grp, pwd, uinf, userEnricher = _initializeData('{}-testShowUserInfo'.format(self.tempdir), harvesterData)
+
+        def _addUser(name, password, **kwargs):
+            pwd.addUser(name, password)
+            uinf.setUserInfo(name, kwargs)
+
+        _addUser("person1", "password 1", fullname="Person 1")
+        _addUser("person2", "password 2", fullname="Person 2")
+
+        grp.newGroup().setName('Group 1').addUsername('person1').addDomainId('d1')
+        grp.newGroup().setName('Group 2').addUsername('person2').addDomainId('d2')
+        grp.newGroup().setName('Group 3').addUsername('person1').addUsername('person2').addDomainId('d3')
+
+        adm = MyUser('admin')
+        userEnricher.enrichUser(adm)
+        self.assertTrue(adm.isAdmin())
+
+        self.assertEqual({
+            'admin': dict(username='admin', fullname='Metastreams Administrator', groups=[dict(name='Admin', adminGroup=True, domainIds=[])]),
+            'person1': dict(username='person1', fullname='Person 1', groups=[dict(name='Group 1', adminGroup=False, domainIds=['d1']), dict(name='Group 3', adminGroup=False, domainIds=['d3'])]),
+            'person2': dict(username='person2', fullname='Person 2', groups=[dict(name='Group 2', adminGroup=False, domainIds=['d2']), dict(name='Group 3', adminGroup=False, domainIds=['d3'])]),
+            }, adm.getAllUserData())
 
 class MyUser(object):
     def __init__(self, name):
