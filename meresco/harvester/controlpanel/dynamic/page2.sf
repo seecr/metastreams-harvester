@@ -23,7 +23,7 @@
 #
 ## end license ##
 
-def render(func, showMenu=True, **kwargs):
+def render(func, showMenu=True, showLogin=True, **kwargs):
     session = kwargs.get("session", {})
     user = kwargs.get("user", None)
     tag = kwargs.get("tag")
@@ -59,7 +59,7 @@ def render(func, showMenu=True, **kwargs):
         with tag("body", class_=bodyClasses):
             with tag('div.container-fluid'):
                 if showMenu:
-                    yield renderMenu(tag, user)
+                    yield renderMenu(tag, user, showLogin=showLogin)
                 with tag('main'):
                     with tag("div.alert.alert-danger.alert-dismissible.collapse", role="alert", id_="message-box"):
                         with tag("i.bi-exclamation-triangle-fill"): pass
@@ -76,7 +76,7 @@ def render(func, showMenu=True, **kwargs):
             yield renderModal(tag)
 
 
-def renderMenu(tag, user):
+def renderMenu(tag, user, showLogin=True):
     with tag('header.d-flex.flex-column.flex-md-row.align-items-center.px-md-4.mb-3.border-bottom.shadow-sm'):
         with tag('div.container-fluid'):
             with tag("nav.navbar.navbar-expand-lg.navbar-light"):
@@ -102,7 +102,9 @@ def renderMenu(tag, user):
                             else:
                                 with tag("a.nav-link.pe3", href="/domains"): yield 'Domeinen'
                         else:
-                            with tag("a.btn.nav-link", id_="BtnLogin", href='/login'): yield "Inloggen"
+                            if showLogin:
+                                #with tag("a.btn.nav-link", id_="BtnLogin", href='/login'): yield "Inloggen"
+                                with tag("button.btn.nav-link", id_="BtnLogin"): yield "Inloggen"
                         if user:
                             with tag("ul.navbar-nav"):
                                 with tag("li.nav-item.dropdown"):

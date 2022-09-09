@@ -146,7 +146,7 @@ def dna(reactor, port, dataPath, logPath, statePath, externalUrl, customerLogoUr
                                     ),
                                     (staticFiles,),
                                     (PathFilter('/', excluding=['/info/version', '/info/config', '/action', '/login.action'] + harvesterDataRetrieve.paths + staticFilePaths),
-                                        (SecureZone("/login", excluding=["/index", "/invalid", "/rss", '/running.rss', '/showHarvesterStatus'], defaultLanguage="nl"),
+                                        (SecureZone("/login", excluding=["/index", "/invalid", "/rss", '/running.rss', '/showHarvesterStatus', '/login/dialog/show'], defaultLanguage="nl"),
                                             (PathFilter('/', excluding=userGroup.excludedPaths),
                                                 (DynamicHtml(
                                                         [dynamicHtmlPath],

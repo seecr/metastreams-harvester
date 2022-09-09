@@ -30,6 +30,7 @@ def main(**kwargs):
     if dialog is None:
         yield page.render(
             login, 
+            showLogin=False,
             additionalScripts=[
                 '/static/common.js', 
                 '/static/login.js'],
