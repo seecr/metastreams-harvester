@@ -58,7 +58,7 @@ def main(tag, **kwargs):
         with tag("table.table.table-hover", id_="status-table"):
             with tag("thead"):
                 with tag("tr"):
-                    for each in ["Repository", "Laatste harvest", "# Geharvest", "# Uploads", "# Deletes", "# Ongeldig", "# Fouten"]:
+                    for each in ["Repository", "Laatste harvest", "# Totaal", "# Geharvest", "# Uploads", "# Deletes", "# Ongeldig", "# Fouten"]:
                         with tag("th"):
                             yield each
             with tag("tbody"):
@@ -68,6 +68,8 @@ def main(tag, **kwargs):
                             yield each['repositoryId']
                         with tag("td"):
                             yield each['lastHarvestDate'] or "---"
+                        with tag("td"):
+                            yield each['total']
                         with tag("td"):
                             yield each['harvested']
                         with tag("td"):
