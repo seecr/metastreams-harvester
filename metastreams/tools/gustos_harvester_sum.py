@@ -3,7 +3,7 @@
 # "Metastreams Harvester" is a fork of Meresco Harvester that demonstrates
 # the translation of traditional metadata into modern events streams.
 #
-# Copyright (C) 2021, 2023 Seecr (Seek You Too B.V.) https://seecr.nl
+# Copyright (C) 2023 Seecr (Seek You Too B.V.) https://seecr.nl
 #
 # This file is part of "Metastreams Harvester"
 #
@@ -23,5 +23,27 @@
 #
 ## end license ##
 
-from .syncdomains import *
-from .gustos_harvester_sum import *
+import pathlib
+import json
+
+__all__ = ['GustosHarvesterSum']
+
+class GustosHarvesterSum:
+    def __init__(self, stateDir, domainId):
+        self._path = pathlib.Path(stateDir)/domainId
+        self._domainId = domainId
+
+    def values(self):
+        count = {}
+        for c in self._path.glob('*.count'):
+            try:
+                data = json.loads(c.read_text())
+                for k, v in data.items():
+                    current = count.get(k, 0)
+                    count[k] = current+v
+            except ValueError:
+                pass
+        return {f'Harvester ({self._domainId})':
+                {'Overall count':
+                    {k:{'count': v} for k,v in count.items()}}}
+
