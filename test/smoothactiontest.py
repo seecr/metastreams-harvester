@@ -9,7 +9,7 @@
 # Copyright (C) 2007-2009 Stichting Kennisnet Ict op school. http://www.kennisnetictopschool.nl
 # Copyright (C) 2009 Tilburg University http://www.uvt.nl
 # Copyright (C) 2011-2012, 2020-2021 Stichting Kennisnet https://www.kennisnet.nl
-# Copyright (C) 2012-2013, 2020-2022 Seecr (Seek You Too B.V.) https://seecr.nl
+# Copyright (C) 2012-2013, 2020-2023 Seecr (Seek You Too B.V.) https://seecr.nl
 # Copyright (C) 2020-2021 Data Archiving and Network Services https://dans.knaw.nl
 # Copyright (C) 2020-2021 SURF https://www.surf.nl
 # Copyright (C) 2020-2021 The Netherlands Institute for Sound and Vision https://beeldengeluid.nl
@@ -74,20 +74,17 @@ class SmoothActionTest(ActionTestCase):
         self.assertEqual('Smooth reharvest: initialized.', message)
         self.assertFalse(done)
 
-    def testSmooth_InitWithNothingHarvestedYetRepository(self):
+    def testSmooth_InitWithNothingHarvestedYetRepositoryWillStartHarvestin(self):
         self.assertFalse(os.path.isfile(self.idfilename))
         self.assertFalse(os.path.isfile(self.invalidIdsFilename))
         self.assertFalse(os.path.isfile(self.old_idfilename))
+
+        self.smoothaction._harvest = lambda:(HARVESTED, False)
 
         done,message, hasResumptionToken = self.smoothaction.do()
 
-        self.assertFalse(os.path.isfile(self.old_idfilename))
-        self.assertFalse(os.path.isfile(self.idfilename))
-        self.assertFalse(os.path.isfile(self.invalidIdsFilename))
-        self.assertTrue('Done: Deleted all ids' in  readfile(self.statsfilename))
-        self.assertEqual('Smooth reharvest: initialized.', message)
+        self.assertEqual('Smooth reharvest: Harvested.', message)
         self.assertFalse(done)
-
 
     def testSmooth_Harvest(self):
         writefile(self.old_idfilename, 'rep:id:1\nrep:id:2\n')

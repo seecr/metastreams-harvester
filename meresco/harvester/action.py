@@ -9,7 +9,7 @@
 # Copyright (C) 2007-2009 Stichting Kennisnet Ict op school. http://www.kennisnetictopschool.nl
 # Copyright (C) 2009 Tilburg University http://www.uvt.nl
 # Copyright (C) 2010-2011, 2015, 2020-2021 Stichting Kennisnet https://www.kennisnet.nl
-# Copyright (C) 2015, 2017, 2020-2022 Seecr (Seek You Too B.V.) https://seecr.nl
+# Copyright (C) 2015, 2017, 2020-2023 Seecr (Seek You Too B.V.) https://seecr.nl
 # Copyright (C) 2020-2021 Data Archiving and Network Services https://dans.knaw.nl
 # Copyright (C) 2020-2021 SURF https://www.surf.nl
 # Copyright (C) 2020-2021 The Netherlands Institute for Sound and Vision https://beeldengeluid.nl
@@ -157,7 +157,7 @@ class SmoothAction(Action):
         if self._repository.shopClosed():
             return False, 'Not smoothharvesting outside timeslots.', False
 
-        if len(self._state.oldIds) == 0:
+        if len(self._state.oldIds) == 0 and len(self._state.ids) + len(self._state.invalidIds) != 0:
             result, hasResumptionToken = self._smoothinit(), True
         else:
             result, hasResumptionToken = self._harvest()
