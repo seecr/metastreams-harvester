@@ -40,21 +40,21 @@ from meresco.harvester.controlpanel.tools import checkName
 from meresco.harvester.mapping import Mapping
 from meresco.harvester.timeslot import Timeslot
 
-from .datastore import OldDataStore
+from .datastore import DataStore
 
 class HarvesterData(object):
     def __init__(self, dataPath=None, id_fn=lambda: str(uuid4()), datastore=None):
         if dataPath is None and datastore is None:
             raise TypeError('Missing dataPath or datastore')
-        self._store = OldDataStore(dataPath, id_fn=id_fn) if datastore is None else datastore
+        self._store = DataStore(dataPath) if datastore is None else datastore
         self.id_fn = id_fn
 
     #domain
     def getDomainIds(self):
         return JsonList(self._store.listForDatatype('domain'))
 
-    def getDomain(self, identifier, guid=None):
-        return self._store.getData(identifier, 'domain', guid=guid)
+    def getDomain(self, identifier):
+        return self._store.getData(identifier, 'domain')
 
     def addDomain(self, identifier):
         if identifier == '':
@@ -74,8 +74,8 @@ class HarvesterData(object):
     def getRepositoryGroupIds(self, domainId):
         return self.getDomain(domainId).get('repositoryGroupIds', [])
 
-    def getRepositoryGroup(self, identifier, domainId, guid=None):
-        return self._store.getData(id_combine(domainId, identifier), 'repositoryGroup', guid)
+    def getRepositoryGroup(self, identifier, domainId):
+        return self._store.getData(id_combine(domainId, identifier), 'repositoryGroup')
 
     def getRepositoryGroups(self, domainId):
         return [self.getRepositoryGroup(repositoryGroupId, domainId) for repositoryGroupId in self.getRepositoryGroupIds(domainId)]
@@ -123,8 +123,8 @@ class HarvesterData(object):
 
         return JsonList([self.getRepository(repositoryId, domainId) for repositoryId in repositoryIds])
 
-    def getRepository(self, identifier, domainId, guid=None):
-        return self._store.getData(id_combine(domainId, identifier), 'repository', guid=guid)
+    def getRepository(self, identifier, domainId):
+        return self._store.getData(id_combine(domainId, identifier), 'repository')
 
     def addRepository(self, identifier, domainId, repositoryGroupId):
         group = self.getRepositoryGroup(repositoryGroupId, domainId)
@@ -170,16 +170,15 @@ class HarvesterData(object):
             continuous=int_or_None,
         )
         for each in mandatory:
-            if not each in kwargs:
+            if each not in kwargs:
                 raise KeyError(f"'{each}' is mandatory")
 
-        attributesToSet = {k:v for k,v in kwargs.items() if k in allowed}
         domainId = kwargs['domainId']
         identifier = kwargs['identifier']
         repository = self.getRepository(identifier, domainId)
         for each in kwargs:
             if each in allowed:
-                value = conversions.get(each, lambda x:x)(kwargs[each])
+                value = conversions.get(each, lambda x: x)(kwargs[each])
                 repository[each] = value
         self._store.addData(id_combine(domainId, identifier), 'repository', repository)
 
@@ -190,13 +189,13 @@ class HarvesterData(object):
         fd = self.getFieldDefinition(domainId)
         for definition in fd.get("repository_fields", []):
             key = 'extra_{}'.format(definition['name'])
+            value = kwargs.get(key, None)
             if definition['type'] == 'bool':
-                value = kwargs.get(key, None)
-                repository[key] = not value is None
-            elif key in kwargs:
-                repository[key] = kwargs[key]
+                value = value is not None
+            if 'extra' not in repository:
+                repository['extra'] = {}
+            repository['extra'][definition['name']] = value
         self._store.addData(id_combine(domainId, identifier), 'repository', repository)
-
 
     def addClosingHours(self, identifier, domainId, week, day, startHour, endHour):
         repository = self.getRepository(identifier, domainId)
@@ -222,8 +221,8 @@ class HarvesterData(object):
         self._store.addData(id_combine(domainId, identifier), 'repository', repository, newId=False)
 
     #target
-    def getTarget(self, domainId, identifier, guid=None):
-        return self._store.getData(f"{domainId}.{identifier}", 'target', guid=guid)
+    def getTarget(self, domainId, identifier):
+        return self._store.getData(f"{domainId}.{identifier}", 'target')
 
     def addTarget(self, name, domainId, targetType):
         domain = self.getDomain(domainId)
@@ -259,8 +258,8 @@ class HarvesterData(object):
         self._store.addData(domainId, 'domain', domain)
 
     #mapping
-    def getMapping(self, identifier, domainId, guid=None):
-        return self._store.getData(id_combine(domainId, identifier), 'mapping', guid=guid)
+    def getMapping(self, identifier, domainId):
+        return self._store.getData(id_combine(domainId, identifier), 'mapping')
 
     def addMapping(self, name, domainId):
         domain = self.getDomain(domainId)
@@ -326,18 +325,14 @@ upload.parts['meta'] = """<meta xmlns="http://meresco.org/namespace/harvester/me
         self._store.addData(domainId, 'domain', domain)
 
     # fielddefinition
-    def getFieldDefinition(self, domainId, guid=None):
+    def getFieldDefinition(self, domainId):
         try:
-            return self._store.getData(domainId, 'fielddefinition', guid)
+            return self._store.getData(domainId, 'fielddefinition')
         except ValueError:
             return {}
 
     def updateFieldDefinition(self, domainId, data):
         self._store.addData(domainId, 'fielddefinition', data)
-
-    def getPublicRecord(self, guid):
-        "Retrieves a record given its uuid only"
-        return self._store.getGuid(guid)
 
 id_combine = lambda *ids: '.'.join(ids)
 

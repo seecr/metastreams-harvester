@@ -201,17 +201,18 @@ def card_fieldDefinitions(tag, domain, repository, fieldDefinition, **kwargs):
 
             for each in fieldDefinition:
                 fieldName = "extra_{}".format(each['name'])
+                fieldValue = repository.get("extra", {}).get(each['name'])
                 with tag("div.row.mb-2"):
                     with tag("div.col.pe-0"):
                         if each['type'] == "text":
                             yield page2.textInput(tag,
-                                label=each['label'], name=fieldName, value=repository.get(fieldName) or '')
+                                label=each['label'], name=fieldName, value=fieldValue or '')
                         elif each['type'] == "bool":
                             yield page2.checkbox(tag, label=each['label'], name=fieldName,
-                                checked=repository.get(fieldName, False) == True)
+                                checked=(fieldValue or False) is True)
                         elif each['type'] == "textarea":
                             yield page2.textarea(tag, label=each['label'], name=fieldName,
-                                value=repository.get(fieldName) or '',height="10em")
+                                value=fieldValue or '', height="10em")
             with tag("div.row"):
                 with tag("div.col"):
                     with tag("button.btn.btn-small.btn-primary.float-end", type_="submit", id_="BtnFieldDefinition"):
@@ -407,6 +408,7 @@ def _repository(tag, domain, repository):
                         yield '\u24d8' # ⓘ
             with tag("td"):
                 fieldName = 'extra_{}'.format(definition['name'])
+                print("HIER")
                 fieldValue =  repository.get('extra', {}).get(definition['name'], definition.get("default", ""))
                 if definition['type'] == "text":
                     with tag("input", type_="text", name=fieldName, value=fieldValue): pass

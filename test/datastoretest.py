@@ -28,36 +28,19 @@ from seecr.test import SeecrTestCase
 
 from os.path import isdir, isfile, join
 
-from meresco.harvester.datastore import DataStore, OldDataStore
+from meresco.harvester.datastore import DataStore
 
 class DataStoreTest(SeecrTestCase):
     def setUp(self):
         SeecrTestCase.setUp(self)
         self.n = 0
-        def idfn():
-            self.n += 1
-            return 'mock:{}'.format(self.n)
-        self.store = DataStore(self.tempdir, id_fn=idfn)
+        self.store = DataStore(self.tempdir)
 
-    def testData(self):
+    def testStoreInDirectory(self):
         self.store.addData('mijnidentifier', 'datatype', {'mijn':'data'})
-        d = self.store.getData('mijnidentifier', 'datatype')
-        self.assertEqual({'mijn': 'data', '@id': 'mock:1'}, d)
-        d['mijn'] = 'andere data'
-        self.store.addData('mijnidentifier', 'datatype', d)
-        d = self.store.getData('mijnidentifier', 'datatype')
-        self.assertEqual({'mijn': 'andere data', '@id': 'mock:2', '@base': 'mock:1'}, d)
-        self.store.deleteData('mijnidentifier', 'datatype')
-        self.assertRaises(ValueError, lambda: self.store.getData('mijnidentifier', 'datatype'))
-        self.assertEqual({'mijn': 'andere data', '@id': 'mock:2', '@base': 'mock:1'}, self.store.getData('mijnidentifier', 'datatype', 'mock:2'))
-
-    def testOldStoreInDirectory(self):
-        store = OldDataStore(self.tempdir)
-        store.addData('mijnidentifier', 'datatype', {'mijn':'data'})
-        self.assertTrue(store.exists('mijnidentifier', 'datatype'))
+        self.assertTrue(self.store.exists('mijnidentifier', 'datatype'))
         self.assertTrue(isdir(join(self.tempdir, 'mijnidentifier')))
         self.assertTrue(isfile(join(self.tempdir, 'mijnidentifier', '{}.{}'.format('mijnidentifier', 'datatype'))))
-
 
     def testListData(self):
         self.store.addData('nr:1', 'datatype', {'mijn':'data'})
@@ -65,5 +48,15 @@ class DataStoreTest(SeecrTestCase):
         self.store.addData('nr:3', 'other', {'mijn':'data'})
         self.assertEqual(['nr:1', 'nr:2'], self.store.listForDatatype('datatype'))
 
-    def testGuid(self):
-        self.assertRaises(NotImplementedError, lambda: self.store.getGuid('someid'))
+    def testDeleteData(self):
+        self.store.addData('mijnidentifier_1', 'datatype_1', {'mijn':'data'})
+        self.store.addData('mijnidentifier_1', 'datatype_2', {'mijn':'data'})
+        self.store.addData('mijnidentifier_2', 'datatype_1', {'mijn':'data'})
+        self.assertTrue(self.store.exists('mijnidentifier_1', 'datatype_1'))
+        self.assertTrue(self.store.exists('mijnidentifier_1', 'datatype_2'))
+        self.assertTrue(self.store.exists('mijnidentifier_2', 'datatype_1'))
+        self.store.deleteData("mijnidentifier_1", "datatype_1")
+        self.assertFalse(self.store.exists('mijnidentifier_1', 'datatype_1'))
+        self.assertTrue(self.store.exists('mijnidentifier_1', 'datatype_2'))
+        self.assertTrue(self.store.exists('mijnidentifier_2', 'datatype_1'))
+

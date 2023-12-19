@@ -26,7 +26,6 @@
 function _init_status_table() {
     var _table = $("#status-table");
 
-    console.log(_table.find(".seecr-show-error"));
     _table.find(".seecr-show-error")
         .unbind("click")
         .click(function(e) {

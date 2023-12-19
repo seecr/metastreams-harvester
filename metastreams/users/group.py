@@ -49,8 +49,11 @@ class GroupStorage(object):
         return Group(self._stateDir, self._newId()).save()
 
     def groupsForUser(self, username):
-        return [g for g in self.listGroups()
-            if username in g.usernames]
+        return [g for g in self.listGroups() if username in g.usernames]
+
+    def groupsForDomainId(self, domain_id):
+        return [g for g in self.listGroups() if domain_id in g.domainIds]
+
 
 class Group(object):
     def __init__(self, stateDir, identifier):

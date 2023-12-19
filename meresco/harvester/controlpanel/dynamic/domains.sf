@@ -55,7 +55,7 @@ def cardDomains(tag, **kwargs):
             with tag("form.form", id_="FrmCreateDomain", **{'data-reset-on-submit': 'True'}):
                 with tag("div.d-flex.flex-row"):
                     with tag("div.flex-fill.me-2"):
-                        yield page2.textInput(tag, label="Naam", name="identifier", value="")
+                        yield page2.textInput(tag, label="Identifier", name="identifier", value="")
                     with tag("div.d-flex.flex-column.flex-shrink-1.justify-content-end"):
                         with tag("button.btn.btn-small.btn-primary", type_="submit", id_="BtnCreateDomain"):
                             yield "Aanmaken"

@@ -81,8 +81,11 @@ class HarvesterDataActions(PostActions):
 
     @check_and_parse('identifier', userCheck='admin')
     def _addDomain(self, data, **kwargs):
-        self.call.addDomain(identifier=data.identifier)
-        yield response(True)
+        try:
+            self.call.addDomain(identifier=data.identifier)
+            yield response(True)
+        except Exception as e:
+            yield response(False, message=str(e))
 
     @check_and_parse('identifier', 'description', userCheck='user')
     def _updateDomain(self, data, **kwargs):

@@ -43,7 +43,7 @@ def render(func, showMenu=True, showLogin=True, **kwargs):
     with tag("html", xmlns="http://www.w3.org/1999/xhtml", lang="en", **{'xml:lang': 'en'}):
         with tag("head"):
             with tag("title"):
-                yield "Seecr Metastreams ({version})".format(version=VERSION)
+                yield "Harvester ({version})".format(version=VERSION)
             with tag("meta", content="text/html; charset=utf-8", **{"http-equiv": 'Content-Type'}): pass
             with tag("meta", content="no-cache", **{'http-equiv': 'Pragma'}): pass
             with tag("meta", content="no-cache", **{'http-equiv': 'Cache-Control'}): pass
@@ -82,7 +82,7 @@ def renderMenu(tag, user, showLogin=True):
             with tag("nav.navbar.navbar-expand-lg.navbar-light"):
                 with tag('a.navbar-brand', href='/'):
                     with tag("img.img-fluid", src="/static/seecr.png", title="Seecr"): pass
-                    yield "Metastreams Control Panel"
+                    yield "Harvester Control Panel"
                 with tag('button.navbar-toggler', type_='button', **{
                     "data-bs-toggle": "collapse",
                     "data-bs-target": "#navbarNavAltMarkup",
@@ -215,7 +215,7 @@ def numberInput(tag, label, name, minValue, maxValue, value, controlId):
 
 @floatingLabel
 def textInput(tag, label, name, value, controlId):
-    with tag("input.form-control", id_=controlId, type_="text", name=name, value=str(value)):
+    with tag("input.form-control", id_=controlId, type_="text", name=name, value=str(value), placeholder=label):
         yield ''
 
 @floatingLabel

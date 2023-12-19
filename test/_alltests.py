@@ -50,7 +50,7 @@ from filesystemuploadtest import FileSystemUploaderTest
 from harvestactiontest import HarvestActionTest
 from harvesterdataactionstest import HarvesterDataActionsTest
 from harvesterdataretrievetest import HarvesterDataRetrieveTest
-from harvesterdatatest import HarvesterDataTest, HarvesterDataOldStyleTest
+from harvesterdatatest import HarvesterDataTest
 from harvesterlogtest import HarvesterLogTest
 from harvestertest import HarvesterTest
 from idstest import IdsTest

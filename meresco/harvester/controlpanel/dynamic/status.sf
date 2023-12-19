@@ -32,16 +32,24 @@ def getStatus(domainId, repositoryGroupId, repositoryId):
 def totalErrors(domainId, repositoryGroupId=None, repositoryId=None):
     return sum(int(each['totalerrors']) for each in getStatus(domainId, repositoryGroupId, repositoryId))
 
-def main(tag, **kwargs):
+def main(tag, showRss=False, **kwargs):
     if not (data := page2.findPath("data", dict(error=render_data_error), **kwargs)) is None:
         yield data(tag=tag, **kwargs)
         return
-   
-    arguments = kwargs['arguments']
-    domainId = arguments.get('domainId', [None])[0]
-    repositoryGroupId = arguments.get('repositoryGroupId', [None])[0]
-    repositoryId = arguments.get('repositoryId', [None])[0]
+     
+    pathArgs = kwargs['path'].split("/")[2:]
+    if pathArgs == []:
+        arguments = kwargs['arguments']
+        domainId = arguments.get('domainId', [None])[0]
+        repositoryGroupId = arguments.get('repositoryGroupId', [None])[0]
+        repositoryId = arguments.get('repositoryId', [None])[0]
+    else:
+        pathArgs = pathArgs + [None, None, None]
+        domainId, repositoryGroupId, repositoryId = pathArgs[:3]
     statuses = getStatus(domainId=domainId, repositoryGroupId=repositoryGroupId, repositoryId=repositoryId)
+
+
+    groups = observable.call.groupsForDomainId(domainId)
 
     with tag("div"):
         with tag("div.modal", tabindex="-1", role="dialog", id_="modal_error"):
@@ -54,6 +62,24 @@ def main(tag, **kwargs):
                             pass
                     with tag("div.modal-body", id_="placeholder_modal-error-body"):
                         pass
+
+        if showRss is True:
+            with tag("div.d-flex.flex-row.justify-content-between"):
+                with tag("h1"):
+                    yield "Harvester Status"
+                with tag("div"):
+                    for each in groups:
+                        with tag("img", src=each.logoUrl, style="height: 50px"): pass
+            with tag("div.d-flex.flex-row.gap-2"):
+                with tag("a.btn.btn-light", href=page2.url("/running.rss", domainId=domainId), target="_blank"):
+                    with tag("i.bi.bi-rss.pe-2"): pass
+                    yield f"Domain: {domainId}"
+                if repositoryGroupId is not None:
+                    with tag("span.btn.btn-light"):
+                        yield f"Repository group: {repositoryGroupId}"
+                if repositoryId is not None:
+                    with tag("span.btn.btn-light"):
+                        yield f"Repository: {repositoryGroupId}"
 
         with tag("table.table.table-hover", id_="status-table"):
             with tag("thead"):

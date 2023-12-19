@@ -85,6 +85,17 @@ class GroupStorageTest(SeecrTestCase):
         g2 = gs.getGroup(g.identifier)
         self.assertEqual([], g2.domainIds)
 
+    def testGroupsForDomain(self):
+        gs = GroupStorage(self.tempdir)
+        g = gs.newGroup()
+        g.addDomainId("Linux")
+        self.assertEqual([], gs.groupsForDomainId("Windows"))
+        self.assertEqual([g.identifier], [each.identifier for each in gs.groupsForDomainId("Linux")])
+
+        g2 = gs.newGroup()
+        g2.addDomainId("Linux")
+        self.assertEqual([g.identifier, g2.identifier], [each.identifier for each in gs.groupsForDomainId("Linux")])
+
     def testGroupsForUser(self):
         gs = GroupStorage(self.tempdir)
         g = gs.newGroup()
