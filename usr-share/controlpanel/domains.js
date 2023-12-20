@@ -33,6 +33,36 @@ function _load_table_domains() {
         });
 }
 
+function _load_table_domain_aliases() {
+    $.get("/domains/table/domain_aliases")
+        .done(function(data) {
+            var _placeholder = $("#placeholder_domain_aliases");
+            _placeholder
+                .empty()
+                .append(data);
+            _placeholder.find(".deletable")
+                .unbind("click")
+                .click(function(e) {
+                    e.preventDefault();
+                    let _btn = $(this);
+                    let _frm = _btn.closest("form");
+
+                    $.post("/action/del_domain_alias", _frm.serialize())
+                        .done(function(data) {
+                            if (data['success'] == true) {
+                                _load_table_domain_aliases();
+                            } else {
+                                alert(data['message']);
+
+                            }
+                        });
+                });
+        });
+}
+
+
 $(document).ready(function() {
     form_init($("#FrmCreateDomain"), "/action/addDomain", $("#BtnCreateDomain"), $("#placeholder_FrmCreateDomain"), function() {_load_table_domains()});
+    form_init($("#frm_add_domain_alias"), "/action/add_domain_alias", $("#btn_add_domain_alias"), $("#placeholder_domain_aliases"), function() {_load_table_domain_aliases()});
+    _load_table_domain_aliases();
 })

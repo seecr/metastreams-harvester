@@ -88,6 +88,42 @@ class HarvesterDataActionsTest(SeecrTestCase):
         self.assertEqual("addDomain", self.observable.calledMethods[0].name)
         self.assertEqual(dict(identifier='aap'), self.observable.calledMethods[0].kwargs)
 
+    def test_add_domain_aliases(self):
+        self.assertEqual({}, self.hd.get_domain_aliases())
+        
+        header, body = parseResponse(asBytes(self.dna.all.handleRequest(
+            user=CallTrace(returnValues=dict(isAdmin=False)),
+            path="/actions/add_domain_alias",
+            Body=bytes(urlencode(dict(domainId="aap", alias="noot")), encoding="utf-8"),
+            Method='Post')))
+        self.assertEqual("200", header['StatusCode'])
+        self.assertEqual("application/json", header['Headers']['Content-Type'])
+        response = JsonDict.loads(body)
+        self.assertTrue(response['success'])
+        self.assertEqual(1, len(self.observable.calledMethods))
+        method = self.observable.calledMethods[0]
+        self.assertEqual("add_domain_alias", method.name)
+        self.assertEqual({'domainId': 'aap', 'alias': 'noot'}, method.kwargs)
+
+
+    def test_del_domain_aliases(self):
+        self.assertEqual({}, self.hd.get_domain_aliases())
+        
+        header, body = parseResponse(asBytes(self.dna.all.handleRequest(
+            user=CallTrace(returnValues=dict(isAdmin=False)),
+            path="/actions/del_domain_alias",
+            Body=bytes(urlencode(dict(alias="noot")), encoding="utf-8"),
+            Method='Post')))
+        self.assertEqual("200", header['StatusCode'])
+        self.assertEqual("application/json", header['Headers']['Content-Type'])
+        response = JsonDict.loads(body)
+        self.assertTrue(response['success'])
+        self.assertEqual(1, len(self.observable.calledMethods))
+        method = self.observable.calledMethods[0]
+        self.assertEqual("del_domain_alias", method.name)
+        self.assertEqual({'alias': 'noot'}, method.kwargs)
+
+
     def testSetRepositoryDone(self):
         self.updateTheRepository(action='refresh')
         repository = self.hd.getRepository('repository', 'domain')

@@ -45,6 +45,9 @@ class HarvesterDataActions(PostActions):
         PostActions.__init__(self, **kwargs)
         self.registerAction('addDomain', self._addDomain)
         self.registerAction('updateDomain', self._updateDomain)
+        self.registerAction('add_domain_alias', self._add_domain_alias)
+        self.registerAction('del_domain_alias', self._del_domain_alias)
+
         self.registerAction('addRepositoryGroup', self._addRepositoryGroup)
         self.registerAction('deleteRepositoryGroup', self._deleteRepositoryGroup)
         self.registerAction('updateRepositoryGroup', self._updateRepositoryGroup)
@@ -93,6 +96,26 @@ class HarvesterDataActions(PostActions):
             identifier=data.identifier,
             description=data.description
         )
+        yield response(True)
+
+    @check_and_parse('domainId', 'alias', userCheck='user')
+    def _add_domain_alias(self, data, **kwargs):
+        try:
+            self.call.add_domain_alias(domainId=data.domainId, alias=data.alias)
+        except Exception as e:
+            yield response(False, message=str(e))
+            return
+
+        yield response(True)
+    
+    @check_and_parse('alias', userCheck='user')
+    def _del_domain_alias(self, data, **kwargs):
+        try:
+            self.call.delete_domain_alias(alias=data.alias)
+        except Exception as e:
+            yield response(False, message=str(e))
+            return
+
         yield response(True)
 
     @check_and_parse('identifier', 'domainId', userCheck='user')

@@ -31,7 +31,9 @@ def main(**kwargs):
         yield http.redirect('/')
         return
 
-    table = page2.findPath("table", dict(domains=table_domains), **kwargs)
+    table = page2.findPath("table", dict(
+        domains=table_domains,
+        domain_aliases=table_domain_aliases), **kwargs)
     if not table is None:
         yield table(**kwargs)
         return
@@ -47,6 +49,49 @@ def _contents(tag, arguments, **kwargs):
     ])
     #with tag("div.container"):
     yield page2.card("Domeinen", cardDomains, icon="collection", tag=tag, **kwargs)
+    
+    user = kwargs.get("user", None)
+    if user and user.isAdmin():
+        yield page2.card("Aliases", card_domain_aliases, icon="collection", tag=tag, **kwargs)
+
+def card_domain_aliases(tag, user, **kwargs):
+    aliases = observable.call.get_domain_aliases()
+    allDomainIds = user.listDomainIds()
+
+    available_domainIds = [each for each in allDomainIds if each not in aliases.values()]
+    with tag("div.d-flex.flex-column.gap-2"):
+        with tag("form.form.d-flex.flex-row.gap-2", id_="frm_add_domain_alias"):
+            yield page2.textInput(tag, label="Alias", name="alias", value="")
+            yield page2.dropdown(tag, label="Identifier", name="domainId", items=[(each, each) for each in available_domainIds])
+
+            with tag("button.btn.btn-primary", type_="button", id_="btn_add_domain_alias"):
+                yield "Aanmaken"
+        with tag("div", id_="placeholder_domain_aliases"):
+            yield table_domain_aliases(tag, **kwargs)
+
+def table_domain_aliases(tag, **kwargs):
+    aliases = observable.call.get_domain_aliases()
+    if len(aliases) == 0:
+        yield "Geen aliases gedefineerd."
+    else:
+        with tag("table.table"):
+            with tag("thead"):
+                with tag("tr"):
+                    for each in ['', 'Alias', 'Domein']:
+                        with tag("th"): yield each
+            with tag("tbody"):
+                for alias in aliases:
+                    with tag("tr"):
+                        with tag("td.fit"):
+                            with tag("form.form"):
+                                with tag("input", type_="hidden", name="alias", value=alias): pass
+                                with tag("button.seecr-btn.deletable", type_="button", title="Verwijderen"):
+                                    with tag("i.bi.bi-x-square"): pass
+                        with tag("td"):
+                            yield alias
+                        with tag("td"):
+                            yield aliases[alias]
+
 
 def cardDomains(tag, **kwargs):
     user = kwargs.get("user", None)
@@ -83,158 +128,3 @@ def table_domains(tag, user, **kwargs):
                     with tag("td"):
                         domainInfo = observable.call.getDomain(each)
                         yield domainInfo.get("description", "")
-
-
-# ------- Old stuff below
-
-
-import page
-import common
-
-def old_main(**kwargs):
-    user = kwargs.get('session', {}).get('user')
-    if not user or not user.isAdmin():
-        yield http.redirect("/login")
-        return
-    yield page.layoutWithMenu(old_contents, **kwargs)
-
-
-def old_contents(arguments, session, **kwargs):
-    yield """<h1>Domains Administration</h1>"""
-    error = arguments.get("error", [None])[0]
-    if error:
-        yield '<span class="error">{}</span>'.format(error)
-
-    yield _domainAdministration()
-    # yield "<br/>"
-    # yield _userAdministration(session)
-
-
-def _domainAdministration():
-
-    yield """
-  <div><h3>Domains</h3>
-  <form action='/actions/addDomain' method='post'>
-    <input type="hidden" name="redirectUri" value="/domain"/>
-    <table width="320" border="0" cellspacing="0" cellpadding="0">
-     <tr>
-      <td width="60">Name:&nbsp;</td>
-      <td width="200"><input name="identifier" type="text" class="zkveld" value=""></td>
-      <td width="40"><input name="submit" type="submit" class="butt" value="Create"></td>
-     </tr>
-    </table>
-  </form>
-  </div>
-
-  <div>
-   <table border="0" cellspacing="0" cellpadding="0" width="50%">"""
-
-    domainIds = observable.call.getDomainIds()
-    for identifier in domainIds:
-        yield """
-    <tr class="table_row">
-     <td>{identifier}</td>
-     <td>
-      <a href="/domain?{args}">
-       Edit / View
-      </a>
-     </td>
-    </tr>""".format(identifier=identifier, args=urlencode(dict(identifier=identifier)))
-
-    yield """
-   </table>
-  </div>"""
-
-
-def _userAdministration(session):
-    yield """
-<h1>Users Administration</h1>
-<div>
-    <table width="100%" border="0" cellspacing="4" cellpadding="0">"""
-    for user in observable.call.listUsers():
-        yield """
-        <tr>
-            <td>
-                <h3>{user_fullname}</h3>
-                <table width="100%" cellspacing="0" cellpadding="0">
-                    <tr>
-                        <td width="15%"><b>Full name:</b></td>
-                        <td width="35%"><b>{user_fullname}</b></td>
-                        <td width="15%">Organization:</td>
-                        <td width="35%">{organization}</td>
-                    </tr>
-                    <tr>
-                        <td><b>Username:</b></td>
-                        <td><b>{user_localname}</b></td>
-                        <td>Telephone:</td>
-                        <td>{telephone}</td>
-                    </tr>
-                    <tr>
-                        <td><b>Domain:</b></td>
-                        <td><b>{domain}</b></td>
-                        <td>E-mail:</td>
-                        <td>{email}</td>
-                    </tr>
-                    <tr>
-                        <td valign="top">Notes:</td>
-                        <td colspan="3" ><pre>{notes}</pre></td>
-                    </tr>
-                </table>
-                <p>
-                    <a href="{userEditLink}">Edit / View</a>
-&nbsp;
-                    <form method='post' action='/user.action/delete' name="{deleteFormName}">
-                        <input type="hidden" name="redirectUri" value="/domains"/>
-                        <input type="hidden" name="username" value="{user_localname_raw}"/>
-                        <a onclick="if(confirm('Weet u het zeker?')) {{ document.{deleteFormName}.submit(); }}; return false;">Delete</a>
-                    </form>
-                </p>""".format(
-            user_fullname=escapeHtml(user.name),
-            organization=escapeHtml(user.organization),
-            user_localname=escapeHtml(user.username),
-            user_localname_raw=user.username,
-            telephone=escapeHtml(user.telephone),
-            domain=escapeHtml(user.domain),
-            email=escapeHtml(user.email),
-            notes=escapeHtml(user.notes),
-            userEditLink="/user?{}".format(urlencode(dict(identifier=user.username))),
-            deleteFormName="deleteUser_{}".format(user.username))
-    yield """
-    </table>
-    <div>
-        <a name="newUser"></a>
-        <h3>Create new user</h3>"""
-    yield common.showSessionError(session, "newUser")
-    yield """
-        <form action='/user.action/create' method='post'>
-            <input type="hidden" name="redirectUri" value="/user"/>
-            <input type="hidden" name="errorUri" value="/domains#newUser"/>
-            <table width="100%" border="0" cellspacing="0" cellpadding="0">
-                <tr>
-                  <td width="60">Username:&nbsp;</td>
-                  <td width="200"><input name="username" type="text" class="zkveld" value="{username}"></td>
-                </tr>
-                <tr>
-                    <td width="60">Domain:&nbsp;</td>
-                    <td width="200">""".format(
-        username=common.valueFromSession(session, 'username'))
-    yield common.dropdown("domain", [(each, each) for each in observable.call.getDomainIds()], selected=common.valueFromSession(session, 'domain'))
-
-    yield """
-                    </td>
-                </tr>
-                <tr>
-                    <td width="60">Password:</td>
-                    <td width="200"><input name="password1" type="password" class="zkveld" value=""></td>
-                </tr>
-                <tr>
-                    <td width="60">Password(repeat):</td>
-                    <td width="200"><input name="password2" type="password" class="zkveld" value=""></td>
-                </tr>
-                <tr>
-                    <td></td>
-                    <td><input name="submit" type="submit" class="butt" value="Create"></td>
-                </tr>
-            </table>
-        </form>
-  </div>"""

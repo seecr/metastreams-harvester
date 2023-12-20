@@ -42,12 +42,16 @@ from meresco.harvester.timeslot import Timeslot
 
 from .datastore import DataStore
 
+from pathlib import Path
+import json
+
 class HarvesterData(object):
     def __init__(self, dataPath=None, id_fn=lambda: str(uuid4()), datastore=None):
         if dataPath is None and datastore is None:
             raise TypeError('Missing dataPath or datastore')
         self._store = DataStore(dataPath) if datastore is None else datastore
         self.id_fn = id_fn
+        self._domain_alias_file = Path(dataPath) / "domain_alias.json"
 
     #domain
     def getDomainIds(self):
@@ -69,6 +73,24 @@ class HarvesterData(object):
         domain = self.getDomain(identifier)
         domain['description'] = description
         self._store.addData(identifier, 'domain', domain)
+
+    def get_domain_aliases(self):
+        return json.loads(self._domain_alias_file.read_text()) if self._domain_alias_file.is_file() else {}
+
+    def set_domain_aliases(self, aliases):
+        tmp_file = self._domain_alias_file.with_suffix(".tmp")
+        tmp_file.write_text(json.dumps(aliases))
+        tmp_file.rename(self._domain_alias_file)
+
+    def add_domain_alias(self, domainId, alias):
+        aliases = self.get_domain_aliases()
+        aliases[alias] = domainId
+        self.set_domain_aliases(aliases)
+
+    def delete_domain_alias(self, alias):
+        aliases = self.get_domain_aliases()
+        aliases.pop(alias, None)
+        self.set_domain_aliases(aliases)
 
     #repositorygroup
     def getRepositoryGroupIds(self, domainId):

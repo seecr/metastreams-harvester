@@ -167,6 +167,13 @@ class HarvesterDataTest(SeecrTestCase):
         except ValueError as e:
             self.assertEqual('adomain.repository12.repository', str(e))
 
+    def test_domain_aliases(self):
+        self.assertEqual({}, self.hd.get_domain_aliases())
+        self.hd.add_domain_alias(domainId="aap", alias="noot")
+        self.assertEqual({"noot":"aap" }, self.hd.get_domain_aliases())
+        self.hd.delete_domain_alias(alias="noot")
+        self.assertEqual({}, self.hd.get_domain_aliases())
+
     def testAddDomain(self):
         self.assertEqual(['adomain'], self.hd.getDomainIds())
         self.hd.addDomain(identifier="newdomain")
