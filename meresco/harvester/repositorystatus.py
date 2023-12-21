@@ -69,7 +69,7 @@ class RepositoryStatus(Observable):
                 return jsonLoad(fp)
 
         return sorted([
-            mergeDicts(_jsonLoad(filepath), {'repositoryId': repoId})
+            mergeDicts(_jsonLoad(filepath), {'repositoryId': repoId, 'repositoryGroupId': groupId})
             for groupId in self.call.getRepositoryGroupIds(domainId=domainId)
             for repoId in self.call.getRepositoryIds(domainId=domainId, repositoryGroupId=groupId)
             for filepath in [join(self._statePath, domainId, escapeFilename("%s.running" % repoId))]

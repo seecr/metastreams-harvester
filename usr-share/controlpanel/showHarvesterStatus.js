@@ -34,7 +34,18 @@ function init_status() {
 }
 
 function init_table() {
-	$("#status-table").dataTable({searching: false, paging: false, info: false});
+	$("#status-table").dataTable({
+        searching: false,
+        paging: false,
+        info: false,
+        columnDefs: [
+            {
+                searchable: false,
+                orderable: false,
+                targets: 8
+            }
+        ],
+    });
 }
 
 $(document).ready(function() {

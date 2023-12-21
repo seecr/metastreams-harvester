@@ -31,9 +31,15 @@ def toZuluTime(timestamp):
     return timestamp
 
 def main(path, arguments, **kwargs):
-    domainId = arguments.get('domainId', [None])[0]
+    pathArgs = path.split("/")[2:]
+    if pathArgs == []:
+        domainId = arguments.get('domainId', [None])[0]
+    else:
+        domainId = pathArgs[0]
+    aliases = observable.call.get_domain_aliases()
+    domainId = aliases.get(domainId, domainId)
 
-    linkToStatusPage = "{}/showHarvesterStatus?{}".format(externalUrl, urlencode(dict(domainId=domainId)))
+    linkToStatusPage = f"{externalUrl}/showHarvesterStatus/{domainId}"
 
     yield "HTTP/1.0 200 OK\r\n"
     yield "Content-Type: application/rss+xml\r\n"
@@ -53,7 +59,7 @@ def main(path, arguments, **kwargs):
         yield RSS_TEMPLATE % {
             'title': '%(repositoryId)s: %(status)s' % runningState,
             'description': escapeXml(description),
-            'link': escapeXml("{}&{}".format(linkToStatusPage, urlencode(dict(repositoryId=runningState['repositoryId'])))),
+            'link': escapeXml('/'.join([linkToStatusPage, runningState['repositoryGroupId'], runningState['repositoryId']])),
             'guid': '%(repositoryId)s:%(changedate)s' % runningState,
         }
 

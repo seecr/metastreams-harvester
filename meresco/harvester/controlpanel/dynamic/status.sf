@@ -75,15 +75,16 @@ def main(tag, showRss=False, **kwargs):
                     for each in groups:
                         with tag("img", src=each.logoUrl, style="height: 50px"): pass
             with tag("div.d-flex.flex-row.gap-2"):
-                with tag("a.btn.btn-light", href=page2.url("/running.rss", domainId=domainId), target="_blank"):
+                with tag("a.btn.btn-light", href=page2.url(f"/running.rss/{domainId}"), target="_blank"):
                     with tag("i.bi.bi-rss.pe-2"): pass
                     yield f"Domain: {domainId}"
                 if repositoryGroupId is not None:
-                    with tag("span.btn.btn-light"):
+                    with tag("a.btn.btn-light", href=page2.url(f"/rss/{domainId}/{repositoryGroupId}"), target="_blank"):
+                        with tag("i.bi.bi-rss.pe-2"): pass
                         yield f"Repository group: {repositoryGroupId}"
-                if repositoryId is not None:
-                    with tag("span.btn.btn-light"):
-                        yield f"Repository: {repositoryGroupId}"
+                #if repositoryId is not None:
+                #    with tag("span.btn.btn-light"):
+                #        yield f"Repository: {repositoryId}"
 
         with tag("table.table.table-hover", id_="status-table"):
             with tag("thead"):
@@ -91,8 +92,11 @@ def main(tag, showRss=False, **kwargs):
                     for each in ["Repository", "Laatste harvest", "# Totaal", "# Geharvest", "# Uploads", "# Deletes", "# Ongeldig", "# Fouten"]:
                         with tag("th"):
                             yield each
+                    if showRss:
+                        with tag("th"):
+                            yield ""
             with tag("tbody"):
-                for each in sorted(statuses, key=lambda i: i['repositoryId']):
+                for each in sorted(statuses, key=lambda s: (s.get('repositoryGroupId', '').lower(), s.get('repositoryId'))):
                     with tag("tr"):
                         with tag("td"):
                             yield each['repositoryId']
@@ -107,7 +111,7 @@ def main(tag, showRss=False, **kwargs):
                         with tag("td"):
                             yield each['deleted']
                         with tag("td"):
-                            invalid =  each['invalid']
+                            invalid = each['invalid']
                             yield invalid
                         with tag("td"):
                             errors = each['totalerrors']
@@ -120,6 +124,11 @@ def main(tag, showRss=False, **kwargs):
                                                 'data-repositorygroupid': each['repositoryGroupId'],
                                                 'data-repositoryid': each['repositoryId']}):
                                             with tag("i.bi.bi-eye-fill"): yield ""
+                        if showRss is True:
+                            with tag("td"):
+                                with tag("a.btn.btn-light", href=page2.url(f"/rss/{domainId}/{each['repositoryGroupId']}/{each['repositoryId']}"), target="_blank"):
+                                    with tag("i.bi.bi-rss"): pass
+
 
     return 
     data = {"data": []}

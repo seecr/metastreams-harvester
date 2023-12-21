@@ -35,7 +35,7 @@ def _contents(tag, **kwargs):
 
 def _inleiding(tag, **kwargs):
     with tag("p"):
-        yield "Welkom bij Seecr Metastreams. De startplek om uw metadata te laten stromen. "
+        yield "Welkom bij het controle paneel van de harvester. De startplek om uw metadata te laten stromen. "
     with tag('p'):
         yield "Hier kunt u de aan u toegekende domeinen beheren. "
 

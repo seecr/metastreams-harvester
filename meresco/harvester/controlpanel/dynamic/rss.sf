@@ -27,11 +27,29 @@
 ## end license ##
 
 def main(path, arguments, **kwargs):
-    domainId = arguments.get('domainId', [None])[0]
-    repositoryGroupId = arguments.get('repositoryGroupId', [None])[0]
-    repositoryId = arguments.get('repositoryId', [None])[0]
+    aliases = observable.call.get_domain_aliases()
 
-    linkToStatusPage = "{}/showHarvesterStatus?{}".format(externalUrl, escapeXml(urlencode(dict(domainId=domainId, repositoryId=repositoryId))))
+    pathArgs = path.split("/")[2:]
+    if pathArgs == []:
+        domainId = arguments.get('domainId', [None])[0]
+        repositoryGroupId = arguments.get('repositoryGroupId', [None])[0]
+        repositoryId = arguments.get('repositoryId', [None])[0]
+    else:
+        pathArgs = pathArgs + [None, None, None]
+        domainId, repositoryGroupId, repositoryId = pathArgs[:3]
+    
+    domainId = aliases.get(domainId, domainId)
+
+    parts = [domainId]
+    if repositoryGroupId is not None:
+        parts.append(repositoryGroupId)
+    if repositoryId is not None:
+        parts.append(repositoryId)
+
+    linkToStatusPage = "{}/showHarvesterStatus/{}".format(externalUrl, '/'.join(parts))
+
+
+
     status = observable.call.getStatus(domainId=domainId, repositoryGroupId=repositoryGroupId, repositoryId=repositoryId)[0]
 
     yield "HTTP/1.0 200 OK\r\n"
@@ -39,8 +57,13 @@ def main(path, arguments, **kwargs):
     yield "\r\n"
     yield '<?xml version="1.0" encoding="UTF-8"?>\r\n'
     yield """<rss version="2.0"><channel>"""
-    yield '<title>Harvester status voor %s</title>' % repositoryId
-    yield '<description>Recente repository harvest status voor %s in %s</description>' % (repositoryId, domainId)
+    if repositoryId is None and repositoryGroupId is not None:
+        yield f'<title>Harvester status voor repository groep {repositoryGroupId}</title>'
+        yield f'<description>Recente repository harvest status voor repository groep {repositoryGroupId} in {domainId}/description>'
+    elif repositoryId is not None:
+        yield f'<title>Harvester status voor repository {repositoryId}</title>'
+        yield f'<description>Recente repository harvest status voor repository {repositoryId} in {domainId}</description>'
+
     yield '<link>%s</link>' % linkToStatusPage
     yield '<ttl>360</ttl>'
 
