@@ -62,7 +62,7 @@ def card_domain_aliases(tag, user, **kwargs):
     with tag("div.d-flex.flex-column.gap-2"):
         with tag("form.form.d-flex.flex-row.gap-2", id_="frm_add_domain_alias"):
             yield page2.textInput(tag, label="Alias", name="alias", value="")
-            yield page2.dropdown(tag, label="Identifier", name="domainId", items=[(each, each) for each in available_domainIds])
+            yield page2.dropdown(tag, label="Identifier", name="domainId", items=[(each, each) for each in allDomainIds])
 
             with tag("button.btn.btn-primary", type_="button", id_="btn_add_domain_alias"):
                 yield "Aanmaken"
