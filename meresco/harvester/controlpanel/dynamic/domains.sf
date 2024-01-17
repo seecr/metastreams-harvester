@@ -110,9 +110,10 @@ def cardDomains(tag, **kwargs):
 
 def table_domains(tag, user, **kwargs):
     allDomainIds = user.listDomainIds(); #observable.call.getDomainIds()
+    aliases = observable.call.get_domain_aliases()
     with tag("table.table.table-sm.table-hover", id_="TblDomains"):
         with tag("thead"):
-            for label in ['','Naam', "Omschrijving"]:
+            for label in ['','Naam', "Omschrijving", "Aliassen"]:
                 with tag("th"): yield label
         with tag("tbody"):
             for each in sorted(allDomainIds, key=lambda each: each.lower()):
@@ -128,3 +129,8 @@ def table_domains(tag, user, **kwargs):
                     with tag("td"):
                         domainInfo = observable.call.getDomain(each)
                         yield domainInfo.get("description", "")
+                    with tag("td"):
+                        if len(configured_aliases := [alias for alias in aliases if aliases[alias] == each] ) > 0:
+                            yield ", ".join(sorted(configured_aliases))
+                        else:
+                            yield "-"
