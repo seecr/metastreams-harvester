@@ -408,7 +408,6 @@ def _repository(tag, domain, repository):
                         yield '\u24d8' # ⓘ
             with tag("td"):
                 fieldName = 'extra_{}'.format(definition['name'])
-                print("HIER")
                 fieldValue =  repository.get('extra', {}).get(definition['name'], definition.get("default", ""))
                 if definition['type'] == "text":
                     with tag("input", type_="text", name=fieldName, value=fieldValue): pass

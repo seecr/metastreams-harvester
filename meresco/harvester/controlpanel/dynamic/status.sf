@@ -55,7 +55,6 @@ def main(tag, user, is_fullscreen=False, **kwargs):
 
     groups = observable.call.groupsForDomainId(domainId)
 
-    print("repositoryGroupId", repositoryGroupId, type(repositoryGroupId))
     with tag("div"):
         with tag("div.modal", tabindex="-1", role="dialog", id_="modal_error"):
             with tag("div.modal-dialog.modal-xl"):
@@ -172,7 +171,6 @@ def render_data_error(tag, arguments, **kwargs):
             if len(errors := each.get('recenterrors', [])) == 0:
                 continue
             for error in errors:
-                print(error['error'])
                 with tag("h3"): yield error['date']
                 with tag("pre"):
                     yield error['error'].replace("|", "\n")
