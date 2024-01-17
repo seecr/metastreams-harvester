@@ -28,8 +28,12 @@ import page2
 import status
 
 def main(**kwargs):
-
     if not (data := page2.findPath("data", dict(error=status.render_data_error), **kwargs)) is None:
         yield data(**kwargs)
         return
-    yield page2.render(status.main, showRss=True, additionalScripts=['/static/showHarvesterStatus.js'], **kwargs)
+    yield page2.render(content, showRss=True, additionalScripts=['/static/status.js'], **kwargs)
+
+def content(tag, **kwargs):
+    yield status.main(tag=tag, is_fullscreen=True, **kwargs)
+    with tag("script", language="javascript"):
+        yield tag.as_is('document.addEventListener("DOMContentLoaded", () => { _init_status_table(); })')

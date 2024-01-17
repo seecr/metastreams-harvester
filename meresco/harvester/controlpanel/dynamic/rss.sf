@@ -26,7 +26,7 @@
 #
 ## end license ##
 
-def main(path, arguments, **kwargs):
+def main(tag, path, arguments, **kwargs):
     aliases = observable.call.get_domain_aliases()
 
     pathArgs = path.split("/")[2:]
@@ -48,56 +48,44 @@ def main(path, arguments, **kwargs):
 
     linkToStatusPage = "{}/showHarvesterStatus/{}".format(externalUrl, '/'.join(parts))
 
-
-
     status = observable.call.getStatus(domainId=domainId, repositoryGroupId=repositoryGroupId, repositoryId=repositoryId)[0]
 
     yield "HTTP/1.0 200 OK\r\n"
     yield "Content-Type: application/rss+xml\r\n"
     yield "\r\n"
     yield '<?xml version="1.0" encoding="UTF-8"?>\r\n'
-    yield """<rss version="2.0"><channel>"""
-    if repositoryId is None and repositoryGroupId is not None:
-        yield f'<title>Harvester status voor repository groep {repositoryGroupId}</title>'
-        yield f'<description>Recente repository harvest status voor repository groep {repositoryGroupId} in {domainId}/description>'
-    elif repositoryId is not None:
-        yield f'<title>Harvester status voor repository {repositoryId}</title>'
-        yield f'<description>Recente repository harvest status voor repository {repositoryId} in {domainId}</description>'
+    with tag("rss", version="2.0"):
+        with tag("channel"):
+            with tag("title"): yield f'Harvester status voor repository {repositoryId}'
+            with tag("description"): yield f'Recente repository harvest status voor repository {repositoryId} in {domainId}'
+            with tag("link"): yield linkToStatusPage
+            with tag("ttl"): yield "360"
 
-    yield '<link>%s</link>' % linkToStatusPage
-    yield '<ttl>360</ttl>'
-
-    state = {
-        'lastHarvestDate': status.get("lastHarvestDate"),
-        'total': status.get("total"),
-        'harvested': status.get("harvested"),
-        'uploaded': status.get("uploaded"),
-        'deleted': status.get("deleted"),
-        'invalid': status.get("invalid"),
-        'totalerrors': status.get("totalerrors"),
-    }
-    lastHarvestAttempt = status.get("lastHarvestAttempt")
-    if lastHarvestAttempt:
-        yield RSS_TEMPLATE % {
-            "title": 'Harvester status voor %s' % repositoryId,
-            "description": """Last harvest date: %(lastHarvestDate)s&lt;br/&gt;
-    Total records: %(total)s&lt;br/&gt;
-    Harvested records: %(harvested)s&lt;br/&gt;
-    Uploaded records: %(uploaded)s&lt;br/&gt;
-    Deleted records: %(deleted)s&lt;br/&gt;
-    Validation errors: %(invalid)s&lt;br/&gt;
-    Errors: %(totalerrors)s""" % state,
-            "link": linkToStatusPage,
-            "guid": lastHarvestAttempt[0],
-        }
-
-    yield "</channel>"
-    yield "</rss>"
-
-RSS_TEMPLATE = """<item>
-    <title>%(title)s</title>
-    <description>%(description)s</description>
-    <link>%(link)s</link>
-    <guid>%(guid)s</guid>
-</item>\n"""
+            lastHarvestAttempt = status.get("lastHarvestAttempt")
+            if lastHarvestAttempt:
+                with tag("item"):
+                    with tag("title"):
+                        if repositoryId is None:
+                            yield f'Harvester status voor {repositoryGroupId}'
+                        else:
+                            yield f'Harvester status voor {repositoryId}'
+                    with tag("description"):
+                        items = [
+                            ("Last harvest date", "lastHarvestDate"),
+                            ("Total records", "total"),
+                            ("Harvested records", "harvested"),
+                            ("Uploaded records", "uploaded"),
+                            ("Deleted records", "deleted"),
+                            ("Validation errors", "invalid"),
+                            ("Errors", "totalerrors"),
+                        ]
+                        for index, (label, name) in enumerate(items):
+                            value = status.get(name)
+                            yield f"{label}: {value}"
+                            if (index+1) < len(items):
+                                with tag("br"): pass
+                    with tag("link"):
+                        yield linkToStatusPage
+                    with tag("guid"):
+                        yield lastHarvestAttempt[0]
 

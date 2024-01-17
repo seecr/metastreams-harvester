@@ -32,12 +32,12 @@ function _init_status_table() {
             e.preventDefault();
 
             var _btn = $(this);
-            var _domainId = _btn.data('domainid'); 
-            var _repositoryGroupId = _btn.data('repositorygroupid'); 
+            var _domainId = _btn.data('domainid');
+            var _repositoryGroupId = _btn.data('repositorygroupid');
             var _repositoryId = _btn.data('repositoryid');
             $.get("status/data/error?" + $.param({
-                    domainId: _domainId, 
-                    repositoryGroupId: _repositoryGroupId, 
+                    domainId: _domainId,
+                    repositoryGroupId: _repositoryGroupId,
                     repositoryId: _repositoryId}))
                 .done(function(data) {
                     var _error_modal = $("#modal_error");
@@ -55,36 +55,36 @@ function _init_status_table() {
                     _error_modal.modal("show");
             });
         });
-}
 
-
-function old_init_status_table(domainId, repositoryGroupId, repositoryId) {
-    var _table = $("#status-table");
-    var _table_tbody = $("#status-table tbody");
-
-
-    _table.DataTable({
+    _table.dataTable({
         searching: false,
         paging: false,
         info: false,
-        ajax: "/status/data/status?" + $.param({
-            domainId: domainId,
-            repositoryGroupId: repositoryGroupId,
-            repositoryId: repositoryId}),
         columnDefs: [
-          {  targets: 5,
-             render: function (data, type, row, meta) {
-                 console.log(meta);
-                return data + '<button class="btn btn-sm btn-primary id="n-' + meta.row + '">Bekijk</button>';
-             }
+            {
+                searchable: false,
+                orderable: false,
+                targets: 8
+            }
+        ],
+        columns: [
+            null,
+            null,
+            {type: "num" },
+            {type: "num" },
+            {type: "num" },
+            {type: "num" },
+            {type: "num" },
+            {type: "num" },
 
-          }
         ]
     });
-    _table_tbody.delegate("tr", "click", function (e) {
-        e.preventDefault();
 
-        var _icon = $(this);
-        alert("clicked on " + _icon)
-    });
+    $("#status_domain_button")
+        .unbind("click")
+        .click(function(e) {
+            e.preventDefault();
+            let _path = $("#status_path").val();
+            window.location = "/showHarvesterStatus/"+_path;
+        })
 }
