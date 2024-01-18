@@ -189,7 +189,7 @@ function init_login_button() {
         _btn
             .unbind("click")
             .click(function(e) {
-                $.get("/login/dialog/show")
+                $.get("/login/dialog/show", {redirect: window.location.href})
                     .done(function(data) {
                         var _modal = $("#modal");
                         var _body_placeholder = _modal.find("#placeholder_modal-body");

@@ -118,18 +118,18 @@ def main(tag, user, is_fullscreen=False, **kwargs):
                                 yield each['repositoryId']
                         with tag("td.text-nowrap"):
                             yield each['lastHarvestDate'] or "---"
-                        with tag("td.text-end", **{'data-order': each['total']}):
+                        with tag("td.text-end", **{'data-order': str(each['total'])}):
                             yield thousands(each['total'])
-                        with tag("td.text-end", **{'data-order': each['harvested']}):
+                        with tag("td.text-end", **{'data-order': str(each['harvested'])}):
                             yield thousands(each['harvested'])
-                        with tag("td.text-end", **{'data-order': each['uploaded']}):
+                        with tag("td.text-end", **{'data-order': str(each['uploaded'])}):
                             yield thousands(each['uploaded'])
-                        with tag("td.text-end", **{'data-order': each['deleted']}):
+                        with tag("td.text-end", **{'data-order': str(each['deleted'])}):
                             yield thousands(each['deleted'])
-                        with tag("td.text-end", **{'data-order': each['invalid']}):
+                        with tag("td.text-end", **{'data-order': str(each['invalid'])}):
                             invalid = thousands(each['invalid'])
                             yield invalid
-                        with tag("td", **{'data-order': each['totalerrors']}):
+                        with tag("td", **{'data-order': str(each['totalerrors'])}):
                             errors = each['totalerrors']
                             with tag("div.d-flex.flex-row"):
                                 with tag("span.flex-fill"):

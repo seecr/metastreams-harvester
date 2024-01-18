@@ -83,7 +83,7 @@ def main(tag, path, arguments, **kwargs):
                             value = status.get(name)
                             yield f"{label}: {value}"
                             if (index+1) < len(items):
-                                with tag("br"): pass
+                                yield "<br/>"
                     with tag("link"):
                         yield linkToStatusPage
                     with tag("guid"):

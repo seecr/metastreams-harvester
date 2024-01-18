@@ -45,10 +45,13 @@ def login(tag, **kwargs):
                 yield dialog_login(tag, **kwargs)
 
 def dialog_login(tag, **kwargs):
+    redirect_after_login = kwargs.get("arguments", {"redirect": ["/"]})['redirect'][0]
+
     with tag("div.alert.alert-danger.collapse", role="alert", id_="login-message-box"):
         with tag("i.bi-exclamation-triangle-fill"): pass
         with tag("strong.ps-3"): pass
     with tag("form.form", id_="FrmLogin"):
+        with tag("input", type_="hidden", name="redirect", value=redirect_after_login): pass
         with tag("div.row"):
             with tag("div.col-4"):
                 with tag("label.col-form-label"):
