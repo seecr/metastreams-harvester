@@ -91,6 +91,7 @@ def _content(tag, arguments, **kwargs):
             fieldDefinition=fieldDefinition.get("repository_fields"),
             **cardKwargs)
     yield page2.card("Tijden niet beschikbaar", card_closingHours, **cardKwargs)
+    yield page2.card("Links", card_usefull_links, **cardKwargs)
 
 def btn_status(tag, domainId, repositoryId):
     with tag("div"):
@@ -289,6 +290,33 @@ def table_closinghours(tag, domain=None, repository=None, **kwargs):
                         yield f"{each.beginhour}:00"
                     with tag("td"):
                         yield f"{each.endhour}:00"
+
+def card_usefull_links(tag, domain, repository, **kwargs):
+    with tag("div.d-flex.flex-row.gap-2"):
+        with tag("a.btn.btn-light",
+            href=page2.url("/get",
+                verb="getRepository",
+                domainId=domain.get("identifier"),
+                identifier=repository.get("identifier")),
+            target="_blank"):
+            with tag("i.bi.bi bi-box-arrow-up-right.pe-2"): pass
+            yield "Sahara Get"
+
+        with tag("a.btn.btn-light",
+            href=page2.url("/testrepository",
+                domainId=domain.get("identifier"),
+                repositoryId=repository.get("identifier")),
+            target="_blank"):
+            with tag("i.bi.bi bi-box-arrow-up-right.pe-2"): pass
+            yield "Test Mapping"
+
+        with tag("a.btn.btn-light",
+            href=page2.url(repository.get("baseurl"),
+                verb="ListMetadataFormats"),
+            target="_blank"):
+            with tag("i.bi.bi bi-box-arrow-up-right.pe-2"): pass
+            yield "List all metadata formats"
+
 
 def _contents(tag, arguments, **kwargs):
     domainId = arguments.get("domainId", [None])[0]

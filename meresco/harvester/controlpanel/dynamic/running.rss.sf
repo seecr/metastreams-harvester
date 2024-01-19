@@ -37,9 +37,9 @@ def main(path, arguments, **kwargs):
     else:
         domainId = pathArgs[0]
     aliases = observable.call.get_domain_aliases()
-    domainId = aliases.get(domainId, domainId)
 
     linkToStatusPage = f"{externalUrl}/showHarvesterStatus/{domainId}"
+    domainId = aliases.get(domainId, domainId)
 
     yield "HTTP/1.0 200 OK\r\n"
     yield "Content-Type: application/rss+xml\r\n"

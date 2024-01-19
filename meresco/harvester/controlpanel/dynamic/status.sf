@@ -173,6 +173,10 @@ def render_data_error(tag, arguments, **kwargs):
             for error in errors:
                 with tag("h3"): yield error['date']
                 with tag("pre"):
-                    yield error['error'].replace("|", "\n")
+                    line = error['error'].split("|")[-1]
+                    if (index := line.find(", message:")) > -1:
+                        yield line[:index] + "\n"
+                        yield line[index+2:]
 
-
+                    else:
+                        yield line

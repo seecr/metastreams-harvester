@@ -37,10 +37,11 @@ def main(tag, path, arguments, **kwargs):
     else:
         pathArgs = pathArgs + [None, None, None]
         domainId, repositoryGroupId, repositoryId = pathArgs[:3]
-    
+   
+    originalDomainId = domainId
     domainId = aliases.get(domainId, domainId)
 
-    parts = [domainId]
+    parts = [originalDomainId]
     if repositoryGroupId is not None:
         parts.append(repositoryGroupId)
     if repositoryId is not None:
