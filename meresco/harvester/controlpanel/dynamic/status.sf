@@ -48,6 +48,11 @@ def main(tag, user, is_fullscreen=False, **kwargs):
         pathArgs = pathArgs + [None, None, None]
         domainId, repositoryGroupId, repositoryId = pathArgs[:3]
 
+    if domainId is None:
+        with tag("div.alert.alert-danger", role="alert"):
+            yield "Geen domein gespecificeerd."
+            return
+
     original_domainId = domainId
     domainId = aliases.get(domainId, domainId)
     statuses = getStatus(domainId=domainId, repositoryGroupId=repositoryGroupId, repositoryId=repositoryId)
@@ -164,6 +169,9 @@ def render_data_error(tag, arguments, **kwargs):
     domainId = arguments.get('domainId', [None])[0]
     repositoryGroupId = arguments.get('repositoryGroupId', [None])[0]
     repositoryId = arguments.get('repositoryId', [None])[0]
+
+    aliases = observable.call.get_domain_aliases()
+    domainId = aliases.get(domainId, domainId)
     statuses = observable.call.getStatus(domainId=domainId, repositoryGroupId=repositoryGroupId, repositoryId=repositoryId)
 
     with tag("div.d-flex.flex-column"):
