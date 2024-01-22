@@ -55,7 +55,13 @@ def main(tag, user, is_fullscreen=False, **kwargs):
 
     original_domainId = domainId
     domainId = aliases.get(domainId, domainId)
-    statuses = getStatus(domainId=domainId, repositoryGroupId=repositoryGroupId, repositoryId=repositoryId)
+    try:
+        statuses = getStatus(domainId=domainId, repositoryGroupId=repositoryGroupId, repositoryId=repositoryId)
+    except ValueError:
+        with tag("div.alert.alert-danger", role="alert"):
+            yield f"Domein {domainId!r} niet gevonden"
+            return
+
 
 
     groups = observable.call.groupsForDomainId(domainId)
