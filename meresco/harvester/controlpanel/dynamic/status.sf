@@ -54,7 +54,8 @@ def main(tag, user, is_fullscreen=False, **kwargs):
 
     original_domainId = domainId
     aliases = observable.call.get_domain_aliases()
-    aliases = {k:v for k,v in aliases.items() if v == domainId}
+    if domainId not in aliases:
+        aliases = {k:v for k,v in aliases.items() if v == domainId}
 
     domainId = aliases.get(domainId, domainId)
     try:
