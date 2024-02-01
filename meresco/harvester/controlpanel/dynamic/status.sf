@@ -65,8 +65,6 @@ def main(tag, user, is_fullscreen=False, **kwargs):
             yield f"Domein {domainId!r} niet gevonden"
             return
 
-
-
     groups = observable.call.groupsForDomainId(domainId)
 
     with tag("div"):
@@ -125,11 +123,15 @@ def main(tag, user, is_fullscreen=False, **kwargs):
                 for each in sorted(statuses, key=lambda s: (s.get('repositoryGroupId', '').lower(), s.get('repositoryId'))):
                     with tag("tr.align-middle"):
                         with tag("td"):
+                            caption = page2.shorten(each['repositoryId'], length=30)
                             if user is not None:
-                                with tag("a", href=page2.url("/repository", identifier=each['repositoryId'], domainId=domainId)):
-                                    yield each['repositoryId']
+                                with tag("a",
+                                        href=page2.url("/repository", identifier=each['repositoryId'], domainId=domainId),
+                                        title=each['repositoryId']):
+                                    yield caption
                             else:
-                                yield each['repositoryId']
+                                with tag("span", title=each['repositoryId']):
+                                    yield caption
                         with tag("td.text-nowrap"):
                             yield each['lastHarvestDate'] or "---"
                         with tag("td.text-end", **{'data-order': str(each['total'])}):

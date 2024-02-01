@@ -259,3 +259,10 @@ def _renderHelp(tag, arguments, **kwargs):
         with tag("div.d-flex.flex-row-reverse"):
             with tag("button.btn.btn-small.btn-primary"):
                 yield "OK"
+
+def shorten(text, length=25):
+    if len(text) < length:
+        return text
+    visible = length // 3
+    return text[:visible] + "..." + text[-visible:]
+
