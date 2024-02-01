@@ -37,7 +37,6 @@ def main(tag, user, is_fullscreen=False, **kwargs):
         yield data(tag=tag, **kwargs)
         return
 
-    aliases = observable.call.get_domain_aliases()
     pathArgs = kwargs['path'].split("/")[2:]
     if pathArgs == []:
         arguments = kwargs['arguments']
@@ -54,6 +53,9 @@ def main(tag, user, is_fullscreen=False, **kwargs):
             return
 
     original_domainId = domainId
+    aliases = observable.call.get_domain_aliases()
+    aliases = {k:v for k,v in aliases.items() if v == domainId}
+
     domainId = aliases.get(domainId, domainId)
     try:
         statuses = getStatus(domainId=domainId, repositoryGroupId=repositoryGroupId, repositoryId=repositoryId)
