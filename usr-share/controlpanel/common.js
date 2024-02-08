@@ -3,7 +3,7 @@
  * "Metastreams Harvester" is a fork of Meresco Harvester that demonstrates
  * the translation of traditional metadata into modern events streams.
  *
- * Copyright (C) 2021 Seecr (Seek You Too B.V.) https://seecr.nl
+ * Copyright (C) 2021, 2024 Seecr (Seek You Too B.V.) https://seecr.nl
  *
  * This file is part of "Metastreams Harvester"
  *
