@@ -9,7 +9,7 @@
 # Copyright (C) 2007-2009 Stichting Kennisnet Ict op school. http://www.kennisnetictopschool.nl
 # Copyright (C) 2009, 2011 Tilburg University http://www.uvt.nl
 # Copyright (C) 2011, 2015, 2020-2021 Stichting Kennisnet https://www.kennisnet.nl
-# Copyright (C) 2015, 2020-2022 Seecr (Seek You Too B.V.) https://seecr.nl
+# Copyright (C) 2015, 2020-2022, 2024 Seecr (Seek You Too B.V.) https://seecr.nl
 # Copyright (C) 2020-2021 Data Archiving and Network Services https://dans.knaw.nl
 # Copyright (C) 2020-2021 SURF https://www.surf.nl
 # Copyright (C) 2020-2021 The Netherlands Institute for Sound and Vision https://beeldengeluid.nl
@@ -36,6 +36,7 @@ from re import compile
 from datetime import datetime
 from os.path import dirname, isdir
 from os import makedirs, rename
+import pathlib
 
 LOGLINE_RE=compile(r'^\[([^\]]*)\]\t([\w ]+)\t\[([^\]]*)\]\t(.*)$')
 
@@ -43,7 +44,7 @@ class BasicEventLogger(object):
     def __init__(self, logfile, maxLogLines=20000):
         self._numberOfLogLines = 0
         self._maxLogLines = maxLogLines
-        self._logfilePath = logfile
+        self._logfilePath = logfile if logfile is None else pathlib.Path(logfile)
         self._logfile = self._openlogfile(self._logfilePath)
 
     def close(self):

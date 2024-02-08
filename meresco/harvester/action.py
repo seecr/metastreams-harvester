@@ -97,7 +97,7 @@ class Action(object):
 
     def _createDeleteIds(self):
         harvesterLog = self._state.getHarvesterLog()
-        deleteIdsLog = EventLogger(str(self._state.logPath / 'deleteids.log'))
+        deleteIdsLog = EventLogger(self._state.logPath / 'deleteids.log')
         eventlogger = CompositeLogger([
             (['*'], deleteIdsLog),
             (['*'], harvesterLog.eventLogger()),

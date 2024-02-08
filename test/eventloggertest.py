@@ -11,7 +11,7 @@
 # Copyright (C) 2011, 2020-2021 Stichting Kennisnet https://www.kennisnet.nl
 # Copyright (C) 2020-2021 Data Archiving and Network Services https://dans.knaw.nl
 # Copyright (C) 2020-2021 SURF https://www.surf.nl
-# Copyright (C) 2020-2022 Seecr (Seek You Too B.V.) https://seecr.nl
+# Copyright (C) 2020-2022, 2024 Seecr (Seek You Too B.V.) https://seecr.nl
 # Copyright (C) 2020-2021 The Netherlands Institute for Sound and Vision https://beeldengeluid.nl
 #
 # This file is part of "Metastreams Harvester"
@@ -77,6 +77,20 @@ class EventLoggerTest(SeecrTestCase):
         self.assertEqual('2\t[123]\taab', self.logfile.readline().strip()[DATELENGTH:])
         self.assertEqual('3\t[uu_1234]\tbbbccc', self.logfile.readline().strip()[DATELENGTH:])
         self.assertEqual('error err\t[uu_234]\tbbb ddd', self.logfile.readline().strip()[DATELENGTH:])
+
+    def testManyLoglines(self):
+        def test(name, fn):
+            logpath = self.tmp_path/f'too_many_{name}'
+            logger = EventLogger(fn(logpath), maxLogLines=10)
+            logger._time = lambda: None
+            try:
+                for i in range(15):
+                    logger.logLine('SUCCES', f'Nr {i}')
+                self.assertEqual('\n'.join(f'\tSUCCES\t[]\tNr {i}' for i in [10,11,12,13,14])+'\n', logpath.read_text())
+            finally:
+                logger.close()
+        test('pathobject', lambda x:x)
+        test('strpath', str)
 
     def testSucces(self):
         self.logger.logSuccess('really succesful')
