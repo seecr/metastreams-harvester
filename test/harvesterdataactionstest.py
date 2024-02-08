@@ -90,7 +90,7 @@ class HarvesterDataActionsTest(SeecrTestCase):
 
     def test_add_domain_aliases(self):
         self.assertEqual({}, self.hd.get_domain_aliases())
-        
+
         header, body = parseResponse(asBytes(self.dna.all.handleRequest(
             user=CallTrace(returnValues=dict(isAdmin=False)),
             path="/actions/add_domain_alias",
@@ -108,7 +108,7 @@ class HarvesterDataActionsTest(SeecrTestCase):
 
     def test_del_domain_aliases(self):
         self.assertEqual({}, self.hd.get_domain_aliases())
-        
+
         header, body = parseResponse(asBytes(self.dna.all.handleRequest(
             user=CallTrace(returnValues=dict(isAdmin=False)),
             path="/actions/del_domain_alias",
@@ -120,7 +120,7 @@ class HarvesterDataActionsTest(SeecrTestCase):
         self.assertTrue(response['success'])
         self.assertEqual(1, len(self.observable.calledMethods))
         method = self.observable.calledMethods[0]
-        self.assertEqual("del_domain_alias", method.name)
+        self.assertEqual("delete_domain_alias", method.name)
         self.assertEqual({'alias': 'noot'}, method.kwargs)
 
 
@@ -287,7 +287,7 @@ class HarvesterDataActionsTest(SeecrTestCase):
             'maximumIgnore': 0,
             'action': None,
             'use': False}, self.observable.calledMethods[0].kwargs)
-    
+
     def testUpdateRepositoryActionForm_Action(self):
         header, body = parseResponse(asBytes(self.dna.all.handleRequest(
             user=CallTrace(returnValues=dict(isAdmin=True)),

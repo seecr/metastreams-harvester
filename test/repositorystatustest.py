@@ -82,10 +82,25 @@ class RepositoryStatusTest(SeecrTestCase):
         with open(join(self.stateDir, self.domainId, "anotherRepoId.running"), 'w') as fp:
             jsonDump({'changedate': "2012-08-16 12:00:00",'status': "Ok", 'message': ""}, fp)
 
-        expected = [
-            {'repositoryId': 'anotherRepoId', 'changedate': "2012-08-16 12:00:00",'status': "Ok", 'message': ""},
-            {'repositoryId': 'repoId1', 'changedate': "2012-08-14 12:00:00",'status': "Ok", 'message': ""},
-            {'repositoryId': 'repoId3', 'changedate': "2012-08-13 12:00:00",'status': "Error", 'message': "an error message"},
+        expected = [{
+                'repositoryId': 'anotherRepoId',
+                "repositoryGroupId": "repoGroupId2",
+                'changedate': "2012-08-16 12:00:00",
+                'status': "Ok",
+                'message': ""
+            }, {
+                'repositoryId': 'repoId1',
+                "repositoryGroupId": "repoGroupId1",
+                'changedate': "2012-08-14 12:00:00",
+                'status': "Ok",
+                'message': ""
+            }, {
+                'repositoryId': 'repoId3',
+                "repositoryGroupId": "repoGroupId2",
+                'changedate': "2012-08-13 12:00:00",
+                'status': "Error",
+                'message': "an error message"
+            },
         ]
         self.assertEqual(expected, self.status.getRunningStatesForDomain(self.domainId))
 

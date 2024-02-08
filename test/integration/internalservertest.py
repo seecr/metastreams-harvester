@@ -134,10 +134,10 @@ class InternalServerTest(IntegrationTestCase):
     def testRssForHarvesterStatus(self):
         self.controlHelper(action="noneInvalid")
         self.startHarvester(repository=REPOSITORY)
-        header, result = getRequest(self.harvesterInternalServerPortNumber, '/rss', {'domainId': 'adomain', 'repositoryId': 'integrationtest'}, parse='lxml')
-        self.assertEqual("Harvester status voor integrationtest", xpath(result, "/rss/channel/title/text()")[0])
-        self.assertEqual("Recente repository harvest status voor integrationtest in adomain", xpath(result, "/rss/channel/description/text()")[0])
-        self.assertEqual("http://localhost:9999/showHarvesterStatus?domainId=adomain&repositoryId=integrationtest", xpath(result, "/rss/channel/link/text()")[0])
+        header, result = getRequest(self.harvesterInternalServerPortNumber, '/rss', {'domainId': 'adomain', 'repositoryGroupId':'IntegrationTest', 'repositoryId': 'integrationtest'}, parse='lxml')
+        self.assertEqual("Harvester status voor repository integrationtest", xpath(result, "/rss/channel/title/text()")[0])
+        self.assertEqual("Recente repository harvest status voor repository integrationtest in adomain", xpath(result, "/rss/channel/description/text()")[0])
+        self.assertEqual("http://localhost:9999/showHarvesterStatus/adomain/IntegrationTest/integrationtest", xpath(result, "/rss/channel/link/text()")[0])
         self.assertEqual(str(60 * 6), xpath(result, "/rss/channel/ttl/text()")[0])
 
         self.assertEqual("Harvester status voor integrationtest", xpath(result, "/rss/channel/item[1]/title/text()")[0])
@@ -149,11 +149,11 @@ class InternalServerTest(IntegrationTestCase):
         self.assertTrue("Deleted records: 2" in description, description)
         self.assertTrue("Validation errors: 0" in description, description)
         self.assertTrue("Errors: 0" in description, description)
-        self.assertEqual("http://localhost:9999/showHarvesterStatus?domainId=adomain&repositoryId=integrationtest", xpath(result, "/rss/channel/item[1]/link/text()")[0])
+        self.assertEqual("http://localhost:9999/showHarvesterStatus/adomain/IntegrationTest/integrationtest", xpath(result, "/rss/channel/item[1]/link/text()")[0])
 
     def testRssForNeverHarvestedRepository(self):
         header, result = getRequest(self.harvesterInternalServerPortNumber, '/rss', {'domainId': 'adomain', 'repositoryId': 'repository2'}, parse='lxml')
-        self.assertEqual("Harvester status voor repository2", xpath(result, "/rss/channel/title/text()")[0])
+        self.assertEqual("Harvester status voor repository repository2", xpath(result, "/rss/channel/title/text()")[0])
         self.assertEqual(0, len(xpath(result, "/rss/channel/item")))
 
     def testRssForStatusChangesOk(self):
@@ -161,7 +161,7 @@ class InternalServerTest(IntegrationTestCase):
         header, result = getRequest(self.harvesterInternalServerPortNumber, '/running.rss', {'domainId': 'adomain'}, parse='lxml')
         self.assertEqual("Harvest status changes for domain 'adomain'", xpath(result, "/rss/channel/title/text()")[0])
         self.assertEqual("Status changes per repository for domain 'adomain'", xpath(result, "/rss/channel/description/text()")[0])
-        self.assertEqual("http://localhost:9999/showHarvesterStatus?domainId=adomain", xpath(result, "/rss/channel/link/text()")[0])
+        self.assertEqual("http://localhost:9999/showHarvesterStatus/adomain", xpath(result, "/rss/channel/link/text()")[0])
         self.assertEqual(str(60 * 6), xpath(result, "/rss/channel/ttl/text()")[0])
         TODAY = strftime("%Y-%m-%d", gmtime())
         items = xpath(result, "/rss/channel/item")
@@ -170,7 +170,7 @@ class InternalServerTest(IntegrationTestCase):
         description = ''.join(xpath(items[0], "description/text()"))
         self.assertTrue(description.startswith("Harvest time: %s" % TODAY), description)
         self.assertEqual('integrationtest:%s' % TODAY, ''.join(xpath(items[0], "guid/text()")).split('T')[0])
-        self.assertEqual("http://localhost:9999/showHarvesterStatus?domainId=adomain&repositoryId=integrationtest", xpath(items[0], "link/text()")[0])
+        self.assertEqual("http://localhost:9999/showHarvesterStatus/adomain/IntegrationTest/integrationtest", xpath(items[0], "link/text()")[0])
 
     def testRssForStatusChangesError(self):
         self.controlHelper(action="raiseExceptionOnIds", id=['%s:oai:record:01' % REPOSITORY] )
@@ -184,4 +184,4 @@ class InternalServerTest(IntegrationTestCase):
         self.assertTrue(description.startswith("Harvest time: %s" % TODAY), description)
         self.assertTrue("Exception: ERROR" in description, description)
         self.assertEqual('integrationtest:%s' % TODAY, ''.join(xpath(items[0], "guid/text()")).split('T')[0])
-        self.assertEqual("http://localhost:9999/showHarvesterStatus?domainId=adomain&repositoryId=integrationtest", xpath(items[0], "link/text()")[0])
+        self.assertEqual("http://localhost:9999/showHarvesterStatus/adomain/IntegrationTest/integrationtest", xpath(items[0], "link/text()")[0])

@@ -107,7 +107,7 @@ class HarvesterDataActions(PostActions):
             return
 
         yield response(True)
-    
+
     @check_and_parse('alias', userCheck='user')
     def _del_domain_alias(self, data, **kwargs):
         try:
