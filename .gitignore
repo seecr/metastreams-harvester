@@ -1,1 +1,3 @@
 deps.d
+env
+*.egg-info/

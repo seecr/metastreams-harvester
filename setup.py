@@ -33,6 +33,8 @@ from distutils.core import setup
 from os import walk
 from os.path import join
 
+version = '$Version: 0$'[9:-1].strip()
+
 data_files = []
 for path, dirs, files in walk('usr-share'):
     data_files.append((path.replace('usr-share', '/usr/share/metastreams', 1), [join(path, f) for f in files]))
@@ -71,7 +73,7 @@ setup(
     package_data=package_data,
     data_files=data_files,
     scripts=scripts,
-    version='%VERSION%',
+    version=version,
     url='https://seecr.nl',
     author='Seecr',
     author_email='info@seecr.nl',
