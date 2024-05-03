@@ -133,9 +133,9 @@ def findPath(wantedPath, mapping, **kwargs):
         selector = path.rsplit('/', 1)[-1]
         return mapping.get(selector, None)
 
-def card(title, body, icon=None, link=None, **kwargs):
+def card(title, body, icon=None, link=None, card_classes=None, **kwargs):
     tag = kwargs.get('tag')
-    with tag("div.card.mb-3"):
+    with tag("div.card.mb-3", class_=card_classes or []):
         with tag("div.card-header"):
             with tag("div.d-flex.flex-row"):
                 with tag("div.w-100"):

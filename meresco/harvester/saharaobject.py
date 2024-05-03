@@ -31,9 +31,9 @@
 
 
 class SaharaObject(object):
-    def __init__(self, attr, listattr = []):
+    def __init__(self, attr, listattr=None):
         self._attr = attr
-        self._listattr = listattr
+        self._listattr = listattr or []
         self._initAttributes()
         self._proxy = None
 

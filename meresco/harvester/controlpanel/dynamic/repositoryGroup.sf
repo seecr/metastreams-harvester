@@ -61,8 +61,8 @@ def _content(tag, **kwargs):
         dict(label=groupName, active=True)
     ])
     yield page2.card(f"Repository Groep Gegevens - {groupName}", card_repositoryGroupAttributes, tag=tag, domain=domain, group=group, **kwargs)
-    yield page2.card("Repositories", 
-        card_repositories, tag=tag, domain=domain, group=group, 
+    yield page2.card("Repositories",
+        card_repositories, tag=tag, domain=domain, group=group,
         link=dict(
             func=btn_status,
             kwargs=dict(
@@ -136,10 +136,14 @@ def table_repositories(tag, domain=None, group=None, **kwargs):
     else:
         repositoryGroupId = group.get("identifier")
 
+    repositories = observable.call.getRepositories(domainId=domainId, repositoryGroupId=repositoryGroupId)
+    if len(repositories) == 0:
+        yield "Geen repositories aangemaakt."
+        return
+
     with tag("table.table.table-sm.table-hover"):
         yield page2.thead(tag, ["", "Identifier", "Actief"])
         with tag("tbody"):
-            repositories = observable.call.getRepositories(domainId=domainId, repositoryGroupId=repositoryGroupId)
             for repository in repositories:
                 repositoryId = repository.get("identifier")
                 with tag("tr"):

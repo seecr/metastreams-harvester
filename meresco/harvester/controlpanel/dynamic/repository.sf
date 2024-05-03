@@ -44,6 +44,7 @@ def main(**kwargs):
     sub = page2.findPath(
         "table", dict(
             closingHours=table_closinghours,
+            headers=table_headers,
         ), **kwargs)
     if not sub is None:
         yield sub(**kwargs)
@@ -90,7 +91,9 @@ def _content(tag, arguments, **kwargs):
             card_fieldDefinitions,
             fieldDefinition=fieldDefinition.get("repository_fields"),
             **cardKwargs)
-    yield page2.card("Tijden niet beschikbaar", card_closingHours, **cardKwargs)
+    with tag("div.d-flex.flex-row.gap-2"):
+        yield page2.card("Headers", card_headers, card_classes=['w-100'], **cardKwargs)
+        yield page2.card("Tijden niet beschikbaar", card_closingHours, card_classes=['w-100'], **cardKwargs)
     yield page2.card("Links", card_usefull_links, **cardKwargs)
 
 def btn_status(tag, domainId, repositoryId):
@@ -218,6 +221,64 @@ def card_fieldDefinitions(tag, domain, repository, fieldDefinition, **kwargs):
                 with tag("div.col"):
                     with tag("button.btn.btn-small.btn-primary.float-end", type_="submit", id_="BtnFieldDefinition"):
                         yield "Aanpassen"
+
+def card_headers(tag, domain, repository, **kwargs):
+    with tag("div", id_="placeholder_headers_add"):
+        with tag("form.form-inline", id_="FrmAddHeader", **{
+                'data-domainid': domain.get('identifier'),
+                'data-repositoryid': repository.get('identifier')}):
+            with tag("input", type_="hidden", name="identifier", value=repository.get("identifier")): pass
+            with tag("input", type_="hidden", name="domainId", value=domain.get("identifier")): pass
+
+            with tag("div.d-flex.flex-row.gap-2"):
+                with tag("div.flex-fill"):
+                    yield page2.textInput(tag, label="Naam", name="name", value='')
+                with tag("div.flex-fill"):
+                    yield page2.textInput(tag, label="Waarde", name="value", value='')
+                with tag("div.d-flex.flex-column.flex-shrink-1.justify-content-end.ms-2"):
+                    with tag("button.btn.btn-primary", id_="BtnAddHeader"):
+                        yield "Toevoegen"
+
+    with tag("div", id_="placeholder_headers_list"):
+        yield table_headers(tag, domain=domain, repository=repository, **kwargs)
+
+def table_headers(tag, domain=None, repository=None, **kwargs):
+    if domain is None:
+        domainId = kwargs.get("arguments", {}).get("domainId", [None])[0]
+        domain = observable.call.getDomain(domainId)
+    else:
+        domainId = domain.get("identifier")
+
+    if repository is None:
+        repositoryId = kwargs.get("arguments", {}).get("identifier", [None])[0]
+        repository = observable.call.getRepository(repositoryId, domainId)
+    else:
+        repositoryId = repository.get("identifier")
+
+    headers = repository.get("headers", {})
+    if len(headers) == 0:
+        with tag("p.mt-3"):
+            yield "Nog geen headers aangemaakt."
+        return
+
+    with tag("table.table.table-sm.table-hover"):
+        yield page2.thead(tag, ['', 'Naam', 'Waarde'])
+        with tag("tbody"):
+            for name in sorted(headers.keys()):
+                for value in sorted(headers[name]):
+                    with tag("tr.clickable-row", **{}):
+                        with tag("td.fit"):
+                            with tag("form"):
+                                with tag("input", type_="hidden", name="domainId", value=domain.get('identifier')): pass
+                                with tag("input", type_="hidden", name="identifier", value=repository.get('identifier')): pass
+                                with tag("input", type_="hidden", name="name", value=name): pass
+                                with tag("input", type_="hidden", name="value", value=value): pass
+                                with tag("button.seecr-btn.deletable", type_="button", title="Verwijderen"):
+                                    with tag("i.bi-trash"): pass
+                        with tag("td"):
+                            yield name
+                        with tag("td"):
+                            yield value
 
 def card_closingHours(tag, domain, repository, **kwargs):
     weeks = [(str(x), x) for x in range(1, 54)]

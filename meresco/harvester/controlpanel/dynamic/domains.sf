@@ -73,24 +73,25 @@ def table_domain_aliases(tag, **kwargs):
     aliases = observable.call.get_domain_aliases()
     if len(aliases) == 0:
         yield "Geen aliases gedefineerd."
-    else:
-        with tag("table.table"):
-            with tag("thead"):
+        return
+
+    with tag("table.table"):
+        with tag("thead"):
+            with tag("tr"):
+                for each in ['', 'Alias', 'Domein']:
+                    with tag("th"): yield each
+        with tag("tbody"):
+            for alias in aliases:
                 with tag("tr"):
-                    for each in ['', 'Alias', 'Domein']:
-                        with tag("th"): yield each
-            with tag("tbody"):
-                for alias in aliases:
-                    with tag("tr"):
-                        with tag("td.fit"):
-                            with tag("form.form"):
-                                with tag("input", type_="hidden", name="alias", value=alias): pass
-                                with tag("button.seecr-btn.deletable", type_="button", title="Verwijderen"):
-                                    with tag("i.bi.bi-x-square"): pass
-                        with tag("td"):
-                            yield alias
-                        with tag("td"):
-                            yield aliases[alias]
+                    with tag("td.fit"):
+                        with tag("form.form"):
+                            with tag("input", type_="hidden", name="alias", value=alias): pass
+                            with tag("button.seecr-btn.deletable", type_="button", title="Verwijderen"):
+                                with tag("i.bi.bi-x-square"): pass
+                    with tag("td"):
+                        yield alias
+                    with tag("td"):
+                        yield aliases[alias]
 
 
 def cardDomains(tag, **kwargs):
@@ -110,6 +111,11 @@ def cardDomains(tag, **kwargs):
 
 def table_domains(tag, user, **kwargs):
     allDomainIds = user.listDomainIds(); #observable.call.getDomainIds()
+    if len(allDomainIds) == 0:
+        with tag("span"):
+            yield "Geen domeinen gedefineerd"
+        return
+
     aliases = observable.call.get_domain_aliases()
     with tag("table.table.table-sm.table-hover", id_="TblDomains"):
         with tag("thead"):

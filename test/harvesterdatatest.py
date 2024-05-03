@@ -31,6 +31,8 @@ from os.path import join, isfile, isdir
 from os import makedirs
 from seecr.test import SeecrTestCase
 
+import pathlib
+
 from meresco.harvester.harvesterdata import HarvesterData
 from meresco.harvester.datastore import DataStore
 
@@ -72,21 +74,26 @@ DATA = {
     "repositoryGroupId": "NoGroup"
 }"""}
 
+def write_test_data(directory, data):
+    datapath = pathlib.Path(directory)
+    for fname, data in data.items():
+        domainId, _ = fname.split(".", 1)
+        domainDir = datapath / domainId
+        domainDir.mkdir(parents=True, exist_ok=True)
+        (domainDir / fname).write_text(data)
+
+
 class HarvesterDataTest(SeecrTestCase):
     def setUp(self):
         SeecrTestCase.setUp(self)
-        for fname, data in DATA.items():
-            domainId, _ = fname.split(".", 1)
-            domainDir = join(self.tempdir, domainId)
-            isdir(domainDir) or makedirs(domainDir)
-            with open(join(self.tempdir, domainId, fname), "w") as fp:
-                fp.write(data)
+
+        write_test_data(self.tempdir, DATA)
         self.n = 0
         def mock_id():
             self.n+=1
             return 'mock-id: %s' % self.n
         self.hd = HarvesterData(self.tempdir, id_fn=mock_id, datastore=DataStore(self.tempdir))
-    
+
     def testGetRepositoryGroupIds(self):
         self.assertEqual(["Group1", "Group2"], self.hd.getRepositoryGroupIds(domainId="adomain"))
 
@@ -323,6 +330,26 @@ class HarvesterDataTest(SeecrTestCase):
         self.hd.updateRepositoryAttributes(identifier='repository1', domainId='adomain', continuous=None)
         repository = self.hd.getRepository('repository1', 'adomain')
         self.assertEqual(0, repository['continuous'])
+
+    def test_repository_headers(self):
+        repository = self.hd.getRepository('repository1', 'adomain')
+        self.assertFalse("headers" in repository)
+        self.hd.add_header(domainId='adomain', repositoryId='repository1', name='User-Agent', value='Meresco Harvester')
+        repository = self.hd.getRepository('repository1', 'adomain')
+        self.assertTrue("headers" in repository)
+        self.assertEqual(['Meresco Harvester'], repository['headers']['User-Agent'])
+
+        self.hd.add_header(domainId='adomain', repositoryId='repository1', name='User-Agent', value='Meresco Harvester 2')
+        repository = self.hd.getRepository('repository1', 'adomain')
+        self.assertEqual(['Meresco Harvester', 'Meresco Harvester 2'], repository['headers']['User-Agent'])
+
+        self.hd.remove_header(domainId='adomain', repositoryId='repository1', name='User-Agent', value='Meresco Harvester 2')
+        repository = self.hd.getRepository('repository1', 'adomain')
+        self.assertEqual(['Meresco Harvester'], repository['headers']['User-Agent'])
+        self.hd.remove_header(domainId='adomain', repositoryId='repository1', name='User-Agent', value='Meresco Harvester')
+        repository = self.hd.getRepository('repository1', 'adomain')
+        self.assertTrue("headers" in repository)
+        self.assertEqual({}, repository['headers'])
 
     def testRepositoryDone(self):
         self.hd.updateRepositoryAttributes(

@@ -149,10 +149,14 @@ def table_repositoryGroups(tag, domain=None, **kwargs):
         domain = observable.call.getDomain(domainId)
     else:
         domainId = domain.get("identifier")
+    repositoryGroups = [observable.call.getRepositoryGroup(identifier=groupId, domainId=domainId) for groupId in domain.get('repositoryGroupIds', [])]
+    if len(repositoryGroups) == 0:
+        yield "Geen repository groepen gedefineerd."
+        return
+
     with tag("table.table.table-sm.table-hover"):
         yield page2.thead(tag, ["", "Identifier", "Naam", "Repositories"])
         with tag("tbody"):
-            repositoryGroups = [observable.call.getRepositoryGroup(identifier=groupId, domainId=domainId) for groupId in domain.get('repositoryGroupIds', [])]
             for repositoryGroup in sorted(repositoryGroups, key=lambda rg: rg.get("name", {}).get("nl", "")):
                 rgIdentifier = repositoryGroup['identifier']
                 with tag("tr"):

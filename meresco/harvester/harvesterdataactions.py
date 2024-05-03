@@ -61,6 +61,9 @@ class HarvesterDataActions(PostActions):
         self.registerAction('addRepositoryClosingHours', self._addRepositoryClosingHours)
         self.registerAction('deleteRepositoryClosingHours', self._deleteReppositoryClosingHours)
 
+        self.registerAction('add_header', self._add_repository_header)
+        self.registerAction('remove_header', self._remove_repository_header)
+
         self.registerAction('updateFieldDefinition', self._updateFieldDefinition)
 
         self.registerAction('addMapping', self._addMapping)
@@ -349,6 +352,39 @@ class HarvesterDataActions(PostActions):
             return
 
         yield response(True)
+
+    @check_and_parse('domainId', 'identifier', 'name', 'value', userCheck='user')
+    def _add_repository_header(self, data, **kwargs):
+        domainId = data.domainId
+        repositoryId = data.identifier
+        try:
+            self.call.add_header(
+                repositoryId=repositoryId,
+                domainId=domainId,
+                name=data.name,
+                value=data.value
+            )
+        except Exception as e:
+            raise
+            yield response(False, message=str(e))
+            return
+        yield response(True, domainId=domainId, repositoryId=repositoryId)
+
+    @check_and_parse('domainId', 'identifier', 'name', 'value', userCheck='user')
+    def _remove_repository_header(self, data, **kwargs):
+        domainId = data.domainId
+        repositoryId = data.identifier
+        try:
+            self.call.remove_header(
+                repositoryId=repositoryId,
+                domainId=domainId,
+                name=data.name,
+                value=data.value
+            )
+        except Exception as e:
+            yield response(False, message=str(e))
+            return
+        yield response(True, domainId=domainId, repositoryId=repositoryId)
 
 
     def _repositoryDone(self, Body, **kwargs):

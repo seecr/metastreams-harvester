@@ -31,7 +31,7 @@ function init_cardRepositoryAttributes() {
         .unbind("click")
         .click(function(e) {
             e.preventDefault();
-            $.post("/actions/updateRepositoryAttributes", _frm.serialize())
+            $.post("/action/updateRepositoryAttributes", _frm.serialize())
                 .done(function(data) {
                     if (data['success'] == true) {
                         form_resetBordersAndDisabled(_frm, _btn);
@@ -69,7 +69,7 @@ function init_cardClosingHours() {
                 var _domainId = _btn.data('domainid');
                 var _repositoryId = _btn.data('repositoryid'); 
                 e.preventDefault();
-                $.post("/actions/deleteRepositoryClosingHours", $.param({
+                $.post("/action/deleteRepositoryClosingHours", $.param({
                         repositoryId: _repositoryId,
                         domainId: _domainId,
                         closingHour: _btn.data('closinghour')
@@ -91,7 +91,7 @@ function init_cardClosingHours() {
         .unbind("click")
         .click(function(e) {
             e.preventDefault();
-            $.post("/actions/addRepositoryClosingHours", _frm.serialize())
+            $.post("/action/addRepositoryClosingHours", _frm.serialize())
                 .done(function(data) {
                     if (data['success'] == true) {
                         form_resetBordersAndDisabled(_frm, _btn, true);
@@ -107,14 +107,66 @@ function init_cardClosingHours() {
 
 function init_cardRepositoryActions() {
     form_init(
-        $("#FrmRepositoryActions"), "/actions/updateRepositoryActionAttributes",
+        $("#FrmRepositoryActions"), "/action/updateRepositoryActionAttributes",
         $("#BtnRepositoryActions"), $("#placeholder_FrmRepositoryActions"));
 }
 
 function init_cardRepositoryFieldDefinitions() {
     form_init(
-        $("#FrmFieldDefinition"), "/actions/updateRepositoryFieldDefinitions",
+        $("#FrmFieldDefinition"), "/action/updateRepositoryFieldDefinitions",
         $("#BtnFieldDefinition"), $("#placeholder_FrmFieldDefinition"));
+}
+
+function init_cardHeaders() {
+    let _frm = $("#FrmAddHeader");
+    let _btn = $("#BtnAddHeader");
+
+    function _load_table_headers(domainId, repositoryId) {
+        var _placeholder = $("#placeholder_headers_list");
+        $.get("/repository/table/headers", $.param({domainId: domainId, identifier: repositoryId}))
+            .done(function(page) {
+                _placeholder
+                    .empty()
+                    .append(page);
+                init_table_headers();
+            });
+    }
+    function init_table_headers() {
+        var _placeholder = $("#placeholder_headers_list");
+        _placeholder.find("button.deletable.seecr-btn")
+            .unbind("click")
+            .click(function(e) {
+                e.preventDefault();
+                var _btn = $(this);
+                let _frm = _btn.closest("form");
+                $.post("/action/remove_header", _frm.serialize())
+                    .done(function(data) {
+                        if (data['success'] == true) {
+                            _load_table_headers(data['domainId'], data['repositoryId']);
+                        } else {
+                            msg_Error(placeholder=$("#placeholder_headers_add"), identifier=undefined, text=data['message']);
+                        }
+                    })
+            })
+    }
+
+    _btn
+        .unbind("click")
+        .click(function(e) {
+            e.preventDefault();
+            $.post("/action/add_header", _frm.serialize())
+                .done(function(data) {
+                    if (data['success'] == true) {
+                        _load_table_headers(data['domainId'], data['repositoryId']);
+                        form_resetBordersAndDisabled(_frm, _btn, true);
+                    } else {
+                        msg_Error(placeholder=$("#placeholder_headers_add"), identifier=undefined, text=data['message']);
+                    }
+                })
+        })
+    init_table_headers();
+    form_setBordersAndDisabled(_frm, _btn);
+    form_resetBordersAndDisabled(_frm, _btn);
 }
 
 $(document).ready(function() {
@@ -122,6 +174,7 @@ $(document).ready(function() {
     init_cardRepositoryActions();
     init_cardRepositoryFieldDefinitions();
     init_cardClosingHours();
+    init_cardHeaders();
 
 
     init_button_status(); // from common.js
