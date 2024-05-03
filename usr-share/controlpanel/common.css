@@ -51,3 +51,7 @@ html.wait, html.wait * {
     top: 0px;
     right: 0.3em;
 }
+button:disabled, button[disabled] {
+    background-color: lightgrey !important;
+    border-color: darkgrey !important;
+}
