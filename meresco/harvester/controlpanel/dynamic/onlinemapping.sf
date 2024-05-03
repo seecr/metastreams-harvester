@@ -28,13 +28,18 @@ def main(arguments, **kwargs):
 
     mappingId = arguments.get('mappingId', [None])[0]
     domainId = arguments.get('domainId', [None])[0]
+
+    repository = observable.call.getRepository(
+        identifier=arguments.get('repositoryId', [None])[0],
+        domainId=domainId)
+    
     mapping = observable.call.getMapping(identifier=mappingId, domainId=domainId)
 
     yield okPlainText
     strm = StringIO()
     onlineHarvest = OnlineHarvest(strm)
     try:
-        onlineHarvest.performMapping(mapping, urlString=inputurl)
+        onlineHarvest.performMapping(mapping, urlString=inputurl, headers=repository.get('headers', {}))
     except Exception as e:
         yield """There was an exception testing the mapping.
 

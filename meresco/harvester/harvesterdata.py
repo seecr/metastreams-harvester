@@ -223,25 +223,19 @@ class HarvesterData(object):
         repository = self.getRepository(repositoryId, domainId)
         if 'headers' not in repository:
             repository['headers'] = {}
-        values = repository['headers'].get(name, [])
-        values.append(value)
-        repository['headers'][name] = values
-        self._store.addData(id_combine(domainId, repositoryId), 'repository', repository)
 
-    def remove_header(self, domainId, repositoryId, name, value):
+        if name not in repository['headers']:
+            repository['headers'][name] = value
+            self._store.addData(id_combine(domainId, repositoryId), 'repository', repository)
+
+    def remove_header(self, domainId, repositoryId, name):
         repository = self.getRepository(repositoryId, domainId)
         headers = repository.get('headers', [])
         if name not in headers:
             return
 
-        values = repository['headers'].get(name, [])
-        if value in values:
-            values.remove(value)
-            if values == []:
-                repository['headers'].pop(name)
-            else:
-                repository['headers'][name] = values
-            self._store.addData(id_combine(domainId, repositoryId), 'repository', repository)
+        repository['headers'].pop(name)
+        self._store.addData(id_combine(domainId, repositoryId), 'repository', repository)
 
 
     def addClosingHours(self, identifier, domainId, week, day, startHour, endHour):

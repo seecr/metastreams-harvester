@@ -66,15 +66,14 @@ class OaiRequestTest(SeecrTestCase):
     def testHeaders(self):
         self.assertEqual({"User-Agent": "Meresco Harvester {}".format(VERSION)},
                 OaiRequest('http://example.com')._headers())
+
         self.assertEqual({"User-Agent": "User Agent 3.0"},
-                OaiRequest('http://example.com', userAgent="User Agent 3.0")._headers())
-        self.assertEqual({"User-Agent": "Meresco Harvester {}".format(VERSION)},
-                OaiRequest('http://example.com', userAgent='')._headers())
-        self.assertEqual({"User-Agent": "Meresco Harvester {}".format(VERSION)},
-                OaiRequest('http://example.com', userAgent=' ')._headers())
-        self.assertEqual({"User-Agent": "Meresco Harvester {}".format(VERSION),
-                "Authorization": "Bearer GivenKey"},
-                OaiRequest('http://example.com', authorizationKey='GivenKey')._headers())
+                OaiRequest('http://example.com', headers={'User-Agent': "User Agent 3.0"})._headers())
+
+        self.assertEqual({
+            "User-Agent": "Meresco Harvester {}".format(VERSION),
+            "Authorization": "Bearer GivenKey"},
+                OaiRequest('http://example.com', headers={'Authorization': 'Bearer GivenKey'})._headers())
 
     def testContextSetToTLS12(self):
         from ssl import SSLError, PROTOCOL_TLSv1_2

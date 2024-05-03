@@ -48,12 +48,11 @@ from .__version__ import VERSION
 from meresco.harvester.namespaces import xpathFirst, xpath
 
 class OaiRequest(object):
-    def __init__(self, url, userAgent=None, authorizationKey=None, _urlopen=None):
+    def __init__(self, url, headers=None, _urlopen=None):
         self._url = url
         self._urlElements = urlparse(url)
         self._argslist = parse_qsl(self._urlElements[QUERY_POSITION_WITHIN_URLPARSE_RESULT])
-        self._userAgent = userAgent or ''
-        self._authorizationKey = authorizationKey or ''
+        self._repo_headers = headers or {}
         self._urlopen = _urlopen or urlopen
 
     def listRecords(self, **kwargs):
@@ -92,10 +91,9 @@ class OaiRequest(object):
         return OaiResponse(result)
 
     def _headers(self):
-        headers = {'User-Agent': self._userAgent.strip() or "Meresco Harvester {}".format(VERSION)}
-        if self._authorizationKey.strip():
-            headers['Authorization'] = "Bearer {}".format(self._authorizationKey)
-        return headers
+        if 'User-Agent' not in self._repo_headers:
+            return dict({'User-Agent': 'Meresco Harvester {}'.format(VERSION)}, **self._repo_headers)
+        return self._repo_headers
 
     def _request(self, argslist):
         def doUrlopen(context=None):

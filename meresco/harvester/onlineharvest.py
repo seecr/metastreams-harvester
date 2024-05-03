@@ -44,7 +44,7 @@ class OnlineHarvest(object):
     def __init__(self, outputstream):
         self._output = outputstream
 
-    def performMapping(self, mappingData, urlString, mappingObject=None):
+    def performMapping(self, mappingData, urlString, mappingObject=None, headers=None):
         if mappingObject:
             mapping = mappingObject
         else:
@@ -53,7 +53,7 @@ class OnlineHarvest(object):
         mapping.addObserver(StreamEventLogger(self._output))
         self._output.write(mapping.mappingInfo() or '')
         self._output.write('\n')
-        response = OaiRequest(urlString).request()
+        response = OaiRequest(urlString, headers=headers).request()
         for record in response.records:
             response.selectRecord(record)
             try:

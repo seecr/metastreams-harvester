@@ -31,19 +31,24 @@
 
 
 class SaharaObject(object):
-    def __init__(self, attr, listattr=None):
+    def __init__(self, attr, listattr=None, dictattr=None):
         self._attr = attr
         self._listattr = listattr or []
+        self._dictattr = dictattr or []
         self._initAttributes()
         self._proxy = None
 
     def _initAttributes(self):
         for attr in self._attr + self._listattr:
             setattr(self, attr, None)
+        for attr in self._dictattr:
+            setattr(self, attr, {})
 
     def fill(self, proxy, jsonDict):
         for attr in self._attr:
             setattr(self, attr, jsonDict.get(attr))
         for attr in self._listattr:
             setattr(self, attr, jsonDict.get(attr, []))
+        for attr in self._dictattr:
+            setattr(self, attr, jsonDict.get(attr, {}))
         self._proxy = proxy

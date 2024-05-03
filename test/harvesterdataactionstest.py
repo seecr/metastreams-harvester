@@ -198,7 +198,6 @@ class HarvesterDataActionsTest(SeecrTestCase):
             Body=bUrlencode(dict(
                 identifier='repo-id',
                 domainId='domain-id',
-                userAgent="Herman in de zon op een terras",
                 ), doseq=True))))
         self.assertEqual('200', header['StatusCode'])
         self.assertEqual(dict(success=True), JsonDict.loads(body))
@@ -211,9 +210,7 @@ class HarvesterDataActionsTest(SeecrTestCase):
             'baseurl': None,
             'set': None,
             'metadataPrefix': None,
-            'userAgent': 'Herman in de zon op een terras',
             'collection': None,
-            'authorizationKey': None,
             'mappingId': None,
             'targetId': None}, self.observable.calledMethods[0].kwargs)
 
@@ -224,7 +221,6 @@ class HarvesterDataActionsTest(SeecrTestCase):
             Body=bUrlencode(dict(
                 identifier='repo-id',
                 domainId='domain-id',
-                userAgent="",
                 ), doseq=True))))
         self.assertEqual('200', header['StatusCode'])
         self.assertEqual(dict(success=True), JsonDict.loads(body))
@@ -236,9 +232,7 @@ class HarvesterDataActionsTest(SeecrTestCase):
             'baseurl': None,
             'set': None,
             'metadataPrefix': None,
-            'userAgent': None,
             'collection': None,
-            'authorizationKey': None,
             'mappingId': None,
             'targetId': None}, self.observable.calledMethods[1].kwargs)
 
@@ -423,8 +417,6 @@ class HarvesterDataActionsTest(SeecrTestCase):
                 continuous=continuous,
                 complete=complete,
                 action=action,
-                userAgent='',
-                authorizationKey='',
             )
 
 

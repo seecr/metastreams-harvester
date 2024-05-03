@@ -176,8 +176,8 @@ class HarvesterDataActions(PostActions):
             return
         yield response(True)
 
-    @check_and_parse('identifier', 'domainId', "baseurl", "set", "metadataPrefix", "userAgent",
-                     "authorizationKey", "collection", "mappingId", "targetId", userCheck='user')
+    @check_and_parse('identifier', 'domainId', "baseurl", "set", "metadataPrefix", 
+                     "collection", "mappingId", "targetId", userCheck='user')
     def _updateRepositoryAttributes(self, data, **kwargs):
         try:
             self.call.updateRepositoryAttributes(**data.asDict())
@@ -365,12 +365,11 @@ class HarvesterDataActions(PostActions):
                 value=data.value
             )
         except Exception as e:
-            raise
             yield response(False, message=str(e))
             return
         yield response(True, domainId=domainId, repositoryId=repositoryId)
 
-    @check_and_parse('domainId', 'identifier', 'name', 'value', userCheck='user')
+    @check_and_parse('domainId', 'identifier', 'name', userCheck='user')
     def _remove_repository_header(self, data, **kwargs):
         domainId = data.domainId
         repositoryId = data.identifier
@@ -378,8 +377,7 @@ class HarvesterDataActions(PostActions):
             self.call.remove_header(
                 repositoryId=repositoryId,
                 domainId=domainId,
-                name=data.name,
-                value=data.value
+                name=data.name
             )
         except Exception as e:
             yield response(False, message=str(e))

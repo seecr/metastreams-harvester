@@ -55,8 +55,7 @@ class Repository(SaharaObject):
             'repositoryGroupId', 'baseurl', 'set',
             'collection', 'metadataPrefix', 'use',
             'targetId', 'mappingId', 'action',
-            'userAgent', 'authorizationKey',
-            'complete', 'maximumIgnore', 'continuous'], ['shopclosed'])
+            'complete', 'maximumIgnore', 'continuous'], ['shopclosed'], ['headers'])
         self.domainId = domainId
         self.id = repositoryId
         self.mockUploader = None
@@ -89,7 +88,7 @@ class Repository(SaharaObject):
         return UploaderFactory().createUploader(self.target(), logger, self.collection)
 
     def oairequest(self):
-        return self._oaiRequestClass(self.baseurl, userAgent=self.userAgent or None, authorizationKey=self.authorizationKey or None)
+        return self._oaiRequestClass(self.baseurl, headers=self.headers)
 
     def _createAction(self, repoState, generalHarvestLog):
         return Action.create(self, repoState, generalHarvestLog=generalHarvestLog)

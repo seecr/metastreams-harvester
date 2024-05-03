@@ -337,19 +337,21 @@ class HarvesterDataTest(SeecrTestCase):
         self.hd.add_header(domainId='adomain', repositoryId='repository1', name='User-Agent', value='Meresco Harvester')
         repository = self.hd.getRepository('repository1', 'adomain')
         self.assertTrue("headers" in repository)
-        self.assertEqual(['Meresco Harvester'], repository['headers']['User-Agent'])
+        self.assertEqual('Meresco Harvester', repository['headers']['User-Agent'])
 
         self.hd.add_header(domainId='adomain', repositoryId='repository1', name='User-Agent', value='Meresco Harvester 2')
         repository = self.hd.getRepository('repository1', 'adomain')
-        self.assertEqual(['Meresco Harvester', 'Meresco Harvester 2'], repository['headers']['User-Agent'])
+        self.assertEqual('Meresco Harvester', repository['headers']['User-Agent'])
 
-        self.hd.remove_header(domainId='adomain', repositoryId='repository1', name='User-Agent', value='Meresco Harvester 2')
+        self.hd.add_header(domainId='adomain', repositoryId='repository1', name='Name', value='Value')
         repository = self.hd.getRepository('repository1', 'adomain')
-        self.assertEqual(['Meresco Harvester'], repository['headers']['User-Agent'])
-        self.hd.remove_header(domainId='adomain', repositoryId='repository1', name='User-Agent', value='Meresco Harvester')
+        self.assertEqual({'Name': 'Value', 'User-Agent': 'Meresco Harvester'}, repository['headers'])
+
+        self.hd.remove_header(domainId='adomain', repositoryId='repository1', name='User-Agent')
         repository = self.hd.getRepository('repository1', 'adomain')
+
         self.assertTrue("headers" in repository)
-        self.assertEqual({}, repository['headers'])
+        self.assertEqual({'Name': 'Value'}, repository['headers'])
 
     def testRepositoryDone(self):
         self.hd.updateRepositoryAttributes(

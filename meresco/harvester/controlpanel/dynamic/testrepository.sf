@@ -25,9 +25,8 @@
 
 def main(arguments, **kwargs):
     domainId = arguments.get('domainId', [None])[0]
-    repository = observable.call.getRepository(
-        identifier=arguments.get('repositoryId', [None])[0],
-        domainId=domainId)
+    repositoryId = arguments.get('repositoryId', [None])[0]
+    repository = observable.call.getRepository(repositoryId, domainId)
     queryArguments = dict(
         verb="ListRecords",
         metadataPrefix=repository.get('metadataPrefix'))
@@ -37,4 +36,5 @@ def main(arguments, **kwargs):
     yield http.redirect("{}?{}".format("/onlinemapping", urlencode(dict(
         mappingId=repository.get('mappingId'),
         domainId=domainId,
+        repositoryId=repositoryId,
         inputurl="{}?{}".format(repository.get('baseurl'), urlencode(queryArguments))))))
