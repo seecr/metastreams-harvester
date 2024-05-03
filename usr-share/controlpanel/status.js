@@ -35,7 +35,7 @@ function _init_status_table() {
             var _domainId = _btn.data('domainid');
             var _repositoryGroupId = _btn.data('repositorygroupid');
             var _repositoryId = _btn.data('repositoryid');
-            $.get("status/data/error?" + $.param({
+            $.get("/status/data/error?" + $.param({
                     domainId: _domainId,
                     repositoryGroupId: _repositoryGroupId,
                     repositoryId: _repositoryId}))

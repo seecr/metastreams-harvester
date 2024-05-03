@@ -30,6 +30,7 @@ def render(func, showMenu=True, showLogin=True, **kwargs):
     scripts = [
         "/js/jquery/jquery.min.js",
         f'/static/common.js?version={VERSION}',
+        '/static/status.js',
     ]
     scripts.extend(kwargs.get('additionalScripts', []))
     scriptsModules = kwargs.get('additionalScripts', [])
@@ -133,12 +134,13 @@ def findPath(wantedPath, mapping, **kwargs):
         selector = path.rsplit('/', 1)[-1]
         return mapping.get(selector, None)
 
+
 def card(title, body, icon=None, link=None, card_classes=None, **kwargs):
     tag = kwargs.get('tag')
     with tag("div.card.mb-3", class_=card_classes or []):
         with tag("div.card-header"):
-            with tag("div.d-flex.flex-row"):
-                with tag("div.w-100"):
+            with tag("div.d-flex.flex-row.justify-content-between"):
+                with tag("div"):
                     with tag("h5.m-0"):
                         if not icon is None:
                             with tag("i", class_=['bi-{}'.format(icon)]): pass

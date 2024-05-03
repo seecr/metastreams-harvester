@@ -56,7 +56,6 @@ def main(**kwargs):
     yield page2.render(
         _content,
         additionalScripts=[
-            '/static/status.js',
             '/static/domain.js',
         ],
         **kwargs)
@@ -75,8 +74,11 @@ def _content(tag, arguments, **kwargs):
     yield page2.card("Repository Groepen",
         card_domainRepositoryGroups, tag=tag, domain=domain,
         link=dict(
-            func=btn_status,
-            kwargs=dict(tag=tag, domainId=domainId)),
+            func=status.btn_status,
+            kwargs=dict(
+                tag=tag,
+                caption=f'Status domein {domainId}',
+                domainId=domainId)),
         **kwargs)
     with tag("div.row"):
         with tag("div.col"):
@@ -86,16 +88,6 @@ def _content(tag, arguments, **kwargs):
     if user.isAdmin():
         yield page2.card("Field definition", card_fieldDefinition, tag=tag, domain=domain, **kwargs)
 
-def btn_status(tag, domainId):
-    with tag("div"):
-        with tag("button.btn.seecr-btn.p-0.button-status", title="Status", **{
-            'data-caption': f'Status domein {domainId}',
-            'data-domainid': domainId,
-            }):
-            with tag("i.bi.bi-graph-up"):
-                yield ''
-            if status.totalErrors(domainId) > 0:
-                with tag("span.position-absolute.top-1.end-1.translate-middle.p-1.bg-danger.border.border-light.rounded-circle"): pass
 
 def card_domainAttributes(tag, domain, **kwargs):
     domainId = domain.get("identifier")

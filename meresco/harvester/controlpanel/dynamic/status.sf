@@ -17,7 +17,7 @@
 # MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 # GNU General Public License for more details.
 #
-# You should have received a copy of the GNU General Public License
+
 # along with "Metastreams Harvester"; if not, write to the Free Software
 # Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 #
@@ -31,6 +31,24 @@ def getStatus(domainId, repositoryGroupId, repositoryId):
 
 def totalErrors(domainId, repositoryGroupId=None, repositoryId=None):
     return sum(int(each['totalerrors']) for each in getStatus(domainId, repositoryGroupId, repositoryId))
+
+def btn_status(tag, caption, domainId, repositoryGroupId=None, repositoryId=None):
+    has_errors = totalErrors(domainId, repositoryGroupId, repositoryId) > 0
+
+    data_args = {
+        'data-caption': caption,
+        'data-domainid': domainId
+    }
+    if not repositoryGroupId is None:
+        data_args['data-repositorygroupid'] = repositoryGroupId
+    if not repositoryId is None:
+        data_args['data-repositoryid'] = repositoryId
+
+    with tag("div"):
+        with tag("button.btn.py-0.button-status", title="Status", class_=['btn-danger'] if has_errors else ['btn-success'], **data_args):
+            with tag("i.bi.bi-graph-up.pe-2"):
+                yield ''
+            yield "Status"
 
 def main(tag, user, is_fullscreen=False, **kwargs):
     if not (data := page2.findPath("data", dict(error=render_data_error), **kwargs)) is None:
@@ -145,17 +163,19 @@ def main(tag, user, is_fullscreen=False, **kwargs):
                         with tag("td.text-end", **{'data-order': str(each['invalid'])}):
                             invalid = thousands(each['invalid'])
                             yield invalid
-                        with tag("td", **{'data-order': str(each['totalerrors'])}):
+                        with tag("td.text-end", **{'data-order': str(each['totalerrors'])}):
                             errors = each['totalerrors']
                             with tag("div.d-flex.flex-row"):
                                 with tag("span.flex-fill"):
                                     if errors > 0:
-                                        with tag("button.seecr-btn.seecr-show-error", **{
+                                        with tag("button.btn.btn-danger.py-0.seecr-show-error", title="Bekijk fouten", **{
                                                 'data-domainid': domainId,
                                                 'data-repositorygroupid': each['repositoryGroupId'],
                                                 'data-repositoryid': each['repositoryId']}):
-                                            with tag("i.bi.bi-eye-fill"): yield ""
-                                with tag("span.flex-fill.text-end"): yield thousands(errors)
+                                            with tag("i.bi.bi-eye-fill.pe-1"): yield ""
+                                            yield thousands(errors)
+                                    else:
+                                        with tag("span.flex-fill.text-end"): yield thousands(errors)
                         with tag("td"):
                             with tag("a.btn.btn-light", href=page2.url(f"/rss/{original_domainId}/{each['repositoryGroupId']}/{each['repositoryId']}"), target="_blank"):
                                 with tag("i.bi.bi-rss"): pass
@@ -164,8 +184,8 @@ def main(tag, user, is_fullscreen=False, **kwargs):
     return
     data = {"data": []}
     for each in statuses:
-
         data['data'].append([each[i] for i in ['repositoryId', 'lastHarvestDate', 'harvested', 'uploaded', 'deleted', 'invalid', 'totalerrors']])
+
     yield "HTTP/1.0 200 OK\r\n"
     yield "Content-Type: application/json\r\n"
     yield "\r\n"
