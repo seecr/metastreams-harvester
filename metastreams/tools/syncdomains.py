@@ -100,9 +100,8 @@ def copyRepository(src_repo, dest_repo, targetId=None, mappingId=None):
             'maximumIgnore',
             'complete',
             'continuous',
-            'userAgent',
-            'authorizationKey',
             'shopclosed',
+            'headers',
         ]:
         cur_v = dest_repo.get(k)
         new_v = src_repo.get(k)

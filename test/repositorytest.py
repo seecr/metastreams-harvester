@@ -216,10 +216,10 @@ class RepositoryTest(SeecrTestCase):
         self.mock_repositoryActionDone_repositoryId = repositoryId
 
     def testPassOnHeaders(self):
-        self.repo.headers['userAgent'] = ["This is the User agent"]
-        self.repo.headers['authorizationKey'] = ["Let Me In"]
+        self.repo.headers['userAgent'] = "This is the User agent"
+        self.repo.headers['authorizationKey'] = "Let Me In"
         self.repo.oairequest()
-        self.assertEqual(((None,), {'headers': {'userAgent': ['This is the User agent'], 'authorizationKey': ['Let Me In']}}), self.oaiRequestArgsKwargs)
+        self.assertEqual(((None,), {'headers': {'userAgent': 'This is the User agent', 'authorizationKey': 'Let Me In'}}), self.oaiRequestArgsKwargs)
 
 class MockAction(Action):
     def __init__(self, message = '', done = True, hasResumptionToken=False):

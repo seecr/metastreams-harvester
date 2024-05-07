@@ -367,9 +367,7 @@ class HarvesterDataTest(SeecrTestCase):
                 use=False,
                 complete=True,
                 continuous="3600",
-                action='action',
-                userAgent='',
-                authorizationKey='',
+                action='action'
             )
         repository = self.hd.getRepository('repository1', 'adomain')
         self.assertEqual('action', repository['action'])

@@ -32,7 +32,6 @@ class SyncDomainsTest(SeecrTestCase):
 
     def testCopyRepository(self):
         src = { 'action': 'refresh',
-                'authorizationKey': 'let-me-in',
                 'baseurl': 'https://oai.example.org',
                 'collection': 'coll_ection',
                 'complete': True,
@@ -44,20 +43,22 @@ class SyncDomainsTest(SeecrTestCase):
                 'repositoryGroupId': 'groupId',
                 'set': 'some_set',
                 'shopclosed': [],
+                'headers': {
+                    'key1': 'value1',
+                    'key2': 'value2'},
                 'targetId': '34e93586-d28f-4968-9191-260b2fc3df00',
-                'use': True,
-                'userAgent': 'Seecr Metastreams Harvester'}
+                'use': True
+                }
         dest = {'identifier': 'repo_id',
                 'repositoryGroupId': 'groupId',
                 'targetId': 'myTargetId',
-                'mappingId': 'myMappingId',
+                'mappingId': 'myMappingId'
                 }
 
         new_repo, changed = copyRepository(src, dest)
 
         expected = {
                 'action': None,
-                'authorizationKey': 'let-me-in',
                 'baseurl': 'https://oai.example.org',
                 'collection': 'coll_ection',
                 'complete': True,
@@ -68,10 +69,13 @@ class SyncDomainsTest(SeecrTestCase):
                 'repositoryGroupId': 'groupId',
                 'set': 'some_set',
                 'shopclosed': [],
+                'headers': {
+                    'key1': 'value1',
+                    'key2': 'value2'},
                 'use': False,
                 'targetId': 'myTargetId',
-                'mappingId': 'myMappingId',
-                'userAgent': 'Seecr Metastreams Harvester'}
+                'mappingId': 'myMappingId'
+                }
 
         self.assertTrue(changed)
         self.assertEqual(expected, new_repo)

@@ -31,7 +31,6 @@ class DomainApiTest(SeecrTestCase):
     def testRepoKwargs(self):
         repo = {
                 'action': None,
-                'authorizationKey': 'let-me-in',
                 'baseurl': 'https://oai.example.org',
                 'collection': 'coll_ection',
                 'complete': True,
@@ -45,14 +44,12 @@ class DomainApiTest(SeecrTestCase):
                 'use': False,
                 'targetId': 'myTargetId',
                 'mappingId': 'myMappingId',
-                'userAgent': 'Seecr Metastreams Harvester',
                 'extra': {
                     'name': 'Somevalue',
                     'true': True,
                     'false': False,
                 }}
         self.assertEqual({
-                'authorizationKey': 'let-me-in',
                 'baseurl': 'https://oai.example.org',
                 'collection': 'coll_ection',
                 'complete': '1',
@@ -64,7 +61,6 @@ class DomainApiTest(SeecrTestCase):
                 'set': 'some_set',
                 'targetId': 'myTargetId',
                 'mappingId': 'myMappingId',
-                'userAgent': 'Seecr Metastreams Harvester',
                 'extra_name': 'Somevalue',
                 'extra_true': '1',
             }, DomainApi.createUpdateRepositoryKwargs(repo))
