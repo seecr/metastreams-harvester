@@ -45,7 +45,7 @@ def login(tag, **kwargs):
                 yield dialog_login(tag, **kwargs)
 
 def dialog_login(tag, **kwargs):
-    redirect_after_login = kwargs.get("arguments", {}).get("redirect", ["/"])[0]
+    redirect_after_login = kwargs.get("arguments", {}).get("redirect", [''])[0]
 
     with tag("div.alert.alert-danger.collapse", role="alert", id_="login-message-box"):
         with tag("i.bi-exclamation-triangle-fill"): pass

@@ -70,6 +70,8 @@ def main(tag, user, is_fullscreen=False, **kwargs):
             yield "Geen domein gespecificeerd."
             return
 
+    repositoryLink = repositoryId is None or len(repositoryId) == 0
+
     original_domainId = domainId
     aliases = observable.call.get_domain_aliases()
     if domainId not in aliases:
@@ -148,8 +150,14 @@ def main(tag, user, is_fullscreen=False, **kwargs):
                                         title=each['repositoryId']):
                                     yield caption
                             else:
-                                with tag("span", title=each['repositoryId']):
-                                    yield caption
+                                if repositoryLink:
+                                    with tag("a",
+                                            href=page2.url(f"/showHarvesterStatus/{domainId}/{each['repositoryGroupId']}/{each['repositoryId']}"),
+                                            title=each['repositoryId']):
+                                        yield caption
+                                else:
+                                    with tag("span", title=each['repositoryId']):
+                                        yield caption
                         with tag("td.text-nowrap"):
                             yield each['lastHarvestDate'] or "---"
                         with tag("td.text-end", **{'data-order': str(each['total'])}):
