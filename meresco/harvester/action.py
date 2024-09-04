@@ -145,6 +145,7 @@ class DeleteIdsAction(Action):
         try:
             d.delete(self._state.ids)
             d.delete(self._state.invalidIds)
+            d.delete(self._state.oldIds)
             d.markDeleted()
         finally:
             for each in loggers:
