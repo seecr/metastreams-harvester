@@ -3,7 +3,7 @@
 # "Metastreams Harvester" is a fork of Meresco Harvester that demonstrates
 # the translation of traditional metadata into modern events streams.
 #
-# Copyright (C) 2011-2012, 2015, 2019-2021 Seecr (Seek You Too B.V.) https://seecr.nl
+# Copyright (C) 2011-2012, 2015, 2019-2021, 2024 Seecr (Seek You Too B.V.) https://seecr.nl
 # Copyright (C) 2011 Seek You Too (CQ2) http://www.cq2.nl
 # Copyright (C) 2011-2012, 2015, 2019-2021 Stichting Kennisnet https://www.kennisnet.nl
 # Copyright (C) 2020-2021 Data Archiving and Network Services https://dans.knaw.nl
@@ -47,7 +47,16 @@ from meresco.html.login import BasicHtmlLoginForm, SecureZone, UserFromSession
 from seecr.zulutime import ZuluTime
 
 from meresco.components.log import LogCollector, ApacheLogWriter, HandleRequestLog
-from meresco.components.http import PathFilter, ObservableHttpServer, StringServer, BasicHttpHandler, SessionHandler, CookieMemoryStore, StaticFiles, Deproxy
+from meresco.components.http import (
+    PathFilter,
+    ObservableHttpServer,
+    StringServer,
+    BasicHttpHandler,
+    SessionHandler,
+    CookieMemoryStore,
+    StaticFiles,
+    Deproxy,
+)
 from meresco.components.http.utils import ContentTypePlainText, okPlainText
 
 from .__version__ import VERSION_STRING, VERSION
@@ -68,25 +77,33 @@ from uuid import uuid4
 from json import dumps
 
 myPath = dirname(abspath(__file__))
-usrSharePath = '/usr/share/metastreams'
-usrSharePath = join(dirname(dirname(myPath)), 'usr-share') # DO_NOT_DISTRIBUTE
-dynamicHtmlPath = join(myPath, 'controlpanel', 'dynamic')
-staticHtmlPath = join(usrSharePath, 'controlpanel')
+usrSharePath = "/usr/share/metastreams"
+usrSharePath = join(dirname(dirname(myPath)), "usr-share")  # DO_NOT_DISTRIBUTE
+dynamicHtmlPath = join(myPath, "controlpanel", "dynamic")
+staticHtmlPath = join(usrSharePath, "controlpanel")
 
 
 def dateSince(days):
     return strftime("%Y-%m-%d", localtime(time() - days * 3600 * 24))
 
-def dna(reactor, port, dataPath, logPath, statePath, externalUrl, customerLogoUrl, deproxyIps=None, **ignored):
+
+def dna(
+    reactor,
+    port,
+    dataPath,
+    logPath,
+    statePath,
+    externalUrl,
+    customerLogoUrl,
+    deproxyIps=None,
+    deproxyIpRanges=None,
+    **ignored,
+):
     environment = createEnvironment(dataPath)
     harvesterData = environment.createHarvesterData()
     harvesterDataRetrieve = environment.createHarvesterDataRetrieve()
-    deproxy = Deproxy(deproxyForIps=deproxyIps)
-    repositoryStatus = be(
-        (RepositoryStatus(logPath, statePath),
-            (harvesterData, )
-        )
-    )
+    deproxy = Deproxy(deproxyForIps=deproxyIps, deproxyForIpRanges=deproxyIpRanges)
+    repositoryStatus = be((RepositoryStatus(logPath, statePath), (harvesterData,)))
     configDict = JsonDict(
         logPath=logPath,
         statePath=statePath,
@@ -95,80 +112,130 @@ def dna(reactor, port, dataPath, logPath, statePath, externalUrl, customerLogoUr
     )
     print("Started Metastreams with configuration:\n" + configDict.pretty_print())
 
-    userGroup = initializeUserGroupManagement(join(statePath, 'users'), harvesterData)
-    basicHtmlLoginHelix = (BasicHtmlLoginForm(
-        action="/login.action",
-        loginPath="/login",
-        home="/index",
-        rememberMeCookie=False,
-        lang="nl"),
-
+    userGroup = initializeUserGroupManagement(join(statePath, "users"), harvesterData)
+    basicHtmlLoginHelix = (
+        BasicHtmlLoginForm(
+            action="/login.action",
+            loginPath="/login",
+            home="/index",
+            rememberMeCookie=False,
+            lang="nl",
+        ),
         (userGroup.basicHtmlObserver,),
     )
-    varWwwdataPath = join(statePath, 'www-data', 'var')
+    varWwwdataPath = join(statePath, "www-data", "var")
     isdir(varWwwdataPath) or makedirs(varWwwdataPath)
 
     staticFilePaths = []
     staticFiles = Transparent()
     for path, libdir in [
-            ('/js/bootstrap', '/usr/share/javascript/bootstrap5/js'),
-            ('/css/bootstrap', '/usr/share/javascript/bootstrap5/css'),
-            ('/css/bootstrap-icons', '/usr/share/javascript/bootstrap-icons'),
-            ('/js/jquery', '/usr/share/javascript/jquery'),
-            ('/js/jquery-tablesorter', '/usr/share/javascript/jquery-tablesorter'),
-            ('/css/jquery-tablesorter', '/usr/share/javascript/jquery-tablesorter/css'),
-            ('/js/autosize', '/usr/share/javascript/autosize'),
-            ('/static', staticHtmlPath),
-            ('/var', varWwwdataPath),
-            ]:
+        ("/js/bootstrap", "/usr/share/javascript/bootstrap5/js"),
+        ("/css/bootstrap", "/usr/share/javascript/bootstrap5/css"),
+        ("/css/bootstrap-icons", "/usr/share/javascript/bootstrap-icons"),
+        ("/js/jquery", "/usr/share/javascript/jquery"),
+        ("/js/jquery-tablesorter", "/usr/share/javascript/jquery-tablesorter"),
+        ("/css/jquery-tablesorter", "/usr/share/javascript/jquery-tablesorter/css"),
+        ("/js/autosize", "/usr/share/javascript/autosize"),
+        ("/static", staticHtmlPath),
+        ("/var", varWwwdataPath),
+    ]:
         staticFiles.addObserver(StaticFiles(libdir=libdir, path=path))
         staticFilePaths.append(path)
 
-    return \
-    (Observable(),
-        (ObservableHttpServer(reactor, port),
-            (LogCollector(),
+    return (
+        Observable(),
+        (
+            ObservableHttpServer(reactor, port),
+            (
+                LogCollector(),
                 (ApacheLogWriter(stdout),),
-                (deproxy,
-                    (HandleRequestLog(),
-                        (BasicHttpHandler(),
-                            (SessionHandler(),
-                                (CookieMemoryStore(name="meresco-harvester", timeout=2*60*60), ),
-                                (UserFromSession(),
-                                    (PathFilter("/info/version"),
-                                        (StringServer(VERSION_STRING, ContentTypePlainText), )
+                (
+                    deproxy,
+                    (
+                        HandleRequestLog(),
+                        (
+                            BasicHttpHandler(),
+                            (
+                                SessionHandler(),
+                                (
+                                    CookieMemoryStore(
+                                        name="meresco-harvester", timeout=2 * 60 * 60
                                     ),
-                                    (PathFilter("/info/config"),
-                                        (StringServer(configDict.dumps(), ContentTypeJson), )
+                                ),
+                                (
+                                    UserFromSession(),
+                                    (
+                                        PathFilter("/info/version"),
+                                        (
+                                            StringServer(
+                                                VERSION_STRING, ContentTypePlainText
+                                            ),
+                                        ),
                                     ),
-                                    (PathFilter('/login.action'),
-                                        basicHtmlLoginHelix
+                                    (
+                                        PathFilter("/info/config"),
+                                        (
+                                            StringServer(
+                                                configDict.dumps(), ContentTypeJson
+                                            ),
+                                        ),
                                     ),
+                                    (PathFilter("/login.action"), basicHtmlLoginHelix),
                                     (staticFiles,),
-                                    (PathFilter('/', excluding=['/info/version', '/info/config', '/action', '/login.action'] + harvesterDataRetrieve.paths + staticFilePaths),
-                                        (SecureZone("/login", excluding=["/index", "/invalid", "/rss", '/running.rss', '/showHarvesterStatus', '/login/dialog/show'], defaultLanguage="nl"),
-                                            (PathFilter('/', excluding=userGroup.excludedPaths),
-                                                (DynamicHtml(
+                                    (
+                                        PathFilter(
+                                            "/",
+                                            excluding=[
+                                                "/info/version",
+                                                "/info/config",
+                                                "/action",
+                                                "/login.action",
+                                            ]
+                                            + harvesterDataRetrieve.paths
+                                            + staticFilePaths,
+                                        ),
+                                        (
+                                            SecureZone(
+                                                "/login",
+                                                excluding=[
+                                                    "/index",
+                                                    "/invalid",
+                                                    "/rss",
+                                                    "/running.rss",
+                                                    "/showHarvesterStatus",
+                                                    "/login/dialog/show",
+                                                ],
+                                                defaultLanguage="nl",
+                                            ),
+                                            (
+                                                PathFilter(
+                                                    "/",
+                                                    excluding=userGroup.excludedPaths,
+                                                ),
+                                                (
+                                                    DynamicHtml(
                                                         [dynamicHtmlPath],
                                                         reactor=reactor,
                                                         additionalGlobals={
-                                                            'externalUrl': externalUrl,
-                                                            'escapeXml': escapeXml,
-                                                            'compose': compose,
-                                                            'dumps': dumps,
-                                                            'VERSION': VERSION,
-                                                            'CONFIG': configDict,
-                                                            'Timeslot': Timeslot,
-                                                            'ThroughputAnalyser': ThroughputAnalyser,
-                                                            'dateSince': dateSince,
-                                                            'callable': callable,
-                                                            'OnlineHarvest': OnlineHarvest,
-                                                            'StringIO': StringIO,
-                                                            'okPlainText': okPlainText,
-                                                            'ZuluTime': ZuluTime,
-                                                            'xpathFirst': xpathFirst,
-                                                            'customerLogoUrl': customerLogoUrl,
-                                                            'uuid': lambda: str(uuid4()),
+                                                            "externalUrl": externalUrl,
+                                                            "escapeXml": escapeXml,
+                                                            "compose": compose,
+                                                            "dumps": dumps,
+                                                            "VERSION": VERSION,
+                                                            "CONFIG": configDict,
+                                                            "Timeslot": Timeslot,
+                                                            "ThroughputAnalyser": ThroughputAnalyser,
+                                                            "dateSince": dateSince,
+                                                            "callable": callable,
+                                                            "OnlineHarvest": OnlineHarvest,
+                                                            "StringIO": StringIO,
+                                                            "okPlainText": okPlainText,
+                                                            "ZuluTime": ZuluTime,
+                                                            "xpathFirst": xpathFirst,
+                                                            "customerLogoUrl": customerLogoUrl,
+                                                            "uuid": lambda: str(
+                                                                uuid4()
+                                                            ),
                                                         },
                                                         indexPage="/index",
                                                     ),
@@ -176,32 +243,35 @@ def dna(reactor, port, dataPath, logPath, statePath, externalUrl, customerLogoUr
                                                     (harvesterData,),
                                                     (repositoryStatus,),
                                                     (userGroup.dynamicHtmlObserver,),
-                                                )
+                                                ),
                                             ),
                                             (userGroup.actions,),
                                         ),
                                     ),
-                                    (PathFilter('/action'),
-                                        (HarvesterDataActions(),
-                                            (harvesterData,)
-                                        ),
+                                    (
+                                        PathFilter("/action"),
+                                        (HarvesterDataActions(), (harvesterData,)),
                                     ),
-                                    (PathFilter(harvesterDataRetrieve.paths),
-                                        (harvesterDataRetrieve,
-                                            (FilterFields(),
+                                    (
+                                        PathFilter(harvesterDataRetrieve.paths),
+                                        (
+                                            harvesterDataRetrieve,
+                                            (
+                                                FilterFields(),
                                                 (harvesterData,),
                                             ),
                                             (repositoryStatus,),
-                                        )
-                                    )
-                                )
-                            )
-                        )
-                    )
-                )
-            )
-        )
+                                        ),
+                                    ),
+                                ),
+                            ),
+                        ),
+                    ),
+                ),
+            ),
+        ),
     )
+
 
 def startServer(port, **kwargs):
     reactor = Reactor()
@@ -211,4 +281,3 @@ def startServer(port, **kwargs):
     print("Ready to rumble at", port)
     stdout.flush()
     reactor.loop()
-
