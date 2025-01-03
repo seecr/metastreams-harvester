@@ -327,7 +327,8 @@ class StartHarvester(object):
             generalHarvestLog=self._generalHarvestLog,
             gustosClient=gustosClient,
         )
-        self._generalHarvestLog.logInfo(f"Sleeping for {self.sleepTime}s")
+        if self.sleepTime > 1.5:
+            self._generalHarvestLog.logInfo(f"Sleeping for {self.sleepTime}s")
         sleep(self.sleepTime)
         if again:
             exit(AGAIN_EXITCODE)
