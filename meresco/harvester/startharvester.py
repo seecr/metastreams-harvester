@@ -205,9 +205,6 @@ class StartHarvester(object):
             self._startRepository()
         else:
             self._startChildProcesses()
-        if self.sleepTime > 0.0:
-            self._generalHarvestLog.logInfo(f"Sleeping for {self.sleepTime}s")
-            sleep(self.sleepTime)
 
     def _startChildProcesses(self):
         running = set()
@@ -330,5 +327,7 @@ class StartHarvester(object):
             generalHarvestLog=self._generalHarvestLog,
             gustosClient=gustosClient,
         )
+        self._generalHarvestLog.logInfo(f"Sleeping for {self.sleepTime}s")
+        sleep(self.sleepTime)
         if again:
             exit(AGAIN_EXITCODE)
