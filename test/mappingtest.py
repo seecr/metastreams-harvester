@@ -59,7 +59,11 @@ class MappingTest(SeecrTestCase):
             self.fail()
         except Exception as e:
             self.assertTrue(
-                "EOL while scanning string literal (<string>, line 1)" in str(e), str(e)
+                (
+                    "EOL while scanning string literal (<string>, line 1)" in str(e)
+                    or "unterminated string literal (detected at line 1)" in str(e)
+                ),
+                str(e),
             )
 
     def testInValidWithImportMapping(self):
@@ -178,7 +182,7 @@ upload.parts['meta'] = """<meta xmlns="http://meresco.org/namespace/harvester/me
     <id>%(recordId)s</id>
     <datestamp>%(datestamp)s</datestamp>
     <harvestdate>%(harvestDate)s</harvestdate>
-    <metadataNamespace>%(metadataNamespace)s</metadataNamespace>  
+    <metadataNamespace>%(metadataNamespace)s</metadataNamespace>
   </record>
   <repository>
     <id>%(repository)s</id>

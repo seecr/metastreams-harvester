@@ -1,10 +1,10 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 ## begin license ##
 #
 # "Metastreams Harvester" is a fork of Meresco Harvester that demonstrates
 # the translation of traditional metadata into modern events streams.
 #
-# Copyright (C) 2021 Seecr (Seek You Too B.V.) https://seecr.nl
+# Copyright (C) 2021, 2025 Seecr (Seek You Too B.V.) https://seecr.nl
 #
 # This file is part of "Metastreams Harvester"
 #
@@ -24,92 +24,158 @@
 #
 ## end license ##
 
-from simplejson import load, dump
-from sys import argv
-from os.path import join, isfile
+import argparse
+import pathlib
+import json
+from os.path import isfile
 from uuid import uuid4
 
 
-DATADIR=[line.strip() for line in open('/etc/meresco-harvester/config').readlines() if line.startswith("DATADIR=")][0].split("=")[1] isfile('/etc/meresco-harvester/config') else '.'
+DATADIR = (
+    [
+        line.strip()
+        for line in open("/etc/meresco-harvester/config").readlines()
+        if line.startswith("DATADIR=")
+    ][0].split("=")[1]
+    if isfile("/etc/meresco-harvester/config")
+    else "."
+)
+
 
 def newUuid():
     return str(uuid4())
 
-def main(oldDomainId, newDomainId):
-    if not isfile("{}.domain".format(oldDomainId)):
-        print "Domain not found"
+
+class Domain:
+    def __init__(self, data_path, domainId):
+        self._data_path = data_path.joinpath(domainId)
+        self.id = domainId
+
+    def exists(self):
+        return self._data_path.joinpath(f"{self.id}.domain").is_file()
+
+    def domain_data(self):
+        return json.loads(self._data_path.joinpath(f"{self.id}.domain").read_text())
+
+    def _all_data(self, key_name, extension, domainPrefix=False):
+        result = {}
+        prefix = ""
+        if domainPrefix:
+            prefix = f"{self.id}."
+        for anId in self.domain_data()[key_name]:
+            result[anId] = json.loads(
+                self._data_path.joinpath(f"{prefix}{anId}.{extension}").read_text()
+            )
+        return result.items()
+
+    def all_mapping_data(self):
+        return self._all_data("mappingIds", "mapping")
+
+    def all_target_data(self):
+        return self._all_data("targetIds", "target")
+
+    def all_repository_groups_data(self):
+        return self._all_data(
+            "repositoryGroupIds", "repositoryGroup", domainPrefix=True
+        )
+
+    def all_repositories_data(self):
+        result = {}
+        for fp in self._data_path.iterdir():
+            if not (
+                fp.name.endswith(".repository") and fp.name.startswith(f"{self.id}.")
+            ):
+                continue
+            data = json.loads(fp.read_text())
+            result[data["identifier"]] = data
+        return result.items()
+
+    def _set_data(self, identifier, data, extension, domainPrefix=False):
+        self._data_path.mkdir(parents=True, exist_ok=True)
+        prefix = ""
+        if domainPrefix:
+            prefix = f"{self.id}."
+        data["identifier"] = identifier
+        fp =self._data_path.joinpath(f"{prefix}{identifier}.{extension}")
+        fp.write_text(
+            json.dumps(data, indent=4)
+        )
+        print(f"Created {fp.as_posix()!r}")
+
+    def set_mapping_data(self, identifier, data):
+        return self._set_data(identifier, data, "mapping")
+
+    def set_target_data(self, identifier, data):
+        return self._set_data(identifier, data, "target")
+
+    def set_repository_group_data(self, identifier, data):
+        return self._set_data(identifier, data, "repositoryGroup", domainPrefix=True)
+
+    def set_repository_data(self, identifier, data):
+        return self._set_data(identifier, data, "repository", domainPrefix=True)
+
+    def set_domain_data(self, data):
+        return self._set_data(self.id, data, "domain")
+
+
+def main(data_path, oldDomainId, newDomainId):
+    if not oldDomainId or not newDomainId or oldDomainId == newDomainId:
+        print("No correct ids")
+        return
+    oldDomain = Domain(data_path, oldDomainId)
+    newDomain = Domain(data_path, newDomainId)
+    if not oldDomain.exists():
+        print("Domain not found")
         return
 
-    domain = load(open(join(DATADIR, "{}.domain".format(oldDomainId))))
-    domain['identifier'] = newDomainId
+    domain = oldDomain.domain_data()
 
     #
     # Mappings
     #
-    newMappingIds = []
-    for mappingId in domain['mappingIds']:
-        if not isfile('{}.mapping'.format(mappingId)):
-            print "Skipping {}, no mapping file found".format(targetId)
-            continue
-        mappingInfo = load(open(join(DATADIR, "{}.mapping".format(mappingId))))
+    newMappingIdsMapping = {}
+    for mappingId, mappingData in oldDomain.all_mapping_data():
         newMappingId = newUuid()
-        newMappingIds.append(newMappingId)
-        mappingInfo['identifier'] = newMappingId
-        dump(mappingInfo, open(join(DATADIR, "{}.mapping".format(newMappingId)), "w"), indent=4)
-    domain['mappingIds'] = newMappingIds
+        newMappingIdsMapping[mappingId] = newMappingId
+        newDomain.set_mapping_data(newMappingId, mappingData)
+    domain["mappingIds"] = list(newMappingIdsMapping.values())
 
     #
     # Targets
     #
-    newTargetIds = []
-    for targetId in domain['targetIds']:
-        if not isfile('{}.target'.format(targetId)):
-            print "Skipping {}, no target file found".format(targetId)
-            continue
-        targetInfo = load(open(join(DATADIR, "{}.target".format(targetId))))
+    newTargetIdsMapping = {}
+    for targetId, targetData in oldDomain.all_target_data():
         newTargetId = newUuid()
-        newTargetIds.append(newTargetId)
-        targetInfo['identifier'] = newTargetId
-        dump(targetInfo, open(join(DAATDIR, "{}.target".format(newTargetId)), 'w'), indent=4)
-    domain['targetIds'] = newTargetIds
+        newTargetIdsMapping[targetId] = newTargetId
+        newDomain.set_target_data(newTargetId, targetData)
+    domain["targetIds"] = list(newTargetIdsMapping.values())
 
     #
     # RepositoryGroupIds
     #
-    newRepositoryGroupsIds = []
-    for repositoryGroupId in domain['repositoryGroupIds']:
-        oldRepositoryGroupFile = join(DATADIR, "{}.{}.repositoryGroup".format(oldDomainId, repositoryGroupId))
-        newRepositoryGroupFile = join(DATADIR, "{}.{}.repositoryGroup".format(newDomainId, repositoryGroupId))
-        if not isfile(oldRepositoryGroupFile):
-            print "Skipping '{}', no repositoryGroup file found".format(repositoryGroupId)
-            continue
-        newRepositoryGroupsIds.append(repositoryGroupId)
+    for repositoryGroupId, repoGroup in oldDomain.all_repository_groups_data():
+        newDomain.set_repository_group_data(repositoryGroupId, repoGroup)
 
-        repositoryGroup = load(open(oldRepositoryGroupFile))
-        newRepositoryIds = []
-        for repositoryId in repositoryGroup['repositoryIds']:
-            oldRepositoryFile = join(DATADIR, "{}.{}.repository".format(oldDomainId, repositoryId))
-            newRepositoryFile = join(DATADIR, "{}.{}.repository".format(newDomainId, repositoryId))
-            if not isfile(oldRepositoryFile):
-                print "Skipping '{}', no repository file found".format(repositoryId)
-                continue
-            newRepositoryIds.append(repositoryId)
-            
-            repository = load(open(oldRepositoryFile))
-            repository['mappingId'] = domain['mappingIds'][0]
-            repository['targetId'] = domain['targetIds'][0]
-            dump(repository, open(newRepositoryFile, "w"), ident=4)
-        repositoryGroup['repositoryIds'] = newRepositoryIds
-        dump(repositoryGroup, open(newRepositoryGroupFile, "w"), indent=4)
+    for repositoryId, repo in oldDomain.all_repositories_data():
+        repo["mappingId"] = newMappingIdsMapping.get(repo.get("mappingId"))
+        repo["targetId"] = newTargetIdsMapping.get(repo.get("targetId"))
+        newDomain.set_repository_data(repositoryId, repo)
 
-    domain['repositoryGroupIds'] = newRepositoryGroupsIds
-    dump(domain, open(join(DATADIR, "{}.domain".format(newDomainId)), "w"), indent=4)
+    newDomain.set_domain_data(domain)
 
 
-if __name__ == '__main__':
-    args = argv[1:]
-    if len(args) != 2:
-        print "Specify the old and new domainname"
-    else:
-        main(*args)
+if __name__ == "__main__":
+    parser = argparse.ArgumentParser()
+    parser.add_argument(
+        "--data_dir",
+        type=pathlib.Path,
+        help=f"Datadir, default: {DATADIR!r}",
+        default=pathlib.Path(DATADIR),
+    )
+    parser.add_argument("--srcId", type=str, help="Source identifier", required=True)
+    parser.add_argument(
+        "--destId", type=str, help="Destination identifier", required=True
+    )
 
+    args = parser.parse_args()
+    main(data_path=args.data_dir, oldDomainId=args.srcId, newDomainId=args.destId)
