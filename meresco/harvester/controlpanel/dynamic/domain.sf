@@ -71,14 +71,18 @@ def _content(tag, arguments, **kwargs):
         dict(label=domainId, active=True)
     ])
     yield page2.card(f"Domein Gegevens - {domainId}", card_domainAttributes, tag=tag, domain=domain, **kwargs)
+
+    status_func = get_addon_hook("status.domain", status.btn_status)
+
     yield page2.card("Repository Groepen",
         card_domainRepositoryGroups, tag=tag, domain=domain,
         link=dict(
-            func=status.btn_status,
+            func=status_func,
             kwargs=dict(
                 tag=tag,
                 caption=f'Status domein {domainId}',
-                domainId=domainId)),
+                domainId=domainId,
+                observable=observable)),
         **kwargs)
     with tag("div.row"):
         with tag("div.col"):

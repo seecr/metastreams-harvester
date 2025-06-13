@@ -32,7 +32,7 @@ def getStatus(domainId, repositoryGroupId, repositoryId):
 def totalErrors(domainId, repositoryGroupId=None, repositoryId=None):
     return sum(int(each['totalerrors']) for each in getStatus(domainId, repositoryGroupId, repositoryId))
 
-def btn_status(tag, caption, domainId, repositoryGroupId=None, repositoryId=None):
+def btn_status(tag, caption, domainId, repositoryGroupId=None, repositoryId=None, **kwargs):
     has_errors = totalErrors(domainId, repositoryGroupId, repositoryId) > 0
 
     data_args = {

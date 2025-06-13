@@ -76,6 +76,8 @@ from time import localtime, strftime, time
 from uuid import uuid4
 from json import dumps
 
+import importlib
+
 myPath = dirname(abspath(__file__))
 usrSharePath = "/usr/share/metastreams"
 usrSharePath = join(dirname(dirname(myPath)), "usr-share")  # DO_NOT_DISTRIBUTE
@@ -97,6 +99,7 @@ def dna(
     customerLogoUrl,
     deproxyIps=None,
     deproxyIpRanges=None,
+    addons=None,
     **ignored,
 ):
     environment = createEnvironment(dataPath)
@@ -141,6 +144,60 @@ def dna(
     ]:
         staticFiles.addObserver(StaticFiles(libdir=libdir, path=path))
         staticFilePaths.append(path)
+
+    addons = addons or []
+    addon_mods = []
+    for addon in addons:
+        addon_mod = importlib.import_module(addon)
+        addon_mods.append(addon_mod)
+
+    securezone_excluded = [
+        "/index",
+        "/invalid",
+        "/rss",
+        "/running.rss",
+        "/showHarvesterStatus",
+        "/login/dialog/show",
+    ]
+    for addon in addon_mods:
+        if hasattr(addon, "securezone_excluded"):
+            securezone_excluded.extend(addon.securezone_excluded)
+
+    additionalGlobals = {
+        "externalUrl": externalUrl,
+        "escapeXml": escapeXml,
+        "compose": compose,
+        "dumps": dumps,
+        "VERSION": VERSION,
+        "CONFIG": configDict,
+        "Timeslot": Timeslot,
+        "ThroughputAnalyser": ThroughputAnalyser,
+        "dateSince": dateSince,
+        "callable": callable,
+        "OnlineHarvest": OnlineHarvest,
+        "StringIO": StringIO,
+        "okPlainText": okPlainText,
+        "ZuluTime": ZuluTime,
+        "xpathFirst": xpathFirst,
+        "customerLogoUrl": customerLogoUrl,
+        "uuid": lambda: str(uuid4()),
+    }
+    for addon in addon_mods:
+        if hasattr(addon, "additionalGlobals"):
+            for name, value in addon.additionalGlobals.items():
+                if name in additionalGlobals:
+                    print(f"addon {addon} overwrites additionalGlobal {name}")
+                additionalGlobals[name] = value
+
+    def get_addon_hook(name, default):
+        for addon in addon_mods:
+            if (hooks := getattr(addon, "hooks", None)) is not None:
+                if isinstance(hooks, dict):
+                    if (hook := hooks.get(name)) is not None:
+                        return hook
+        return default
+
+    additionalGlobals["get_addon_hook"] = get_addon_hook
 
     return (
         Observable(),
@@ -197,14 +254,7 @@ def dna(
                                         (
                                             SecureZone(
                                                 "/login",
-                                                excluding=[
-                                                    "/index",
-                                                    "/invalid",
-                                                    "/rss",
-                                                    "/running.rss",
-                                                    "/showHarvesterStatus",
-                                                    "/login/dialog/show",
-                                                ],
+                                                excluding=securezone_excluded,
                                                 defaultLanguage="nl",
                                             ),
                                             (
@@ -214,29 +264,13 @@ def dna(
                                                 ),
                                                 (
                                                     DynamicHtml(
-                                                        [dynamicHtmlPath],
+                                                        [dynamicHtmlPath]
+                                                        + [
+                                                            addon.dynamic_path
+                                                            for addon in addon_mods
+                                                        ],
                                                         reactor=reactor,
-                                                        additionalGlobals={
-                                                            "externalUrl": externalUrl,
-                                                            "escapeXml": escapeXml,
-                                                            "compose": compose,
-                                                            "dumps": dumps,
-                                                            "VERSION": VERSION,
-                                                            "CONFIG": configDict,
-                                                            "Timeslot": Timeslot,
-                                                            "ThroughputAnalyser": ThroughputAnalyser,
-                                                            "dateSince": dateSince,
-                                                            "callable": callable,
-                                                            "OnlineHarvest": OnlineHarvest,
-                                                            "StringIO": StringIO,
-                                                            "okPlainText": okPlainText,
-                                                            "ZuluTime": ZuluTime,
-                                                            "xpathFirst": xpathFirst,
-                                                            "customerLogoUrl": customerLogoUrl,
-                                                            "uuid": lambda: str(
-                                                                uuid4()
-                                                            ),
-                                                        },
+                                                        additionalGlobals=additionalGlobals,
                                                         indexPage="/index",
                                                     ),
                                                     basicHtmlLoginHelix,

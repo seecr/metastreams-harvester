@@ -62,15 +62,19 @@ def _content(tag, **kwargs):
     yield page2.card(f"Repository Groep Gegevens - {groupName}", card_repositoryGroupAttributes, tag=tag, domain=domain, group=group, **kwargs)
 
     repositoryGroupId = group.get('identifier')
+
+    status_func = get_addon_hook("status.repositoryGroup", status.btn_status)
+
     yield page2.card("Repositories",
         card_repositories, tag=tag, domain=domain, group=group,
         link=dict(
-            func=status.btn_status,
+            func=status_func,
             kwargs=dict(
                 tag=tag,
                 caption=f'Status repository groep {repositoryGroupId}',
                 domainId=domainId,
-                repositoryGroupId=repositoryGroupId)),
+                repositoryGroupId=repositoryGroupId,
+                observable=observable)),
             **kwargs)
 
 def card_repositoryGroupAttributes(tag, domain, group, **kwargs):

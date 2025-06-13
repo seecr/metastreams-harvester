@@ -74,16 +74,19 @@ def _content(tag, arguments, **kwargs):
     cardKwargs.update(kwargs)
     yield page2.card(f"Repository Gegevens - {repositoryId}", card_repositoryAttributes, **cardKwargs)
 
+    status_func = get_addon_hook("status.repository", status.btn_status)
+
     yield page2.card("Uitvoering",
         card_repositoryActions,
         link=dict(
-            func=status.btn_status,
+            func=status_func,
             kwargs=dict(
                 tag=tag,
                 caption=f'Status repository {repositoryId}',
                 domainId=domainId,
                 repositoryGroupId=None,
-                repositoryId=repository.get("identifier"))),
+                repositoryId=repository.get("identifier"),
+                observable=observable)),
         **cardKwargs)
 
     fieldDefinition = observable.call.getFieldDefinition(domainId=domainId)
