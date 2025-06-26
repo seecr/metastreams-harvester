@@ -3,7 +3,7 @@
 # "Metastreams Harvester" is a fork of Meresco Harvester that demonstrates
 # the translation of traditional metadata into modern events streams.
 #
-# Copyright (C) 2021, 2024 Seecr (Seek You Too B.V.) https://seecr.nl
+# Copyright (C) 2021, 2024-2025 Seecr (Seek You Too B.V.) https://seecr.nl
 #
 # This file is part of "Metastreams Harvester"
 #
@@ -17,7 +17,7 @@
 # MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 # GNU General Public License for more details.
 #
-
+# You should have received a copy of the GNU General Public License
 # along with "Metastreams Harvester"; if not, write to the Free Software
 # Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 #
@@ -25,42 +25,60 @@
 
 import page2
 
+
 def getStatus(domainId, repositoryGroupId, repositoryId):
-    statuses = observable.call.getStatus(domainId=domainId, repositoryGroupId=repositoryGroupId, repositoryId=repositoryId)
+    statuses = observable.call.getStatus(
+        domainId=domainId,
+        repositoryGroupId=repositoryGroupId,
+        repositoryId=repositoryId,
+    )
     return statuses
 
-def totalErrors(domainId, repositoryGroupId=None, repositoryId=None):
-    return sum(int(each['totalerrors']) for each in getStatus(domainId, repositoryGroupId, repositoryId))
 
-def btn_status(tag, caption, domainId, repositoryGroupId=None, repositoryId=None, **kwargs):
+def totalErrors(domainId, repositoryGroupId=None, repositoryId=None):
+    return sum(
+        int(each["totalerrors"])
+        for each in getStatus(domainId, repositoryGroupId, repositoryId)
+    )
+
+
+def btn_status(
+    tag, caption, domainId, repositoryGroupId=None, repositoryId=None, **kwargs
+):
     has_errors = totalErrors(domainId, repositoryGroupId, repositoryId) > 0
 
-    data_args = {
-        'data-caption': caption,
-        'data-domainid': domainId
-    }
+    data_args = {"data-caption": caption, "data-domainid": domainId}
     if not repositoryGroupId is None:
-        data_args['data-repositorygroupid'] = repositoryGroupId
+        data_args["data-repositorygroupid"] = repositoryGroupId
     if not repositoryId is None:
-        data_args['data-repositoryid'] = repositoryId
+        data_args["data-repositoryid"] = repositoryId
 
     with tag("div"):
-        with tag("button.btn.py-0.button-status", title="Status", class_=['btn-danger'] if has_errors else ['btn-success'], **data_args):
+        with tag(
+            "button.btn.py-0.button-status",
+            title="Status",
+            class_=["btn-danger"] if has_errors else ["btn-success"],
+            **data_args,
+        ):
             with tag("i.bi.bi-graph-up.pe-2"):
-                yield ''
+                yield ""
             yield "Status"
 
+
 def main(tag, user, is_fullscreen=False, **kwargs):
-    if not (data := page2.findPath("data", dict(error=render_data_error), **kwargs)) is None:
+    if (
+        not (data := page2.findPath("data", dict(error=render_data_error), **kwargs))
+        is None
+    ):
         yield data(tag=tag, **kwargs)
         return
 
-    pathArgs = kwargs['path'].split("/")[2:]
+    pathArgs = kwargs["path"].split("/")[2:]
     if pathArgs == []:
-        arguments = kwargs['arguments']
-        domainId = arguments.get('domainId', [None])[0]
-        repositoryGroupId = arguments.get('repositoryGroupId', [None])[0]
-        repositoryId = arguments.get('repositoryId', [None])[0]
+        arguments = kwargs["arguments"]
+        domainId = arguments.get("domainId", [None])[0]
+        repositoryGroupId = arguments.get("repositoryGroupId", [None])[0]
+        repositoryId = arguments.get("repositoryId", [None])[0]
     else:
         pathArgs = pathArgs + [None, None, None]
         domainId, repositoryGroupId, repositoryId = pathArgs[:3]
@@ -75,11 +93,15 @@ def main(tag, user, is_fullscreen=False, **kwargs):
     original_domainId = domainId
     aliases = observable.call.get_domain_aliases()
     if domainId not in aliases:
-        aliases = {k:v for k,v in aliases.items() if v == domainId}
+        aliases = {k: v for k, v in aliases.items() if v == domainId}
 
     domainId = aliases.get(domainId, domainId)
     try:
-        statuses = getStatus(domainId=domainId, repositoryGroupId=repositoryGroupId, repositoryId=repositoryId)
+        statuses = getStatus(
+            domainId=domainId,
+            repositoryGroupId=repositoryGroupId,
+            repositoryId=repositoryId,
+        )
     except ValueError:
         with tag("div.alert.alert-danger", role="alert"):
             yield f"Domein {domainId!r} niet gevonden"
@@ -94,7 +116,11 @@ def main(tag, user, is_fullscreen=False, **kwargs):
                     with tag("div.modal-header"):
                         with tag("h5.modal-title", id_="placeholder_modal-error-title"):
                             yield ""
-                        with tag("button.btn-close", type_="button", **{"data-bs-dismiss": 'modal', 'aria-label': 'Close'}):
+                        with tag(
+                            "button.btn-close",
+                            type_="button",
+                            **{"data-bs-dismiss": "modal", "aria-label": "Close"},
+                        ):
                             pass
                     with tag("div.modal-body", id_="placeholder_modal-error-body"):
                         pass
@@ -104,126 +130,254 @@ def main(tag, user, is_fullscreen=False, **kwargs):
                 yield "Harvester Status"
             with tag("div"):
                 for each in groups:
-                    with tag("img", src=each.logoUrl, style="height: 50px"): pass
+                    with tag("img", src=each.logoUrl, style="height: 50px"):
+                        pass
         with tag("div.d-flex.flex-row.justify-content-between"):
-            with tag("a.btn.btn-light", href=page2.url(f"/running.rss/{original_domainId}"), target="_blank"):
-                with tag("i.bi.bi-rss.pe-2"): pass
-                yield f"Domain: {original_domainId}"
+            domain_rss_link_fn = get_addon_hook("status.rss.domain", rss_domain)
+            yield domain_rss_link_fn(tag, observable, original_domainId)
 
             if not is_fullscreen:
                 with tag("div.d-flex.flex-row.gap-2"):
+
                     def as_path(x):
                         _repositoryGroupId = repositoryGroupId
                         if repositoryId is not None and len(repositoryId) > 0:
-                            _repositoryGroupId = [status for status in statuses if status['repositoryId'] == repositoryId][0]['repositoryGroupId']
-                        return "/".join([each for each in [x, _repositoryGroupId, repositoryId] if each is not None and len(each) > 0])
+                            _repositoryGroupId = [
+                                status
+                                for status in statuses
+                                if status["repositoryId"] == repositoryId
+                            ][0]["repositoryGroupId"]
+                        return "/".join(
+                            [
+                                each
+                                for each in [x, _repositoryGroupId, repositoryId]
+                                if each is not None and len(each) > 0
+                            ]
+                        )
 
                     nrAliases = len(aliases)
                     if nrAliases == 0:
-                        with tag("input", type_="hidden", id_="status_path", value=as_path(domainId)): pass
+                        with tag(
+                            "input",
+                            type_="hidden",
+                            id_="status_path",
+                            value=as_path(domainId),
+                        ):
+                            pass
                     elif nrAliases == 1:
-                        with tag("input", type_="hidden", id_="status_path", value=as_path(list(aliases.keys())[0])): pass
+                        with tag(
+                            "input",
+                            type_="hidden",
+                            id_="status_path",
+                            value=as_path(list(aliases.keys())[0]),
+                        ):
+                            pass
                     else:
                         with tag("select.form-select", id_="status_path"):
                             for each in aliases:
                                 with tag("option", value=as_path(each)):
                                     yield each
-                    with tag("button.btn.btn-light", type_="button", id_="status_domain_button"):
-                        with tag("i.bi.bi-arrows-fullscreen"): pass
-
-
+                    with tag(
+                        "button.btn.btn-light",
+                        type_="button",
+                        id_="status_domain_button",
+                    ):
+                        with tag("i.bi.bi-arrows-fullscreen"):
+                            pass
 
         with tag("table.table.table-hover.table-bordered", id_="status-table"):
             with tag("thead"):
                 with tag("tr"):
-                    for each in ["Repository", "Laatste harvest", "Totaal", "Geharvest", "Uploads", "Deletes", "Ongeldig", "Fouten", ""]:
+                    for each in [
+                        "Repository",
+                        "Laatste harvest",
+                        "Totaal",
+                        "Geharvest",
+                        "Uploads",
+                        "Deletes",
+                        "Ongeldig",
+                        "Fouten",
+                        "",
+                    ]:
                         with tag("th"):
                             yield each
             with tag("tbody"):
-                for each in sorted(statuses, key=lambda s: (s.get('repositoryGroupId', '').lower(), s.get('repositoryId'))):
+                for each in sorted(
+                    statuses,
+                    key=lambda s: (
+                        s.get("repositoryGroupId", "").lower(),
+                        s.get("repositoryId"),
+                    ),
+                ):
+                    repositoryId = each["repositoryId"]
+                    repositoryGroupId = each["repositoryGroupId"]
                     with tag("tr.align-middle"):
                         with tag("td"):
-                            caption = page2.shorten(each['repositoryId'], length=30)
+                            caption = page2.shorten(repositoryId, length=30)
                             if user is not None:
-                                with tag("a",
-                                        href=page2.url("/repository", identifier=each['repositoryId'], domainId=domainId),
-                                        title=each['repositoryId']):
+                                with tag(
+                                    "a",
+                                    href=page2.url(
+                                        "/repository",
+                                        identifier=repositoryId,
+                                        domainId=domainId,
+                                    ),
+                                    title=repositoryId,
+                                ):
                                     yield caption
                             else:
                                 if repositoryLink:
-                                    with tag("a",
-                                            href=page2.url(f"/showHarvesterStatus/{domainId}/{each['repositoryGroupId']}/{each['repositoryId']}"),
-                                            title=each['repositoryId']):
+                                    with tag(
+                                        "a",
+                                        href=page2.url(
+                                            f"/showHarvesterStatus/{domainId}/{repositoryGroupId}/{repositoryId}"
+                                        ),
+                                        title=repositoryId,
+                                    ):
                                         yield caption
                                 else:
-                                    with tag("span", title=each['repositoryId']):
+                                    with tag("span", title=repositoryId):
                                         yield caption
                         with tag("td.text-nowrap"):
-                            yield each['lastHarvestDate'] or "---"
-                        with tag("td.text-end", **{'data-order': str(each['total'])}):
-                            yield thousands(each['total'])
-                        with tag("td.text-end", **{'data-order': str(each['harvested'])}):
-                            yield thousands(each['harvested'])
-                        with tag("td.text-end", **{'data-order': str(each['uploaded'])}):
-                            yield thousands(each['uploaded'])
-                        with tag("td.text-end", **{'data-order': str(each['deleted'])}):
-                            yield thousands(each['deleted'])
-                        with tag("td.text-end", **{'data-order': str(each['invalid'])}):
-                            invalid = thousands(each['invalid'])
-                            yield invalid
-                        with tag("td.text-end", **{'data-order': str(each['totalerrors'])}):
-                            errors = each['totalerrors']
+                            yield each["lastHarvestDate"] or "---"
+                        with tag("td.text-end", **{"data-order": str(each["total"])}):
+                            yield thousands(each["total"])
+                        with tag(
+                            "td.text-end", **{"data-order": str(each["harvested"])}
+                        ):
+                            yield thousands(each["harvested"])
+                        with tag(
+                            "td.text-end", **{"data-order": str(each["uploaded"])}
+                        ):
+                            yield thousands(each["uploaded"])
+                        with tag("td.text-end", **{"data-order": str(each["deleted"])}):
+                            yield thousands(each["deleted"])
+                        with tag("td.text-end", **{"data-order": str(each["invalid"])}):
+                            status_func = get_addon_hook(
+                                "status.display.invalid", render_thousands
+                            )
+                            yield status_func(
+                                tag,
+                                observable,
+                                count=each["invalid"],
+                                domainId=domainId,
+                                repositoryId=repositoryId,
+                            )
+                        with tag(
+                            "td.text-end", **{"data-order": str(each["totalerrors"])}
+                        ):
+                            errors = each["totalerrors"]
                             with tag("div.d-flex.flex-row"):
                                 with tag("span.flex-fill"):
                                     if errors > 0:
-                                        with tag("button.btn.btn-danger.py-0.seecr-show-error", title="Bekijk fouten", **{
-                                                'data-domainid': domainId,
-                                                'data-repositorygroupid': each['repositoryGroupId'],
-                                                'data-repositoryid': each['repositoryId']}):
-                                            with tag("i.bi.bi-eye-fill.pe-1"): yield ""
+                                        with tag(
+                                            "button.btn.btn-danger.py-0.seecr-show-error",
+                                            title="Bekijk fouten",
+                                            **{
+                                                "data-domainid": domainId,
+                                                "data-repositorygroupid": repositoryGroupId,
+                                                "data-repositoryid": repositoryId,
+                                            },
+                                        ):
+                                            with tag("i.bi.bi-eye-fill.pe-1"):
+                                                yield ""
                                             yield thousands(errors)
                                     else:
-                                        with tag("span.flex-fill.text-end"): yield thousands(errors)
+                                        with tag("span.flex-fill.text-end"):
+                                            yield thousands(errors)
                         with tag("td"):
-                            with tag("a.btn.btn-light", href=page2.url(f"/rss/{original_domainId}/{each['repositoryGroupId']}/{each['repositoryId']}"), target="_blank"):
-                                with tag("i.bi.bi-rss"): pass
-
+                            repository_rss_link_fn = get_addon_hook(
+                                "status.rss.repository", rss_repository
+                            )
+                            yield repository_rss_link_fn(
+                                tag,
+                                observable,
+                                original_domainId=original_domainId,
+                                repositoryGroupId=repositoryGroupId,
+                                repositoryId=repositoryId,
+                            )
 
     return
     data = {"data": []}
     for each in statuses:
-        data['data'].append([each[i] for i in ['repositoryId', 'lastHarvestDate', 'harvested', 'uploaded', 'deleted', 'invalid', 'totalerrors']])
+        data["data"].append(
+            [
+                each[i]
+                for i in [
+                    "repositoryId",
+                    "lastHarvestDate",
+                    "harvested",
+                    "uploaded",
+                    "deleted",
+                    "invalid",
+                    "totalerrors",
+                ]
+            ]
+        )
 
     yield "HTTP/1.0 200 OK\r\n"
     yield "Content-Type: application/json\r\n"
     yield "\r\n"
     yield dumps(data)
 
+
 def thousands(number):
-    return format(number, ',d').replace(",",".")
+    return format(number, ",d").replace(",", ".")
+
+
+def render_thousands(tag, observable, number, domainId, repositoryId):
+    yield thousands(number)
+
+
+def rss_domain(tag, observable, original_domainId):
+    with tag(
+        "a.btn.btn-light",
+        href=page2.url(f"/running.rss/{original_domainId}"),
+        target="_blank",
+    ):
+        with tag("i.bi.bi-rss.pe-2"):
+            pass
+        yield f"Domain: {original_domainId}"
+
+
+def rss_repository(tag, observable, original_domainId, repositoryGroupId, repositoryId):
+    with tag(
+        "a.btn.btn-light",
+        href=page2.url(f"/rss/{original_domainId}/{repositoryGroupId}/{repositoryId}"),
+        target="_blank",
+    ):
+        with tag("i.bi.bi-rss"):
+            pass
+    return
+    yield
 
 
 def render_data_error(tag, arguments, **kwargs):
 
-    domainId = arguments.get('domainId', [None])[0]
-    repositoryGroupId = arguments.get('repositoryGroupId', [None])[0]
-    repositoryId = arguments.get('repositoryId', [None])[0]
+    domainId = arguments.get("domainId", [None])[0]
+    repositoryGroupId = arguments.get("repositoryGroupId", [None])[0]
+    repositoryId = arguments.get("repositoryId", [None])[0]
 
     aliases = observable.call.get_domain_aliases()
     domainId = aliases.get(domainId, domainId)
-    statuses = observable.call.getStatus(domainId=domainId, repositoryGroupId=repositoryGroupId, repositoryId=repositoryId)
+    statuses = observable.call.getStatus(
+        domainId=domainId,
+        repositoryGroupId=repositoryGroupId,
+        repositoryId=repositoryId,
+    )
 
     with tag("div.d-flex.flex-column"):
         for each in statuses:
-            if len(errors := each.get('recenterrors', [])) == 0:
+            if len(errors := each.get("recenterrors", [])) == 0:
                 continue
             for error in errors:
-                with tag("h3"): yield error['date']
+                with tag("h3"):
+                    yield error["date"]
                 with tag("pre"):
-                    line = error['error'].split("|")[-1]
+                    line = error["error"].split("|")[-1]
                     if (index := line.find(", message:")) > -1:
                         yield line[:index] + "\n"
-                        yield line[index+2:]
+                        yield line[index + 2 :]
 
                     else:
                         yield line
