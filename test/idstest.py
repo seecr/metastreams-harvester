@@ -33,7 +33,7 @@
 ## end license ##
 
 from seecr.test import SeecrTestCase
-from meresco.harvester.ids import Ids, _readIds, _writeIds
+from meresco.harvester.ids import Ids, readIds
 from os.path import join
 import pathlib
 
@@ -60,8 +60,7 @@ class IdsTest(SeecrTestCase):
             ids.add("id:1")
             ids.add("id:1")
             self.assertEqual(1, len(ids))
-            with open(self.tempdir + "/idstest.ids") as f:
-                self.assertEqual(1, len(f.readlines()))
+        self.assertEqual(1, len(Ids(self.tempdir + "/idstest.ids")))
 
     def testInit(self):
         with _Ids(self.tmp_path / "none") as ids:
@@ -79,8 +78,8 @@ class IdsTest(SeecrTestCase):
         with _Ids(self.tempdir + "/three") as ids:
             ids.remove("id:1")
             self.assertEqual(2, len(ids))
-        with open(self.tempdir + "/three") as fp:
-            self.assertEqual(2, len(fp.readlines()))
+        with _Ids(self.tempdir + "/three") as ids:
+            self.assertEqual(2, len(ids))
 
     def testRemoveNonExistingId(self):
         self.writeTestIds("three.ids", ["id:1", "id:2", "id:3"])
@@ -96,12 +95,9 @@ class IdsTest(SeecrTestCase):
             ids.add("id:1")
             ids.add("\n   id:1")
             ids.add("   id:2")
-            with open(self.tempdir + "/idstest.ids") as fp:
-                self.assertEqual(3, len(fp.readlines()))
-            self.assertEqual(["id:1", "\n   id:1", "   id:2"], list(ids))
-
-        with _Ids(self.tempdir + "/idstest.ids") as ids:
-            self.assertEqual(["id:1", "\n   id:1", "   id:2"], list(ids))
+        self.assertEqual(
+            ["id:1", "\n   id:1", "   id:2"], list(Ids(self.tmp_path / "idstest.ids"))
+        )
 
     def testRemoveStrangeId(self):
         with _Ids(self.tempdir + "/idstest") as ids:
@@ -120,29 +116,81 @@ class IdsTest(SeecrTestCase):
             fp.write("uploadId1\n%0A  uploadId2\n   uploadId3")
 
         self.assertEqual(
-            ["uploadId1", "\n  uploadId2", "   uploadId3"], _readIds(filename)
+            ["uploadId1", "\n  uploadId2", "   uploadId3"], Ids(filename).getIds()
         )
 
+    def testReadOnlyMode(self):
+        # test internal working of writing ids
+        f_main = self.tmp_path / "test.ids"
+        f_state = self.tmp_path / "test.ids.0"
+        ids = Ids(f_main)
+        for i in range(10):
+            ids.add(f"id:{i}")
+        self.assertFalse(f_main.exists())
+        self.assertTrue(f_state.exists())
+
+        read_ids = readIds(f_main)
+        self.assertEqual(10, len(read_ids))
+        self.assertEqual("id:0", read_ids[0])
+
     def testWriteIds(self):
-        filename = join(self.tempdir, "test.ids")
-        _writeIds(filename, ["uploadId1", "\n  uploadId2", "   uploadId3"])
-        with open(filename) as fp:
-            self.assertEqual("uploadId1\n%0A  uploadId2\n   uploadId3\n", fp.read())
+        # test internal working of writing ids
+        f_main = self.tmp_path / "test.ids"
+        f_state = self.tmp_path / "test.ids.0"
+        ids = Ids(f_main, _max_dirty_count=3)
+        ids.add("id:1")
+
+        self.assertEqual(["id:1"], ids.getIds())
+        self.assertFalse(f_main.exists())
+        self.assertTrue(f_state.exists())
+
+        ids.close()
+
+        # On close don't do anything.
+        self.assertFalse(f_main.exists())
+        self.assertTrue(f_state.exists())
+
+        # on reopen and read, always dirty, merge and continue
+        self.assertEqual(["id:1"], ids.getIds())
+        self.assertTrue(f_main.exists())
+        self.assertFalse(f_state.exists())
+
+        ids.add("id:2")
+        ids.remove("id:2")
+
+        self.assertEqual(["id:1"], ids.getIds())
+        self.assertTrue(f_main.exists())
+        self.assertTrue(f_state.exists())
+
+        ids.add("id:2")
+        self.assertEqual(["id:1", "id:2"], ids.getIds())
+        self.assertTrue(f_main.exists())
+        self.assertFalse(f_state.exists())
+
+        ids.remove("id:2")
+        self.assertEqual(["id:1"], ids.getIds())
+        self.assertTrue(f_main.exists())
+        self.assertTrue(f_state.exists())
+
+        ids.close()
+        ids = Ids(f_main)
+        # At creation nothing happens
+        self.assertTrue(f_main.exists())
+        self.assertTrue(f_state.exists())
+
+        # first action, something will happen, always start "dirty"
+        self.assertEqual(["id:1"], ids.getIds())
+        self.assertFalse(f_state.exists())
 
     def testEscaping(self):
         idsPath = self.tmp_path / "pruebo.ids"
         ids = Ids(idsPath)
-        try:
-            ids.add("needs_\n_escape")
-            self.assertEqual("needs_%0A_escape\n", idsPath.read_text())
-            self.assertEqual(["needs_\n_escape"], ids.getIds())
-            ids.reopen()
-            self.assertEqual("needs_%0A_escape\n", idsPath.read_text())
-            self.assertEqual(["needs_\n_escape"], ids.getIds())
-            ids.reopen()
-            self.assertEqual(["needs_\n_escape"], ids.getIds())
-        finally:
-            ids.close()
+        ids.add("needs_\n_escape")
+        self.assertEqual(["needs_\n_escape"], Ids(idsPath).getIds())
+        self.assertEqual("needs_%0A_escape\n", idsPath.read_text())
+        self.assertEqual(["needs_\n_escape"], ids.getIds())
+        ids.reopen()
+        self.assertEqual(["needs_\n_escape"], ids.getIds())
 
     def testClear(self):
         # Wondering if this is what we really want.
@@ -159,9 +207,10 @@ class IdsTest(SeecrTestCase):
         ids = Ids(myidsPath)
         ids.add("some:id")
         ids.close()
+        ids.getIds()  # after close, clean state
         self.assertTrue(myidsPath.is_file())
         ids.remove("some:id")
-        ids.close()
+        # remove last cleans state
         self.assertFalse(myidsPath.is_file())
 
     def testMoveTo(self):

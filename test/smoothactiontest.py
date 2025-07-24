@@ -59,8 +59,8 @@ class SmoothActionTest(ActionTestCase):
         self.statsfilename = join(self.stateDir, "rep.stats")
 
     def testSmooth_Init(self):
-        writefile(self.idfilename, "rep:id:1\nrep:id:2\n")
-        writefile(self.invalidIdsFilename, "rep:id:3\n")
+        writeIds(self.idfilename, "rep:id:1", "rep:id:2")
+        writeIds(self.invalidIdsFilename, "rep:id:3")
         writefile(
             self.statsfilename,
             "Started: 2005-12-22 16:33:39, Harvested/Uploaded/Deleted/Total: 10/10/0/2, Done: ResumptionToken:\n",
@@ -73,7 +73,7 @@ class SmoothActionTest(ActionTestCase):
         self.assertTrue(os.path.isfile(self.old_idfilename))
         self.assertFalse(os.path.isfile(self.idfilename))
         self.assertEqual(
-            "rep:id:1\nrep:id:2\nrep:id:3\n", readfile(self.old_idfilename)
+            ["rep:id:1", "rep:id:2", "rep:id:3"], Ids(self.old_idfilename).getIds()
         )
         self.assertTrue(
             "Done: Deleted all ids" in readfile(self.statsfilename),
@@ -196,6 +196,12 @@ class SmoothActionTest(ActionTestCase):
 def writefile(filename, contents):
     with open(filename, "w") as f:
         f.write(contents)
+
+
+def writeIds(filename, *ids):
+    idObj = Ids(filename)
+    for anId in ids:
+        idObj.add(anId)
 
 
 def readfile(filename):

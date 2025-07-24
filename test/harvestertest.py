@@ -9,7 +9,7 @@
 # Copyright (C) 2007-2009 Stichting Kennisnet Ict op school. http://www.kennisnetictopschool.nl
 # Copyright (C) 2009 Tilburg University http://www.uvt.nl
 # Copyright (C) 2010-2012, 2015, 2020-2021 Stichting Kennisnet https://www.kennisnet.nl
-# Copyright (C) 2012-2015, 2020-2022 Seecr (Seek You Too B.V.) https://seecr.nl
+# Copyright (C) 2012-2015, 2020-2022, 2025 Seecr (Seek You Too B.V.) https://seecr.nl
 # Copyright (C) 2020-2021 Data Archiving and Network Services https://dans.knaw.nl
 # Copyright (C) 2020-2021 SURF https://www.surf.nl
 # Copyright (C) 2020-2021 The Netherlands Institute for Sound and Vision https://beeldengeluid.nl
@@ -46,9 +46,13 @@ from seecr.test import CallTrace
 
 from meresco.components.json import JsonDict
 from meresco.harvester.harvester import Harvester
+from meresco.harvester.ids import Ids
 from meresco.harvester.action import State
 from meresco.harvester.oairequest import OaiRequest
-from meresco.harvester.virtualuploader import InvalidDataException, TooMuchInvalidDataException
+from meresco.harvester.virtualuploader import (
+    InvalidDataException,
+    TooMuchInvalidDataException,
+)
 from meresco.harvester.mapping import Mapping, DEFAULT_CODE, Upload
 from meresco.harvester import namespaces
 
@@ -59,37 +63,40 @@ from oairequesttest import oaiResponse
 class DeletedRecordHeader(object):
     def isDeleted(self):
         return True
+
     def identifier(self):
-        return 'mockid'
+        return "mockid"
+
 
 class _MockRepository(object):
     def __init__(self, id, baseurl, set, repositoryGroupId, outer, continuous=False):
-        self.repositoryGroupId=repositoryGroupId
+        self.repositoryGroupId = repositoryGroupId
         self.id = id
         self.baseurl = baseurl
         self.set = set
-        self.metadataPrefix = 'oai_dc'
-        self.targetId= outer.mockssetarget
+        self.metadataPrefix = "oai_dc"
+        self.targetId = outer.mockssetarget
         self.createUploader = outer.createUploader
         self.continuous = continuous
 
     def mapping(self):
-        m = Mapping('id')
+        m = Mapping("id")
         m.name = self.repositoryGroupId
         m.code = DEFAULT_CODE
         return m
 
+
 class HarvesterTest(unittest.TestCase):
     def setUp(self):
-        self.sendCalled=0
+        self.sendCalled = 0
         self.sendException = None
         self.upload = None
-        self.sendParts=[]
-        self.sendId=[]
+        self.sendParts = []
+        self.sendId = []
         self.listRecordsSet = None
         self.listRecordsToken = None
-        self.startCalled=0
-        self.stopCalled=0
+        self.startCalled = 0
+        self.stopCalled = 0
         self.logDir = self.stateDir = mkdtemp()
         self.logger = None
 
@@ -98,42 +105,55 @@ class HarvesterTest(unittest.TestCase):
             self.logger.close()
         rmtree(self.logDir)
 
-    def createLogger(self, name='tud'):
-        self.logger=State(stateDir=self.stateDir, logDir=self.logDir, name=name).getHarvesterLog()
+    def createLogger(self, name="tud"):
+        self.logger = State(
+            stateDir=self.stateDir, logDir=self.logDir, name=name
+        ).getHarvesterLog()
         return self.logger
 
-    def createServer(self, url='http://repository.tudelft.nl/oai'):
+    def createServer(self, url="http://repository.tudelft.nl/oai"):
         return OaiRequest(url)
 
     def testCreateHarvester(self):
-        harvester = self.createHarvesterWithMockUploader('tud')
-        self.assertEqual((0,0),(self.startCalled,self.stopCalled))
+        harvester = self.createHarvesterWithMockUploader("tud")
+        self.assertEqual((0, 0), (self.startCalled, self.stopCalled))
         harvester.harvest()
-        self.assertEqual((1,1),(self.startCalled,self.stopCalled))
-        harvester = self.createHarvesterWithMockUploader('eur')
-        self.assertEqual((1,1),(self.startCalled,self.stopCalled))
+        self.assertEqual((1, 1), (self.startCalled, self.stopCalled))
+        harvester = self.createHarvesterWithMockUploader("eur")
+        self.assertEqual((1, 1), (self.startCalled, self.stopCalled))
         harvester.harvest()
-        self.assertEqual((2,2),(self.startCalled,self.stopCalled))
+        self.assertEqual((2, 2), (self.startCalled, self.stopCalled))
 
     def testDoUpload(self):
-        harvester = self.createHarvesterWithMockUploader('tud')
+        harvester = self.createHarvesterWithMockUploader("tud")
         harvester.harvest()
 
         self.assertEqual(3, self.sendCalled)
-        self.assertEqual('tud:oai:tudelft.nl:007193', self.sendId[2])
-        record = parse(StringIO(self.sendParts[2]['record']))
-        subjects = record.xpath('/oai:record/oai:metadata/oai_dc:dc/dc:subject/text()', namespaces=namespaces)
-        self.assertEqual(['quantitative electron microscopy', 'statistical experimental design', 'parameter estimation'], subjects)
-        with open(os.path.join(self.stateDir, 'tud.stats')) as f:
-            self.assertEqual('ResumptionToken: TestToken', f.read()[-27:-1])
+        self.assertEqual("tud:oai:tudelft.nl:007193", self.sendId[2])
+        record = parse(StringIO(self.sendParts[2]["record"]))
+        subjects = record.xpath(
+            "/oai:record/oai:metadata/oai_dc:dc/dc:subject/text()",
+            namespaces=namespaces,
+        )
+        self.assertEqual(
+            [
+                "quantitative electron microscopy",
+                "statistical experimental design",
+                "parameter estimation",
+            ],
+            subjects,
+        )
+        with open(os.path.join(self.stateDir, "tud.stats")) as f:
+            self.assertEqual("ResumptionToken: TestToken", f.read()[-27:-1])
 
     def testLogIDsForRemoval(self):
-        harvester = self.createHarvesterWithMockUploader('tud')
+        harvester = self.createHarvesterWithMockUploader("tud")
         harvester.harvest()
-        with open(self.stateDir+'/tud.ids') as idsfile:
-            self.assertEqual('tud:oai:tudelft.nl:007087',idsfile.readline().strip())
-            self.assertEqual('tud:oai:tudelft.nl:007192',idsfile.readline().strip())
-            self.assertEqual('tud:oai:tudelft.nl:007193',idsfile.readline().strip())
+        ids = Ids(self.stateDir + "/tud.ids").getIds()
+
+        self.assertEqual("tud:oai:tudelft.nl:007087", ids[0])
+        self.assertEqual("tud:oai:tudelft.nl:007192", ids[1])
+        self.assertEqual("tud:oai:tudelft.nl:007193", ids[2])
 
     def createHarvesterWithMockUploader(self, name, set=None, mockRequest=None):
         self.logger = self.createLogger(name)
@@ -141,84 +161,88 @@ class HarvesterTest(unittest.TestCase):
         uploader = repository.createUploader(self.logger.eventLogger())
         self.mapper = repository.mapping()
         harvester = Harvester(repository)
-        harvester.addObserver(mockRequest or MockOaiRequest('mocktud'))
+        harvester.addObserver(mockRequest or MockOaiRequest("mocktud"))
         harvester.addObserver(self.logger)
         harvester.addObserver(uploader)
         harvester.addObserver(self.mapper)
         return harvester
 
     def testSimpleStat(self):
-        harvester = self.createHarvesterWithMockUploader('tud')
+        harvester = self.createHarvesterWithMockUploader("tud")
         harvester.harvest()
-        self.assertTrue(os.path.isfile(self.stateDir+'/tud.stats'))
-        with open(self.stateDir + '/tud.stats') as fp:
-            stats = fp.readline().strip().split(',')
-        year = strftime('%Y')
-        self.assertEqual('Started: %s-'%year, stats[0][:14])
-        self.assertEqual(' Harvested/Uploaded/Deleted/Total: 3/3/0/3', stats[1])
-        self.assertEqual(' Done: %s-'%year, stats[2][:12])
+        self.assertTrue(os.path.isfile(self.stateDir + "/tud.stats"))
+        with open(self.stateDir + "/tud.stats") as fp:
+            stats = fp.readline().strip().split(",")
+        year = strftime("%Y")
+        self.assertEqual("Started: %s-" % year, stats[0][:14])
+        self.assertEqual(" Harvested/Uploaded/Deleted/Total: 3/3/0/3", stats[1])
+        self.assertEqual(" Done: %s-" % year, stats[2][:12])
 
     def testErrorStat(self):
-        harvester = self.createHarvesterWithMockUploader('tud')
-        self.sendException = Exception('send failed')
+        harvester = self.createHarvesterWithMockUploader("tud")
+        self.sendException = Exception("send failed")
         try:
             harvester.harvest()
         except:
             pass
-        with open(self.stateDir + '/tud.stats') as fp:
-            stats = fp.readline().strip().split(',')
-        self.assertTrue(stats[2].startswith(' Error: '), stats[2])
-        self.assertTrue(stats[2].endswith('send failed'), stats[2])
+        with open(self.stateDir + "/tud.stats") as fp:
+            stats = fp.readline().strip().split(",")
+        self.assertTrue(stats[2].startswith(" Error: "), stats[2])
+        self.assertTrue(stats[2].endswith("send failed"), stats[2])
 
     def testResumptionTokenLog(self):
-        harvester = self.createHarvesterWithMockUploader('tud')
+        harvester = self.createHarvesterWithMockUploader("tud")
         harvester.harvest()
-        with open(self.stateDir + '/tud.stats') as fp:
-            stats = fp.readline().strip().split(',')
-        self.assertEqual(' ResumptionToken: TestToken', stats[3])
+        with open(self.stateDir + "/tud.stats") as fp:
+            stats = fp.readline().strip().split(",")
+        self.assertEqual(" ResumptionToken: TestToken", stats[3])
 
     def testOtherMetadataPrefix(self):
-        self.logger=self.createLogger('tud')
-        repository = self.MockRepository('tud', None)
-        repository.metadataPrefix='lom'
+        self.logger = self.createLogger("tud")
+        repository = self.MockRepository("tud", None)
+        repository.metadataPrefix = "lom"
         harvester = Harvester(repository)
-        harvester.addObserver(MockOaiRequest('mocktud'))
+        harvester.addObserver(MockOaiRequest("mocktud"))
         harvester.addObserver(self.logger)
         harvester.addObserver(repository.createUploader(self.logger.eventLogger))
         harvester.addObserver(repository.mapping())
         harvester.harvest()
-        self.assertEqual(['tud:oai:lorenet:147'],self.sendId)
+        self.assertEqual(["tud:oai:lorenet:147"], self.sendId)
 
     def testWriteAndSeek(self):
-        with open('test','w') as f:
-            f.write('enige info: ')
+        with open("test", "w") as f:
+            f.write("enige info: ")
             pos = f.tell()
-            f.write('20000')
+            f.write("20000")
             f.seek(pos)
-            f.write('12345')
+            f.write("12345")
         with open("test", "r") as f:
-            self.assertEqual('enige info: 12345', f.readline().strip())
-        os.remove('test')
+            self.assertEqual("enige info: 12345", f.readline().strip())
+        os.remove("test")
 
     def testException(self):
         try:
-            raise Exception('aap')
+            raise Exception("aap")
             self.fail()
         except:
-            self.assertEqual('aap', str(sys.exc_info()[1]))
+            self.assertEqual("aap", str(sys.exc_info()[1]))
             self.assertEqual("<class 'Exception'>", str(sys.exc_info()[0]))
 
     def testIncrementalHarvest(self):
-        self.mockRepository = MockOaiRequest('mocktud')
-        with open(self.stateDir + '/tud.stats', 'w') as f:
-            f.write(' Started: 1999-12-01 16:37:41, Harvested/Uploaded/Total: 56/23/113, Done: 2004-12-31 16:39:15\n')
-        with open(self.stateDir + '/tud.next', 'w') as fp:
-            JsonDict({'resumptionToken': None, 'from': "1999-12-01T16:37:41Z"}).dump(fp)
+        self.mockRepository = MockOaiRequest("mocktud")
+        with open(self.stateDir + "/tud.stats", "w") as f:
+            f.write(
+                " Started: 1999-12-01 16:37:41, Harvested/Uploaded/Total: 56/23/113, Done: 2004-12-31 16:39:15\n"
+            )
+        with open(self.stateDir + "/tud.next", "w") as fp:
+            JsonDict({"resumptionToken": None, "from": "1999-12-01T16:37:41Z"}).dump(fp)
 
-        with open(self.stateDir + '/tud.ids', 'w') as f:
+        with open(self.stateDir + "/tud.ids", "w") as f:
             for i in range(113):
-                f.write('oai:tudfakeid:%05i\n'%i)
-        repository = self.MockRepository3('tud' ,'http://repository.tudelft.nl/oai', None, 'tud')
+                f.write("oai:tudfakeid:%05i\n" % i)
+        repository = self.MockRepository3(
+            "tud", "http://repository.tudelft.nl/oai", None, "tud"
+        )
         logger = self.createLogger()
         h = Harvester(repository)
         h.addObserver(self)
@@ -227,18 +251,24 @@ class HarvesterTest(unittest.TestCase):
         h.addObserver(repository.mapping())
         self.listRecordsFrom = None
         h.harvest()
-        self.assertEqual('1999-12-01', self.listRecordsFrom)
-        with open(self.stateDir + '/tud.stats') as f:
+        self.assertEqual("1999-12-01", self.listRecordsFrom)
+        with open(self.stateDir + "/tud.stats") as f:
             lines = f.readlines()
         self.assertEqual(2, len(lines))
-        self.assertEqual(('3', '3', '0', '116'), getHarvestedUploadedRecords(lines[1]))
+        self.assertEqual(("3", "3", "0", "116"), getHarvestedUploadedRecords(lines[1]))
 
     def testNotIncrementalInCaseOfError(self):
-        self.mockRepository = MockOaiRequest('mocktud')
-        with open(self.stateDir + '/tud.stats', 'w') as f:
-            f.write('Started: 1998-12-01 16:37:41, Harvested/Uploaded/Total: 113/113/113, Done: 2004-12-31 16:39:15\n')
-            f.write('Started: 1999-12-01 16:37:41, Harvested/Uploaded/Total: 113/113/113, Error: XXX\n')
-        repository = self.MockRepository3('tud' ,'http://repository.tudelft.nl/oai', None, 'tud')
+        self.mockRepository = MockOaiRequest("mocktud")
+        with open(self.stateDir + "/tud.stats", "w") as f:
+            f.write(
+                "Started: 1998-12-01 16:37:41, Harvested/Uploaded/Total: 113/113/113, Done: 2004-12-31 16:39:15\n"
+            )
+            f.write(
+                "Started: 1999-12-01 16:37:41, Harvested/Uploaded/Total: 113/113/113, Error: XXX\n"
+            )
+        repository = self.MockRepository3(
+            "tud", "http://repository.tudelft.nl/oai", None, "tud"
+        )
         logger = self.createLogger()
         h = Harvester(repository)
         h.addObserver(self)
@@ -247,14 +277,20 @@ class HarvesterTest(unittest.TestCase):
         h.addObserver(repository.mapping())
         self.listRecordsFrom = None
         h.harvest()
-        self.assertEqual('1998-12-01', self.listRecordsFrom)
+        self.assertEqual("1998-12-01", self.listRecordsFrom)
 
     def testOnlyErrorInLogFile(self):
-        self.mockRepository = MockOaiRequest('mocktud')
-        with open(self.stateDir + '/tud.stats', 'w') as f:
-            f.write('Started: 1998-12-01 16:37:41, Harvested/Uploaded/Total: 113/113/113, Error:\n')
-            f.write('Started: 1999-12-01 16:37:41, Harvested/Uploaded/Total: 113/113/113, Error: XXX\n')
-        repository = self.MockRepository3('tud' ,'http://repository.tudelft.nl/oai', None, 'tud')
+        self.mockRepository = MockOaiRequest("mocktud")
+        with open(self.stateDir + "/tud.stats", "w") as f:
+            f.write(
+                "Started: 1998-12-01 16:37:41, Harvested/Uploaded/Total: 113/113/113, Error:\n"
+            )
+            f.write(
+                "Started: 1999-12-01 16:37:41, Harvested/Uploaded/Total: 113/113/113, Error: XXX\n"
+            )
+        repository = self.MockRepository3(
+            "tud", "http://repository.tudelft.nl/oai", None, "tud"
+        )
         logger = self.createLogger()
         h = Harvester(repository)
         h.addObserver(self)
@@ -263,14 +299,18 @@ class HarvesterTest(unittest.TestCase):
         h.addObserver(repository.mapping())
         self.listRecordsFrom = None
         h.harvest()
-        self.assertEqual('aap', self.listRecordsFrom)
+        self.assertEqual("aap", self.listRecordsFrom)
 
     def testResumptionToken(self):
-        self.mockRepository = MockOaiRequest('mocktud')
-        f = open(self.stateDir + '/tud.stats', 'w')
-        f.write('Started: 1999-12-01 16:37:41, Harvested/Uploaded/Total: 113/113/113, Done: 2004-12-31 16:39:15, ResumptionToken: ga+hier+verder\n')
-        f.close();
-        repository = self.MockRepository3('tud' ,'http://repository.tudelft.nl/oai', None, 'tud')
+        self.mockRepository = MockOaiRequest("mocktud")
+        f = open(self.stateDir + "/tud.stats", "w")
+        f.write(
+            "Started: 1999-12-01 16:37:41, Harvested/Uploaded/Total: 113/113/113, Done: 2004-12-31 16:39:15, ResumptionToken: ga+hier+verder\n"
+        )
+        f.close()
+        repository = self.MockRepository3(
+            "tud", "http://repository.tudelft.nl/oai", None, "tud"
+        )
         logger = self.createLogger()
         h = Harvester(repository)
         h.addObserver(self)
@@ -279,16 +319,20 @@ class HarvesterTest(unittest.TestCase):
         h.addObserver(repository.mapping())
         self.listRecordsToken = None
         h.harvest()
-        self.assertEqual('ga+hier+verder', self.listRecordsToken)
+        self.assertEqual("ga+hier+verder", self.listRecordsToken)
 
     def testContinuousHarvesting(self):
-        self.mockRepository = MockOaiRequest('mocktud')
-        with open(self.stateDir + '/tud.stats', 'w') as f:
-            f.write(' Started: 1999-12-01 16:37:41, Harvested/Uploaded/Total: 56/23/113, Done: 2004-12-31 16:39:15\n')
+        self.mockRepository = MockOaiRequest("mocktud")
+        with open(self.stateDir + "/tud.stats", "w") as f:
+            f.write(
+                " Started: 1999-12-01 16:37:41, Harvested/Uploaded/Total: 56/23/113, Done: 2004-12-31 16:39:15\n"
+            )
 
-        with open(self.stateDir + '/tud.next', 'w') as f:
-            JsonDict({'resumptionToken': None, 'from': "2015-01-01T00:12:13Z"}).dump(f)
-        repository = self.MockRepository3('tud' ,'http://repository.tudelft.nl/oai', None, 'tud', continuous=True)
+        with open(self.stateDir + "/tud.next", "w") as f:
+            JsonDict({"resumptionToken": None, "from": "2015-01-01T00:12:13Z"}).dump(f)
+        repository = self.MockRepository3(
+            "tud", "http://repository.tudelft.nl/oai", None, "tud", continuous=True
+        )
         logger = self.createLogger()
         h = Harvester(repository)
         h.addObserver(self)
@@ -297,94 +341,127 @@ class HarvesterTest(unittest.TestCase):
         h.addObserver(repository.mapping())
         self.listRecordsFrom = None
         h.harvest()
-        self.assertEqual('2015-01-01T00:12:13Z', self.listRecordsFrom)
+        self.assertEqual("2015-01-01T00:12:13Z", self.listRecordsFrom)
 
     def testHarvestSet(self):
-        self.mockRepository = MockOaiRequest('mocktud')
-        harvester = self.createHarvesterWithMockUploader('um', set='withfulltext:yes', mockRequest = self)
+        self.mockRepository = MockOaiRequest("mocktud")
+        harvester = self.createHarvesterWithMockUploader(
+            "um", set="withfulltext:yes", mockRequest=self
+        )
         harvester.harvest()
-        self.assertEqual('withfulltext:yes', self.listRecordsSet)
+        self.assertEqual("withfulltext:yes", self.listRecordsSet)
 
     def mockHarvest(self, repository, logger, uploader):
-        if not hasattr(self, 'mockHarvestArgs'):
-            self.mockHarvestArgs=[]
-        self.mockHarvestArgs.append({'name':repository.id,'baseurl':repository.baseurl,'set':repository.set,'repositoryGroupId':repository.repositoryGroupId})
+        if not hasattr(self, "mockHarvestArgs"):
+            self.mockHarvestArgs = []
+        self.mockHarvestArgs.append(
+            {
+                "name": repository.id,
+                "baseurl": repository.baseurl,
+                "set": repository.set,
+                "repositoryGroupId": repository.repositoryGroupId,
+            }
+        )
 
     def testNoDateHarvester(self):
         "runs a test with xml containing no dates"
-        harvester = self.createHarvesterWithMockUploader('tud')
-        self.logger._state.token='NoDateToken'
+        harvester = self.createHarvesterWithMockUploader("tud")
+        self.logger._state.token = "NoDateToken"
         harvester.harvest()
 
     def testNothingInRepository(self):
-        harvester = self.createHarvesterWithMockUploader('tud')
-        self.logger._state.token='EmptyListToken'
+        harvester = self.createHarvesterWithMockUploader("tud")
+        self.logger._state.token = "EmptyListToken"
         harvester.harvest()
-        with open(self.stateDir+'/tud.stats') as fp:
+        with open(self.stateDir + "/tud.stats") as fp:
             lines = fp.readlines()
-        self.assertTrue('Harvested/Uploaded/Deleted/Total: 0/0/0/0' in lines[0])
+        self.assertTrue("Harvested/Uploaded/Deleted/Total: 0/0/0/0" in lines[0])
 
     def testUploadRecord(self):
-        harvester = self.createHarvesterWithMockUploader('tud')
-        harvester.upload(oaiResponse(identifier='mockid'))
-        self.assertEqual(['tud:mockid'], self.sendId)
-        self.assertFalse(hasattr(self, 'delete_id'))
+        harvester = self.createHarvesterWithMockUploader("tud")
+        harvester.upload(oaiResponse(identifier="mockid"))
+        self.assertEqual(["tud:mockid"], self.sendId)
+        self.assertFalse(hasattr(self, "delete_id"))
 
     def testSkippedRecord(self):
-        harvester = self.createHarvesterWithMockUploader('tud')
+        harvester = self.createHarvesterWithMockUploader("tud")
+
         def createUpload(repository, oaiResponse):
             upload = Upload(repository=repository, oaiResponse=oaiResponse)
             upload.id = "tud:mockid"
             upload.skip = True
             return upload
+
         self.mapper.createUpload = createUpload
-        harvester.upload(oaiResponse(identifier='mockid'))
+        harvester.upload(oaiResponse(identifier="mockid"))
         self.assertEqual([], self.sendId)
-        self.assertFalse(hasattr(self, 'delete_id'))
+        self.assertFalse(hasattr(self, "delete_id"))
 
     def testDelete(self):
-        harvester = self.createHarvesterWithMockUploader('tud')
-        harvester.upload(oaiResponse(identifier='mockid', deleted=True))
+        harvester = self.createHarvesterWithMockUploader("tud")
+        harvester.upload(oaiResponse(identifier="mockid", deleted=True))
         self.assertEqual([], self.sendId)
-        self.assertEqual('tud:mockid', self.delete_id)
+        self.assertEqual("tud:mockid", self.delete_id)
 
     def testDcIdentifierTake2(self):
-        self.sendFulltexturl=None
-        harvester = self.createHarvesterWithMockUploader('tud')
-        self.logger.token='DcIdentifierHttp2'
+        self.sendFulltexturl = None
+        harvester = self.createHarvesterWithMockUploader("tud")
+        self.logger.token = "DcIdentifierHttp2"
         harvester.harvest()
-        with open(self.stateDir+'/tud.stats') as f:
+        with open(self.stateDir + "/tud.stats") as f:
             f.readlines()
 
     def testHarvesterStopsIgnoringAfter100records(self):
-        observer = CallTrace('observer')
-        upload = Upload(repository=None, oaiResponse=oaiResponse(identifier='mockid'))
-        upload.id = 'mockid'
-        observer.returnValues['createUpload'] = upload
-        observer.returnValues['totalInvalidIds'] = 101
-        observer.exceptions['send'] =  InvalidDataException(upload.id, "message")
-        repository=CallTrace("repository", returnValues={'maxIgnore': 100})
+        observer = CallTrace("observer")
+        upload = Upload(repository=None, oaiResponse=oaiResponse(identifier="mockid"))
+        upload.id = "mockid"
+        observer.returnValues["createUpload"] = upload
+        observer.returnValues["totalInvalidIds"] = 101
+        observer.exceptions["send"] = InvalidDataException(upload.id, "message")
+        repository = CallTrace("repository", returnValues={"maxIgnore": 100})
         harvester = Harvester(repository)
         harvester.addObserver(observer)
-        self.assertRaises(TooMuchInvalidDataException, lambda: harvester.upload(oaiResponse(identifier='mockid')))
-        self.assertEqual(['createUpload', "notifyHarvestedRecord", "send", "logInvalidData", "totalInvalidIds"], [m.name for m in observer.calledMethods])
+        self.assertRaises(
+            TooMuchInvalidDataException,
+            lambda: harvester.upload(oaiResponse(identifier="mockid")),
+        )
+        self.assertEqual(
+            [
+                "createUpload",
+                "notifyHarvestedRecord",
+                "send",
+                "logInvalidData",
+                "totalInvalidIds",
+            ],
+            [m.name for m in observer.calledMethods],
+        )
 
     def testHarvesterIgnoringInvalidDataErrors(self):
-        observer = CallTrace('observer')
-        upload = Upload(repository=None, oaiResponse=oaiResponse(identifier='mockid'))
-        upload.id = 'mockid'
-        observer.returnValues['createUpload'] = upload
-        observer.returnValues['totalInvalidIds'] = 0
-        observer.exceptions['send'] =  InvalidDataException(upload.id, "message")
-        repository=CallTrace("repository", returnValues={'maxIgnore': 100})
+        observer = CallTrace("observer")
+        upload = Upload(repository=None, oaiResponse=oaiResponse(identifier="mockid"))
+        upload.id = "mockid"
+        observer.returnValues["createUpload"] = upload
+        observer.returnValues["totalInvalidIds"] = 0
+        observer.exceptions["send"] = InvalidDataException(upload.id, "message")
+        repository = CallTrace("repository", returnValues={"maxIgnore": 100})
         harvester = Harvester(repository)
         harvester.addObserver(observer)
         harvester.upload(oaiResponse())
-        self.assertEqual(['createUpload', "notifyHarvestedRecord", "send", 'logInvalidData', "totalInvalidIds", 'logIgnoredIdentifierWarning'], [m.name for m in observer.calledMethods])
+        self.assertEqual(
+            [
+                "createUpload",
+                "notifyHarvestedRecord",
+                "send",
+                "logInvalidData",
+                "totalInvalidIds",
+                "logIgnoredIdentifierWarning",
+            ],
+            [m.name for m in observer.calledMethods],
+        )
 
-    #self shunt:
+    # self shunt:
     def send(self, upload):
-        self.sendCalled+=1
+        self.sendCalled += 1
         self.sendId.append(upload.id)
         self.sendParts.append(upload.parts)
         self.upload = upload
@@ -395,7 +472,7 @@ class HarvesterTest(unittest.TestCase):
         self.delete_id = anUpload.id
 
     def uploaderInfo(self):
-        return 'The uploader is connected to /dev/null'
+        return "The uploader is connected to /dev/null"
 
     def start(self):
         self.startCalled += 1
@@ -406,14 +483,18 @@ class HarvesterTest(unittest.TestCase):
     def listRecordsButWaitLong(self, a, b, c, d):
         sleep(20)
 
-    def MockRepository (self, id, set):
-        return _MockRepository(id, 'http://mock.server', set, 'inst'+id,self)
+    def MockRepository(self, id, set):
+        return _MockRepository(id, "http://mock.server", set, "inst" + id, self)
 
-    def MockRepository2 (self, nr):
-        return _MockRepository('reponame'+nr, 'url'+nr, 'set'+nr, 'instname'+nr,self)
+    def MockRepository2(self, nr):
+        return _MockRepository(
+            "reponame" + nr, "url" + nr, "set" + nr, "instname" + nr, self
+        )
 
     def MockRepository3(self, id, baseurl, set, repositoryGroupId, continuous=False):
-        return _MockRepository(id, baseurl, set, repositoryGroupId, self, continuous=continuous)
+        return _MockRepository(
+            id, baseurl, set, repositoryGroupId, self, continuous=continuous
+        )
 
     def mockssetarget(self):
         return self
@@ -421,18 +502,24 @@ class HarvesterTest(unittest.TestCase):
     def createUploader(self, logger):
         return self
 
-    def listRecords(self, metadataPrefix = None, from_ = "aap", resumptionToken = 'mies', set = None):
+    def listRecords(
+        self, metadataPrefix=None, from_="aap", resumptionToken="mies", set=None
+    ):
         self.listRecordsFrom = from_
         self.listRecordsToken = resumptionToken
         self.listRecordsSet = set
         if metadataPrefix:
             if set:
-                return self.mockRepository.listRecords(metadataPrefix = metadataPrefix, set = set)
-            return self.mockRepository.listRecords(metadataPrefix = metadataPrefix)
-        return self.mockRepository.listRecords(resumptionToken = resumptionToken)
+                return self.mockRepository.listRecords(
+                    metadataPrefix=metadataPrefix, set=set
+                )
+            return self.mockRepository.listRecords(metadataPrefix=metadataPrefix)
+        return self.mockRepository.listRecords(resumptionToken=resumptionToken)
 
 
 def getHarvestedUploadedRecords(logline):
-    matches=re.search('Harvested/Uploaded/(?:Deleted/)?Total: \s*(\d*)/\s*(\d*)(?:/\s*(\d*))?/\s*(\d*)', logline)
-    return matches.groups('0')
-
+    matches = re.search(
+        "Harvested/Uploaded/(?:Deleted/)?Total: \s*(\d*)/\s*(\d*)(?:/\s*(\d*))?/\s*(\d*)",
+        logline,
+    )
+    return matches.groups("0")

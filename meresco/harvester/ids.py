@@ -32,77 +32,101 @@
 #
 ## end license ##
 
-#
-import os, pathlib
+import pathlib
 
-from os import makedirs
-from os.path import isdir, join, basename
 from escaping import escapeFilename, unescapeFilename
 
 
-def _readIds(filename):
-    uniqueIds = set()
-    ids = []
-    with open(filename, "a+") as fp:
-        fp.seek(0)
-        for id in (unescapeFilename(id) for id in fp):
-            if id[-1] == "\n":
-                id = id[:-1]
-            if id in uniqueIds:
-                continue
-            ids.append(id)
-            uniqueIds.add(id)
-    return ids
-
-
-def _writeIds(filename, ids):
-    path = pathlib.Path(filename)
-    if ids is None or len(ids) == 0:
-        path.unlink()
-        return
-    idfilenew = path.with_name(path.name + ".new")
-    with idfilenew.open("w") as fp:
-        for anId in ids:
-            fp.write("{}\n".format(escapeFilename(anId)))
-    idfilenew.rename(path)
+def readIds(filepath):
+    return Ids(filepath, read_only=True).getIds()
 
 
 class Ids(object):
-    def __init__(self, path):
-        self._filepath = pathlib.Path(path)
-        self._filepath.parent.mkdir(parents=True, exist_ok=True)
-        self.__idsfile = None
+    def __init__(self, path, read_only=False, _max_dirty_count=10000):
+        self._file_main = pathlib.Path(path)
+        self._file_main.parent.mkdir(parents=True, exist_ok=True)
+        self._file_tmp = self._file_main.with_name(self._file_main.name + ".~tmp")
+        self._file_state = self._file_main.with_name(self._file_main.name + ".0")
+        if self._file_tmp.exists():
+            raise ValueError(f"Unexpected file {self._file_tmp!r} exists")
         self.__ids = None
+        self._max_dirty_count = _max_dirty_count
+        self._dirty_count = 0
+        self._read_only = read_only
 
-    @property
-    def _idsfile(self):
-        if self.__idsfile is None:
-            self.__idsfile = self._filepath.open("a")
-        return self.__idsfile
+    @staticmethod
+    def _read_all(filepath):
+        result = []
+        if not filepath.exists():
+            return result
+        with filepath.open("r") as fp:
+            for identifier in (unescapeFilename(line) for line in fp):
+                if identifier[-1] == "\n":
+                    identifier = identifier[:-1]
+                result.append(identifier)
+        return result
 
     @property
     def _ids(self):
         if self.__ids is None:
-            self.__ids = _readIds(self._filepath)
+            self.__ids = self._init()
         return self.__ids
+
+    def _read_state(self):
+        current = self._read_all(self._file_main)
+        if not self._file_state.exists():
+            return current, False
+        with self._file_state.open("r") as fp:
+            for line in fp:
+                state = line[0]
+                identifier = unescapeFilename(line[1:].rstrip())
+                action = actions[state]
+                action(current, identifier)
+        return current, True
+
+    def _init(self):
+        current, is_dirty = self._read_state()
+        if self._read_only or not is_dirty:
+            return current
+        seen = set()
+        if not current:
+            if self._file_main.exists():
+                self._file_main.unlink()
+        else:
+            with self._file_tmp.open("w") as fnew:
+                for identifier in current:
+                    if identifier in seen:
+                        continue
+                    seen.add(identifier)
+                    fnew.write("{}\n".format(escapeFilename(identifier)))
+            self._file_tmp.rename(self._file_main)
+        self._file_state.unlink()
+        self._dirty_count = 0
+        return current
+
+    def _maybe_cleanup(self):
+        self._dirty_count += 1
+        if self.__ids and self._dirty_count < self._max_dirty_count:
+            return
+        self.__ids = self._init()
 
     def __len__(self):
         return len(self._ids)
 
     def __iter__(self):
-        for id in iter(self._ids[:]):
-            yield unescapeFilename(id)
+        return iter(self.getIds())
 
     def clear(self):
         del self._ids[:]
+        self.__ids = None
+        for f in [self._file_main, self._file_state]:
+            if f.exists():
+                f.unlink()
 
     def open(self):
         pass
 
     def close(self):
-        self.__idsfile and self.__idsfile.close()
-        _writeIds(self._filepath, self._ids)
-        self.__idsfile = None
         self.__ids = None
 
     reopen = close
@@ -114,13 +138,18 @@ class Ids(object):
         if uploadid in self._ids:
             return
         self._ids.append(uploadid)
-        self._idsfile.write("{}\n".format(escapeFilename(uploadid)))
-        self._idsfile.flush()
+        self._write_state_id("+", uploadid)
 
     def remove(self, uploadid):
-        if uploadid in self._ids:
-            self._ids.remove(uploadid)
-            self.close()
+        if uploadid not in self._ids:
+            return
+        self._ids.remove(uploadid)
+        self._write_state_id("-", uploadid)
+
+    def _write_state_id(self, state, identifier):
+        with self._file_state.open("a") as fp:
+            fp.write("{}{}\n".format(state, escapeFilename(identifier)))
+        self._maybe_cleanup()
 
     def moveTo(self, dest):
         for i in self._ids:
@@ -130,7 +159,18 @@ class Ids(object):
         self.close()
 
     def excludeIdsFrom(self, other):
-        remove_this = set(other.getIds())
-        new_ids = [i for i in self if not i in remove_this]
-        self._ids[:] = new_ids
-        self.close()
+        for rmId in other.getIds():
+            self.remove(rmId)
+
+
+def remove_from_list(a, x):
+    if x in a:
+        a.remove(x)
+
+
+def append_to_list(a, x):
+    if x not in a:
+        a.append(x)
+
+
+actions = {"-": remove_from_list, "+": append_to_list}
