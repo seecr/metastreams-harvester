@@ -9,7 +9,7 @@
 # Copyright (C) 2007-2009 Stichting Kennisnet Ict op school. http://www.kennisnetictopschool.nl
 # Copyright (C) 2009 Tilburg University http://www.uvt.nl
 # Copyright (C) 2011-2012, 2020-2021 Stichting Kennisnet https://www.kennisnet.nl
-# Copyright (C) 2012-2013, 2020-2023 Seecr (Seek You Too B.V.) https://seecr.nl
+# Copyright (C) 2012-2013, 2020-2023, 2025 Seecr (Seek You Too B.V.) https://seecr.nl
 # Copyright (C) 2020-2021 Data Archiving and Network Services https://dans.knaw.nl
 # Copyright (C) 2020-2021 SURF https://www.surf.nl
 # Copyright (C) 2020-2021 The Netherlands Institute for Sound and Vision https://beeldengeluid.nl
@@ -38,7 +38,7 @@ from os.path import join
 from meresco.harvester.repository import Repository
 from meresco.harvester.action import SmoothAction, DONE, State
 from meresco.harvester.harvester import HARVESTED, NOTHING_TO_DO
-from meresco.harvester.ids import readIds
+from meresco.harvester.ids import Ids
 from meresco.harvester.eventlogger import NilEventLogger
 from seecr.test import CallTrace
 
@@ -46,32 +46,40 @@ from seecr.test import CallTrace
 class SmoothActionTest(ActionTestCase):
     def setUp(self):
         ActionTestCase.setUp(self)
-        self.repo = Repository('domainId', 'rep')
-        self.uploader = CallTrace('Uploader')
+        self.repo = Repository("domainId", "rep")
+        self.uploader = CallTrace("Uploader")
         self.repo.createUploader = lambda logger: self.uploader
-        self.stateDir = self.tmp_path / 'state'
-        self.logDir = self.tmp_path / 'log'
-        self.state = State(self.stateDir, self.logDir, 'rep')
+        self.stateDir = self.tmp_path / "state"
+        self.logDir = self.tmp_path / "log"
+        self.state = State(self.stateDir, self.logDir, "rep")
         self.smoothaction = SmoothAction(self.repo, self.state, NilEventLogger())
-        self.idfilename = join(self.stateDir, 'rep.ids')
-        self.invalidIdsFilename = join(self.stateDir, 'rep_invalid.ids')
-        self.old_idfilename = join(self.stateDir, 'rep.ids.old')
-        self.statsfilename = join(self.stateDir,'rep.stats')
+        self.idfilename = join(self.stateDir, "rep.ids")
+        self.invalidIdsFilename = join(self.stateDir, "rep_invalid.ids")
+        self.old_idfilename = join(self.stateDir, "rep.ids.old")
+        self.statsfilename = join(self.stateDir, "rep.stats")
 
     def testSmooth_Init(self):
-        writefile(self.idfilename, 'rep:id:1\nrep:id:2\n')
-        writefile(self.invalidIdsFilename, 'rep:id:3\n')
-        writefile(self.statsfilename, 'Started: 2005-12-22 16:33:39, Harvested/Uploaded/Deleted/Total: 10/10/0/2, Done: ResumptionToken:\n')
+        writefile(self.idfilename, "rep:id:1\nrep:id:2\n")
+        writefile(self.invalidIdsFilename, "rep:id:3\n")
+        writefile(
+            self.statsfilename,
+            "Started: 2005-12-22 16:33:39, Harvested/Uploaded/Deleted/Total: 10/10/0/2, Done: ResumptionToken:\n",
+        )
 
         self.assertFalse(os.path.isfile(self.old_idfilename))
 
-        done,message, hasResumptionToken = self.smoothaction.do()
+        done, message, hasResumptionToken = self.smoothaction.do()
 
         self.assertTrue(os.path.isfile(self.old_idfilename))
         self.assertFalse(os.path.isfile(self.idfilename))
-        self.assertEqual('rep:id:1\nrep:id:2\nrep:id:3\n', readfile(self.old_idfilename))
-        self.assertTrue('Done: Deleted all ids' in  readfile(self.statsfilename), readfile(self.statsfilename))
-        self.assertEqual('Smooth reharvest: initialized.', message)
+        self.assertEqual(
+            "rep:id:1\nrep:id:2\nrep:id:3\n", readfile(self.old_idfilename)
+        )
+        self.assertTrue(
+            "Done: Deleted all ids" in readfile(self.statsfilename),
+            readfile(self.statsfilename),
+        )
+        self.assertEqual("Smooth reharvest: initialized.", message)
         self.assertFalse(done)
 
     def testSmooth_InitWithNothingHarvestedYetRepositoryWillStartHarvestin(self):
@@ -79,80 +87,89 @@ class SmoothActionTest(ActionTestCase):
         self.assertFalse(os.path.isfile(self.invalidIdsFilename))
         self.assertFalse(os.path.isfile(self.old_idfilename))
 
-        self.smoothaction._harvest = lambda:(HARVESTED, False)
+        self.smoothaction._harvest = lambda: (HARVESTED, False)
 
-        done,message, hasResumptionToken = self.smoothaction.do()
+        done, message, hasResumptionToken = self.smoothaction.do()
 
-        self.assertEqual('Smooth reharvest: Harvested.', message)
+        self.assertEqual("Smooth reharvest: Harvested.", message)
         self.assertFalse(done)
 
     def testSmooth_Harvest(self):
-        writefile(self.old_idfilename, 'rep:id:1\nrep:id:2\n')
-        writefile(self.idfilename, '')
-        writefile(self.statsfilename, 'Started: 2005-12-22 16:33:39, Harvested/Uploaded/Deleted/Total: 10/10/0/2, Done: ResumptionToken:\n'+
-        'Started: 2005-12-28 10:10:10, Harvested/Uploaded/Deleted/Total: 0/0/0/0, Done: Deleted all ids. \n')
+        writefile(self.old_idfilename, "rep:id:1\nrep:id:2\n")
+        writefile(self.idfilename, "")
+        writefile(
+            self.statsfilename,
+            "Started: 2005-12-22 16:33:39, Harvested/Uploaded/Deleted/Total: 10/10/0/2, Done: ResumptionToken:\n"
+            + "Started: 2005-12-28 10:10:10, Harvested/Uploaded/Deleted/Total: 0/0/0/0, Done: Deleted all ids. \n",
+        )
 
-        self.smoothaction._harvest = lambda:(HARVESTED, False)
-        done,message,hasResumptionToken = self.smoothaction.do()
+        self.smoothaction._harvest = lambda: (HARVESTED, False)
+        done, message, hasResumptionToken = self.smoothaction.do()
 
-        self.assertEqual('Smooth reharvest: Harvested.', message)
+        self.assertEqual("Smooth reharvest: Harvested.", message)
         self.assertFalse(done)
 
     def testSmooth_HarvestAgain(self):
-        writefile(self.old_idfilename, 'rep:id:1\nrep:id:2\n')
-        writefile(self.idfilename, 'rep:id:41\nrep:id:2\n')
-        writefile(self.statsfilename, 'Started: 2005-12-22 16:33:39, Harvested/Uploaded/Deleted/Total: 10/10/0/2, Done: ResumptionToken:\n'+
-        'Started: 2005-12-28 10:10:10, Harvested/Uploaded/Deleted/Total: 2/2/0/2, Done: ResumptionToken:yes \n')
+        writefile(self.old_idfilename, "rep:id:1\nrep:id:2\n")
+        writefile(self.idfilename, "rep:id:41\nrep:id:2\n")
+        writefile(
+            self.statsfilename,
+            "Started: 2005-12-22 16:33:39, Harvested/Uploaded/Deleted/Total: 10/10/0/2, Done: ResumptionToken:\n"
+            + "Started: 2005-12-28 10:10:10, Harvested/Uploaded/Deleted/Total: 2/2/0/2, Done: ResumptionToken:yes \n",
+        )
 
-        self.smoothaction._harvest = lambda:(HARVESTED, False)
+        self.smoothaction._harvest = lambda: (HARVESTED, False)
         done, message, hasResumptionToken = self.smoothaction.do()
 
-        self.assertEqual('Smooth reharvest: Harvested.', message)
+        self.assertEqual("Smooth reharvest: Harvested.", message)
         self.assertFalse(done)
 
     def testSmooth_NothingToDo(self):
-        writefile(self.old_idfilename, 'rep:id:1\nrep:id:2\n')
-        writefile(self.idfilename, 'rep:id:41\nrep:id:2\n')
-        writefile(self.statsfilename, 'Started: 2005-12-22 16:33:39, Harvested/Uploaded/Deleted/Total: 10/10/0/2, Done: ResumptionToken:\n'+
-        'Started: 2005-12-28 10:10:10, Harvested/Uploaded/Deleted/Total: 2/2/0/2, Done: ResumptionToken:None \n')
+        writefile(self.old_idfilename, "rep:id:1\nrep:id:2\n")
+        writefile(self.idfilename, "rep:id:41\nrep:id:2\n")
+        writefile(
+            self.statsfilename,
+            "Started: 2005-12-22 16:33:39, Harvested/Uploaded/Deleted/Total: 10/10/0/2, Done: ResumptionToken:\n"
+            + "Started: 2005-12-28 10:10:10, Harvested/Uploaded/Deleted/Total: 2/2/0/2, Done: ResumptionToken:None \n",
+        )
 
-        self.smoothaction._harvest = lambda:(NOTHING_TO_DO, False)
-        self.smoothaction._finish = lambda:DONE
+        self.smoothaction._harvest = lambda: (NOTHING_TO_DO, False)
+        self.smoothaction._finish = lambda: DONE
         done, message, hasResumptionToken = self.smoothaction.do()
 
-        self.assertEqual('Smooth reharvest: ' + DONE, message)
+        self.assertEqual("Smooth reharvest: " + DONE, message)
         self.assertTrue(done)
 
     def mockdelete(self, filename):
         self.mockdelete_filename = filename
-        self.mockdelete_ids = readIds(filename)
+        self.mockdelete_ids = list(Ids(filename))
 
     def testHarvest(self):
-        harvester = CallTrace('harvester')
+        harvester = CallTrace("harvester")
         self.smoothaction._createHarvester = lambda: ([], harvester)
-        harvester.returnValues['harvest'] = ('result', True)
+        harvester.returnValues["harvest"] = ("result", True)
 
         result = self.smoothaction._harvest()
-        self.assertEqual(['harvest'], [m.name for m in harvester.calledMethods])
-        self.assertEqual(('result', True), result)
+        self.assertEqual(["harvest"], [m.name for m in harvester.calledMethods])
+        self.assertEqual(("result", True), result)
 
     def testResetState_WithoutPreviousCleanState(self):
-        self.writeLogLine(2010, 3, 1, token='resumptionToken')
-        self.writeLogLine(2010, 3, 2, token='resumptionToken')
-        self.writeLogLine(2010, 3, 3, exception='Exception')
+        self.writeLogLine(2010, 3, 1, token="resumptionToken")
+        self.writeLogLine(2010, 3, 2, token="resumptionToken")
+        self.writeLogLine(2010, 3, 3, exception="Exception")
         action = self.newSmoothAction()
 
         action.resetState()
 
         self.assertEqual((None, None), (self.state.from_, self.state.token))
-        self.assertEqual(1, self.state.eventCounts()['deleted'])
+        self.assertEqual(1, self.state.eventCounts()["deleted"])
 
     def testResetState_ToPreviousCleanState(self):
-        self.writeLogLine(2010, 3, 2, token='')
+        self.writeLogLine(2010, 3, 2, token="")
         self.writeMarkDeleted(2010, 3, 3)
-        self.writeLogLine(2010, 3, 4, token='resumptionToken')
-        self.writeLogLine(2010, 3, 5, token='resumptionToken')
-        self.writeLogLine(2010, 3, 6, exception='Exception')
+        self.writeLogLine(2010, 3, 4, token="resumptionToken")
+        self.writeLogLine(2010, 3, 5, token="resumptionToken")
+        self.writeLogLine(2010, 3, 6, exception="Exception")
         action = self.newSmoothAction()
 
         action.resetState()
@@ -160,8 +177,8 @@ class SmoothActionTest(ActionTestCase):
         self.assertEqual((None, None), (self.state.from_, self.state.token))
 
     def testResetState_ToStartAllOver(self):
-        self.writeLogLine(2010, 3, 3, token='resumptionToken')
-        self.writeLogLine(2010, 3, 4, exception='Exception')
+        self.writeLogLine(2010, 3, 3, token="resumptionToken")
+        self.writeLogLine(2010, 3, 4, exception="Exception")
         action = self.newSmoothAction()
 
         action.resetState()
@@ -169,13 +186,17 @@ class SmoothActionTest(ActionTestCase):
         self.assertEqual((None, None), (self.state.from_, self.state.token))
 
     def newSmoothAction(self):
-        action = SmoothAction(self.repository, state=self.state, generalHarvestLog=NilEventLogger())
-        action._harvest = lambda:None
+        action = SmoothAction(
+            self.repository, state=self.state, generalHarvestLog=NilEventLogger()
+        )
+        action._harvest = lambda: None
         return action
 
+
 def writefile(filename, contents):
-    with open(filename,'w') as f:
+    with open(filename, "w") as f:
         f.write(contents)
+
 
 def readfile(filename):
     with open(filename) as f:

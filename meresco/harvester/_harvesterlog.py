@@ -9,7 +9,7 @@
 # Copyright (C) 2007-2009 Stichting Kennisnet Ict op school. http://www.kennisnetictopschool.nl
 # Copyright (C) 2009 Tilburg University http://www.uvt.nl
 # Copyright (C) 2010-2012, 2015, 2020-2021 Stichting Kennisnet https://www.kennisnet.nl
-# Copyright (C) 2011-2012, 2015, 2017, 2020-2022 Seecr (Seek You Too B.V.) https://seecr.nl
+# Copyright (C) 2011-2012, 2015, 2017, 2020-2022, 2025 Seecr (Seek You Too B.V.) https://seecr.nl
 # Copyright (C) 2020-2021 Data Archiving and Network Services https://dans.knaw.nl
 # Copyright (C) 2020-2021 SURF https://www.surf.nl
 # Copyright (C) 2020-2021 The Netherlands Institute for Sound and Vision https://beeldengeluid.nl
@@ -43,14 +43,17 @@ from seecr.zulutime import ZuluTime
 from meresco.harvester.constants import INVALID_DATA_MESSAGES_DIR
 from collections import namedtuple
 
+
 class HarvesterLog(object):
     def __init__(self, repositoryState):
         self._state = repositoryState
-        self._eventlogger = EventLogger(self._state.logPath / f'{self._state.name}.events')
+        self._eventlogger = EventLogger(
+            self._state.logPath / f"{self._state.name}.events"
+        )
         self._resetCounts()
 
     def isCurrentDay(self, date):
-        return date.split('T')[0] == self._state.getTime().split()[0]
+        return date.split("T")[0] == self._state.getTime().split()[0]
 
     def startRepository(self):
         self._resetCounts()
@@ -74,19 +77,33 @@ class HarvesterLog(object):
     def markDeleted(self):
         self._state.ids.clear()
         self._state.markDeleted()
-        self._eventlogger.logSuccess('Harvested/Uploaded/Deleted/Total: 0/0/0/0, Done: Deleted all ids.', id=self._state.name)
+        self._eventlogger.logSuccess(
+            "Harvested/Uploaded/Deleted/Total: 0/0/0/0, Done: Deleted all ids.",
+            id=self._state.name,
+        )
 
     def endRepository(self, token, responseDate):
         self._state.markHarvested(self.countsSummary(), token, responseDate)
-        self._eventlogger.logSuccess('Harvested/Uploaded/Deleted/Total: %s, ResumptionToken: %s' % ('/'.join(map(str, self.countsSummary())), token), id=self._state.name)
+        self._eventlogger.logSuccess(
+            "Harvested/Uploaded/Deleted/Total: %s, ResumptionToken: %s"
+            % ("/".join(map(str, self.countsSummary())), token),
+            id=self._state.name,
+        )
 
     def endWithException(self, exType, exValue, exTb):
         self._state.markException(exType, exValue, self.countsSummary())
-        error = '|'.join(str.strip(s) for s in traceback.format_exception(exType, exValue, exTb))
+        error = "|".join(
+            str.strip(s) for s in traceback.format_exception(exType, exValue, exTb)
+        )
         self._eventlogger.logError(error, id=self._state.name)
 
     def countsSummary(self):
-        return CountsSummary(self._harvestedCount, self._uploadedCount, self._deletedCount, self.totalIds())
+        return CountsSummary(
+            self._harvestedCount,
+            self._uploadedCount,
+            self._deletedCount,
+            self.totalIds(),
+        )
 
     def close(self):
         self._eventlogger.close()
@@ -106,21 +123,18 @@ class HarvesterLog(object):
         self._state.ids.remove(uploadid)
         self._deletedCount += 1
 
-    def getIds(self, invalid=False, deleteIds=False):
-        if deleteIds:
-            return self._state.ids.getDeleteIds()
-        idsFile = self._state.invalidIds if invalid else self._state.ids
-        return idsFile.getIds()
+    def getIds(self):
+        return self._state.ids.getIds()
 
     def logInvalidData(self, uploadid, message):
         self._state.invalidIds.add(uploadid)
         filePath = self._invalidDataMessageFilePath(uploadid)
         filePath.parent.mkdir(parents=True, exist_ok=True)
-        with open(filePath, 'w') as fp:
+        with open(filePath, "w") as fp:
             fp.write(message)
 
     def logIgnoredIdentifierWarning(self, uploadid):
-        self._eventlogger.logWarning('IGNORED', uploadid)
+        self._eventlogger.logWarning("IGNORED", uploadid)
 
     def hasWork(self, continuousInterval=None):
         continuousInterval = 0 if continuousInterval is None else continuousInterval
@@ -131,7 +145,7 @@ class HarvesterLog(object):
             return True
         now = self._state.getZTime()
         if continuousInterval <= 0:
-            return lastTime.zulu().split('T')[0] != now.zulu().split('T')[0]
+            return lastTime.zulu().split("T")[0] != now.zulu().split("T")[0]
         return now.epoch - lastTime.epoch > continuousInterval
 
     def state(self):
@@ -149,5 +163,7 @@ class HarvesterLog(object):
         repositoryId, recordId = uploadid.split(":", 1)
         return self._state.invalidLogPath / escapeFilename(recordId)
 
-CountsSummary = namedtuple('CountsSummary', ['harvested', 'uploaded', 'deleted', 'total'])
 
+CountsSummary = namedtuple(
+    "CountsSummary", ["harvested", "uploaded", "deleted", "total"]
+)

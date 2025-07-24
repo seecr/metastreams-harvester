@@ -11,7 +11,7 @@
 # Copyright (C) 2011, 2020-2021 Stichting Kennisnet https://www.kennisnet.nl
 # Copyright (C) 2020-2021 Data Archiving and Network Services https://dans.knaw.nl
 # Copyright (C) 2020-2021 SURF https://www.surf.nl
-# Copyright (C) 2020-2022 Seecr (Seek You Too B.V.) https://seecr.nl
+# Copyright (C) 2020-2022, 2025 Seecr (Seek You Too B.V.) https://seecr.nl
 # Copyright (C) 2020-2021 The Netherlands Institute for Sound and Vision https://beeldengeluid.nl
 #
 # This file is part of "Metastreams Harvester"
@@ -39,13 +39,14 @@ from os import makedirs
 from os.path import isdir, join, basename
 from escaping import escapeFilename, unescapeFilename
 
-def readIds(filename):
+
+def _readIds(filename):
     uniqueIds = set()
     ids = []
-    with open(filename, 'a+') as fp:
+    with open(filename, "a+") as fp:
         fp.seek(0)
         for id in (unescapeFilename(id) for id in fp):
-            if id[-1] == '\n':
+            if id[-1] == "\n":
                 id = id[:-1]
             if id in uniqueIds:
                 continue
@@ -53,16 +54,18 @@ def readIds(filename):
             uniqueIds.add(id)
     return ids
 
-def writeIds(filename, ids):
+
+def _writeIds(filename, ids):
     path = pathlib.Path(filename)
     if ids is None or len(ids) == 0:
         path.unlink()
         return
-    idfilenew = path.with_name(path.name + '.new')
-    with idfilenew.open('w') as fp:
+    idfilenew = path.with_name(path.name + ".new")
+    with idfilenew.open("w") as fp:
         for anId in ids:
-            fp.write('{}\n'.format(escapeFilename(anId)))
+            fp.write("{}\n".format(escapeFilename(anId)))
     idfilenew.rename(path)
+
 
 class Ids(object):
     def __init__(self, path):
@@ -74,13 +77,13 @@ class Ids(object):
     @property
     def _idsfile(self):
         if self.__idsfile is None:
-            self.__idsfile = self._filepath.open('a')
+            self.__idsfile = self._filepath.open("a")
         return self.__idsfile
 
     @property
     def _ids(self):
         if self.__ids is None:
-            self.__ids = readIds(self._filepath)
+            self.__ids = _readIds(self._filepath)
         return self.__ids
 
     def __len__(self):
@@ -98,7 +101,7 @@ class Ids(object):
 
     def close(self):
         self.__idsfile and self.__idsfile.close()
-        writeIds(self._filepath, self._ids)
+        _writeIds(self._filepath, self._ids)
         self.__idsfile = None
         self.__ids = None
 
@@ -107,15 +110,11 @@ class Ids(object):
     def getIds(self):
         return self._ids[:]
 
-    def getDeleteIds(self):
-        return readIds(self._filepath.with_name(self._filepath.name + ".delete"))
-
-
     def add(self, uploadid):
         if uploadid in self._ids:
             return
         self._ids.append(uploadid)
-        self._idsfile.write('{}\n'.format(escapeFilename(uploadid)))
+        self._idsfile.write("{}\n".format(escapeFilename(uploadid)))
         self._idsfile.flush()
 
     def remove(self, uploadid):
@@ -135,6 +134,3 @@ class Ids(object):
         new_ids = [i for i in self if not i in remove_this]
         self._ids[:] = new_ids
         self.close()
-
-
-
