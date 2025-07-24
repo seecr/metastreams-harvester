@@ -33,14 +33,8 @@
 ## end license ##
 
 from .eventlogger import EventLogger
-from .ids import Ids
 import traceback
-from os.path import join, isdir, isfile, dirname
-from os import makedirs, remove
-from shutil import rmtree
 from escaping import escapeFilename
-from seecr.zulutime import ZuluTime
-from meresco.harvester.constants import INVALID_DATA_MESSAGES_DIR
 from collections import namedtuple
 
 

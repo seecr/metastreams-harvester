@@ -13,6 +13,8 @@ exclude =
 extend-ignore =
     # E266 too many leading '#' for block comment
     E266,
+    # E501, line too long
+    E501,
     # docstring
     D10
 per-file-ignores =
