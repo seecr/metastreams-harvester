@@ -325,8 +325,8 @@ def thousands(number):
     return format(number, ",d").replace(",", ".")
 
 
-def render_thousands(tag, observable, number, domainId, repositoryId):
-    yield thousands(number)
+def render_thousands(tag, observable, count, domainId, repositoryId):
+    yield thousands(count)
 
 
 def rss_domain(tag, observable, original_domainId):
