@@ -62,6 +62,7 @@ from meresco.components.http.utils import ContentTypePlainText, okPlainText
 from .__version__ import VERSION_STRING, VERSION
 from .repositorystatus import RepositoryStatus
 from .harvesterdataactions import HarvesterDataActions
+from .apiactions import ApiActions
 from .harvesterdataretrieve import HarvesterDataRetrieve
 from .timeslot import Timeslot
 from meresco.components.http.utils import ContentTypeJson
@@ -110,7 +111,7 @@ def dna(
     configDict = JsonDict(
         logPath=logPath,
         statePath=statePath,
-        externaUrl=externalUrl,
+        externalUrl=externalUrl,
         dataPath=dataPath,
     )
     print("Started Metastreams with configuration:\n" + configDict.pretty_print())
@@ -238,6 +239,10 @@ def dna(
                                         ),
                                     ),
                                     (PathFilter("/login.action"), basicHtmlLoginHelix),
+                                    (
+                                        PathFilter("/api"),
+                                        (ApiActions(), (harvesterData,)),
+                                    ),
                                     (staticFiles,),
                                     (
                                         PathFilter(
@@ -246,6 +251,7 @@ def dna(
                                                 "/info/version",
                                                 "/info/config",
                                                 "/action",
+                                                "/api",
                                                 "/login.action",
                                             ]
                                             + harvesterDataRetrieve.paths
