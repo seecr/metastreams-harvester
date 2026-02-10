@@ -216,3 +216,70 @@ class ApiActionsTest(SeecrTestCase):
             self.hd.getRepository(identifier="repository", domainId="domain")["action"]
             == "clear"
         )
+
+    def test_action_invalid_fails(self):
+        assert (
+            self.hd.getRepository(identifier="repository", domainId="domain")["action"]
+            is None
+        )
+
+        header, body = parseResponse(
+            asBytes(
+                self.dna.all.handleRequest(
+                    user=CallTrace(returnValues=dict(isAdmin=False)),
+                    path="/api/action",
+                    Body=j2b(
+                        {
+                            "domain": "domain",
+                            "repository": "repository",
+                            "action": "something",
+                        }
+                    ),
+                    Headers={"Authorization": f"bearer {API_TOKEN}"},
+                    Method="Post",
+                )
+            )
+        )
+        assert header["StatusCode"] == "200"
+        assert header["Headers"]["Content-Type"] == "application/json"
+        response = json.loads(body)
+        assert response["success"] is False
+        assert response["message"] == "Invalid action"
+
+        assert (
+            self.hd.getRepository(identifier="repository", domainId="domain")["action"]
+            is None
+        )
+
+    def test_action_not_set(self):
+        assert (
+            self.hd.getRepository(identifier="repository", domainId="domain")["action"]
+            is None
+        )
+
+        header, body = parseResponse(
+            asBytes(
+                self.dna.all.handleRequest(
+                    user=CallTrace(returnValues=dict(isAdmin=False)),
+                    path="/api/action",
+                    Body=j2b(
+                        {
+                            "domain": "domain",
+                            "repository": "repository",
+                        }
+                    ),
+                    Headers={"Authorization": f"bearer {API_TOKEN}"},
+                    Method="Post",
+                )
+            )
+        )
+        assert header["StatusCode"] == "200"
+        assert header["Headers"]["Content-Type"] == "application/json"
+        response = json.loads(body)
+        assert response["success"] is False
+        assert response["message"] == "No action"
+
+        assert (
+            self.hd.getRepository(identifier="repository", domainId="domain")["action"]
+            is None
+        )

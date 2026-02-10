@@ -234,7 +234,6 @@ class HarvesterData(object):
             if each in allowed:
                 value = conversions.get(each, lambda x: x)(kwargs[each])
                 repository[each] = value
-        print("kwargs", kwargs)
         self._store.addData(id_combine(domainId, identifier), "repository", repository)
 
     def updateRepositoryFieldDefinitions(self, **kwargs):

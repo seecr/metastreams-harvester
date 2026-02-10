@@ -11,7 +11,6 @@ API_TOKEN = "70707984-05c4-11f1-9938-a2a88f0ea496"
 
 def authorized(method):
     def _authorized(*args, **kwargs):
-        print("hier")
         if (auth := kwargs.get("Headers", {}).get("Authorization")) is not None:
             if auth.lower().startswith("bearer") and auth.endswith(f" {API_TOKEN}"):
                 return method(*args, **kwargs)
@@ -31,7 +30,6 @@ class ApiActions(PostActions):
 
     @authorized
     def _default(self, **kwargs):
-
         return response(
             success=True,
             data=dict(message="unsupported action", supported=["status", "action"]),
@@ -57,6 +55,12 @@ class ApiActions(PostActions):
             for k, v in request.items()
             if k in ["repository", "domain", "action"] and v != ""
         }
+
+        if "action" not in wanted_arguments:
+            return response(success=False, message="No action")
+
+        if wanted_arguments["action"] not in ["clear", "refresh"]:
+            return response(success=False, message="Invalid action")
 
         self.call.updateRepositoryAttributes(**wanted_arguments)
         repository = self.call.getRepository(request["repository"], request["domain"])

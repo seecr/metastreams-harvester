@@ -1,0 +1,86 @@
+#!/usr/bin/env python3
+#
+
+from seecrdeps import includeParentAndDeps       #DO_NOT_DISTRIBUTE
+includeParentAndDeps(__file__, scanForDeps=True) #DO_NOT_DISTRIBUTE
+
+import asyncio
+import aiohttp
+import argparse
+import pathlib
+import json
+
+from meresco.harvester.apiactions import API_TOKEN
+
+CONFIG_FILE = "/etc/seecr/metastreams/config"
+
+class Response:
+    def __init__(self, data):
+        self._data = json.loads(data)
+
+    @property
+    def success(self):
+        return self._data['success']
+
+    @property
+    def message(self):
+        return self._data['message']
+
+    @property
+    def data(self):
+        return self._data['data']
+
+
+async def do_request(url, action, request):
+    headers = {"Authorization": f"bearer {API_TOKEN}"}
+    async with aiohttp.ClientSession(headers=headers) as session:
+        async with session.post(f'{url}/api/{action}', data=json.dumps(request).encode(encoding="utf-8")) as resp:
+            if resp.status == 401:
+                raise RuntimeError("Authorization failed")
+
+            elif resp.status == 200:
+                body = await resp.read()
+                return Response(body)
+            else:
+                raise RuntimeError("Unexpected status: {resp.status}")
+
+
+async def main(url, domain, repository, refresh):
+
+    action = "status"
+    prep_kwargs = {}
+    if refresh is True:
+        action = "action"
+        prep_kwargs = {"action": "refresh"}
+
+    for repo in repository:
+        request = {"repository": repo, "domain": domain}
+        request.update(prep_kwargs)
+
+        response = await do_request(url, action=action, request=request)
+        if not response.success:
+            print(f"{domain}.{repo}: {response.message}")
+            continue
+
+        if refresh is True:
+            print(f"{domain}.{repo}: {response.data['action']}")
+        else:
+            print(response.data)
+
+
+if __name__ == '__main__':
+    api_url = ""
+    if (config_file := pathlib.Path(CONFIG_FILE)).is_file():
+        config_values = dict([(k.lower(), v) for k, v in (line.split("=", 1) for line in config_file.read_text().split("\n") if line != "")])
+        api_url = config_values.get("external_url")
+
+    parser = argparse.ArgumentParser(
+        prog="Meresco Harvester API", description="API voor Meresco Harvester"
+    )
+    parser.add_argument("--url", type=str, help="API endpoint URL", required=api_url == "", default=api_url)
+    parser.add_argument("-d", "--domain", type=str, help="Domain identifier")
+    parser.add_argument("-r", "--repository", type=str, action="append", help="Rpository identifier")
+    parser.add_argument("--refresh", action=argparse.BooleanOptionalAction, help="Set repositories to refresh")
+
+    args = parser.parse_args()
+    asyncio.run(main(**vars(args)))
