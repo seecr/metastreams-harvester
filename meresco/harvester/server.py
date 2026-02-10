@@ -98,6 +98,7 @@ def dna(
     statePath,
     externalUrl,
     customerLogoUrl,
+    apiKey="",
     deproxyIps=None,
     deproxyIpRanges=None,
     addons=None,
@@ -114,6 +115,9 @@ def dna(
         externalUrl=externalUrl,
         dataPath=dataPath,
     )
+    if apiKey == "":
+        apiKey = uuid4()
+        print(f"Generated API Key: {apiKey}")
     print("Started Metastreams with configuration:\n" + configDict.pretty_print())
 
     userGroup = initializeUserGroupManagement(join(statePath, "users"), harvesterData)
@@ -241,7 +245,7 @@ def dna(
                                     (PathFilter("/login.action"), basicHtmlLoginHelix),
                                     (
                                         PathFilter("/api"),
-                                        (ApiActions(), (harvesterData,)),
+                                        (ApiActions(apiKey=apiKey), (harvesterData,)),
                                     ),
                                     (staticFiles,),
                                     (

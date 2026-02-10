@@ -31,43 +31,36 @@ from metastreams.users._actions import response
 import json
 
 
-API_TOKEN = "70707984-05c4-11f1-9938-a2a88f0ea496"
-
-
-def authorized(method):
-    def _authorized(*args, **kwargs):
-        if (auth := kwargs.get("Headers", {}).get("Authorization")) is not None:
-            if auth.lower().startswith("bearer") and auth.endswith(f" {API_TOKEN}"):
-                return method(*args, **kwargs)
-        return Unauthorized + CRLF
-
-    return _authorized
-
-
 class ApiActions(PostActions):
-    def __init__(self, **kwargs):
+    def __init__(self, apiKey, **kwargs):
         super().__init__(**kwargs)
+
+        self._apiKey = apiKey
 
         self.registerAction("status", self._status)
         self.registerAction("action", self._action)
 
         self.defaultAction(self._default)
 
-    @authorized
-    def _default(self, **kwargs):
+    def handleRequest(self, *args, **kwargs):
+        if (auth := kwargs.get("Headers", {}).get("Authorization")) is not None:
+            if auth.lower().startswith("bearer") and auth.endswith(f" {self._apiKey}"):
+                yield super().handleRequest(*args, **kwargs)
+                return
+        yield Unauthorized + CRLF
+
+    def _default(self, Headers, **kwargs):
         return response(
             success=True,
             data=dict(message="unsupported action", supported=["status", "action"]),
         )
 
-    @authorized
     def _status(self, path, Body, Headers, **kwargs):
         request = json.loads(Body.decode(encoding="utf-8"))
         repository = self.call.getRepository(request["repository"], request["domain"])
 
         return response(success=True, data=repository)
 
-    @authorized
     def _action(self, path, Body, Headers, **kwargs):
         request = json.loads(Body.decode(encoding="utf-8"))
         repository = self.call.getRepository(request["repository"], request["domain"])

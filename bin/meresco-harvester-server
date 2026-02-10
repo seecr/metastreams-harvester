@@ -46,6 +46,7 @@ if __name__ == '__main__':
     parser.add_argument('--statePath', help='Meresco harvester state directory', required=True)
     parser.add_argument('--externalUrl', help='Url this harvester can be reached at', required=True)
     parser.add_argument('--customerLogoUrl', help='URL to logo of customer')
+    parser.add_argument('--apiKey', type=str, default="", help='API Key for scripts')
     parser.add_argument('--deproxyIp', dest='deproxyIps', action='append', help="DeproxyIps")
     parser.add_argument('--deproxyIpRange', dest='deproxyIpRanges', action='append', help="DeproxyIps")
     parser.add_argument('--addons', dest='addons', action='append', help="Addon python modules")

@@ -35,7 +35,7 @@ import json
 
 import pytest
 
-from meresco.harvester.apiactions import API_TOKEN
+APIKEY = "secure123"
 
 
 def j2b(values):
@@ -55,7 +55,7 @@ class ApiActionsTest(SeecrTestCase):
             identifier="repository", domainId="domain", complete=True, action=None
         )
 
-        self.dna = be((Observable(), (ApiActions(), (self.hd,))))
+        self.dna = be((Observable(), (ApiActions(apiKey=APIKEY), (self.hd,))))
 
     def test_default(self):
 
@@ -65,7 +65,7 @@ class ApiActionsTest(SeecrTestCase):
                     user=CallTrace(returnValues=dict(isAdmin=False)),
                     path="/api/pruebo",
                     Body=j2b({}),
-                    Headers={"Authorization": f"bearer {API_TOKEN}"},
+                    Headers={"Authorization": f"bearer {APIKEY}"},
                     Method="Post",
                 )
             )
@@ -96,7 +96,7 @@ class ApiActionsTest(SeecrTestCase):
                             "repository": "repository",
                         }
                     ),
-                    Headers={"Authorization": f"bearer {API_TOKEN}"},
+                    Headers={"Authorization": f"bearer {APIKEY}"},
                     Method="Post",
                 )
             )
@@ -161,7 +161,7 @@ class ApiActionsTest(SeecrTestCase):
                             "action": "refresh",
                         }
                     ),
-                    Headers={"Authorization": f"bearer {API_TOKEN}"},
+                    Headers={"Authorization": f"bearer {APIKEY}"},
                     Method="Post",
                 )
             )
@@ -197,7 +197,7 @@ class ApiActionsTest(SeecrTestCase):
                             "action": "refresh",
                         }
                     ),
-                    Headers={"Authorization": f"bearer {API_TOKEN}"},
+                    Headers={"Authorization": f"bearer {APIKEY}"},
                     Method="Post",
                 )
             )
@@ -231,7 +231,7 @@ class ApiActionsTest(SeecrTestCase):
                             "action": "something",
                         }
                     ),
-                    Headers={"Authorization": f"bearer {API_TOKEN}"},
+                    Headers={"Authorization": f"bearer {APIKEY}"},
                     Method="Post",
                 )
             )
@@ -264,7 +264,7 @@ class ApiActionsTest(SeecrTestCase):
                             "repository": "repository",
                         }
                     ),
-                    Headers={"Authorization": f"bearer {API_TOKEN}"},
+                    Headers={"Authorization": f"bearer {APIKEY}"},
                     Method="Post",
                 )
             )

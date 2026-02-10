@@ -35,8 +35,6 @@ import argparse
 import pathlib
 import json
 
-from meresco.harvester.apiactions import API_TOKEN
-
 CONFIG_FILE = "/etc/seecr/metastreams/config"
 
 class Response:
@@ -56,8 +54,8 @@ class Response:
         return self._data['data']
 
 
-async def do_request(url, action, request):
-    headers = {"Authorization": f"bearer {API_TOKEN}"}
+async def do_request(url, api_key, action, request):
+    headers = {"Authorization": f"bearer {api_key}"}
     async with aiohttp.ClientSession(headers=headers) as session:
         async with session.post(f'{url}/api/{action}', data=json.dumps(request).encode(encoding="utf-8")) as resp:
             if resp.status == 401:
@@ -70,7 +68,7 @@ async def do_request(url, action, request):
                 raise RuntimeError("Unexpected status: {resp.status}")
 
 
-async def main(url, domain, repository, refresh):
+async def main(url, api_key, domain, repository, refresh):
 
     action = "status"
     prep_kwargs = {}
@@ -82,7 +80,7 @@ async def main(url, domain, repository, refresh):
         request = {"repository": repo, "domain": domain}
         request.update(prep_kwargs)
 
-        response = await do_request(url, action=action, request=request)
+        response = await do_request(url, api_key, action=action, request=request)
         if not response.success:
             print(f"{domain}.{repo}: {response.message}")
             continue
@@ -95,14 +93,17 @@ async def main(url, domain, repository, refresh):
 
 if __name__ == '__main__':
     api_url = ""
+    api_key = ""
     if (config_file := pathlib.Path(CONFIG_FILE)).is_file():
         config_values = dict([(k.lower(), v) for k, v in (line.split("=", 1) for line in config_file.read_text().split("\n") if line != "")])
         api_url = config_values.get("external_url")
+        api_key = config_values.get("api_key")
 
     parser = argparse.ArgumentParser(
         prog="Meresco Harvester API", description="API voor Meresco Harvester"
     )
     parser.add_argument("--url", type=str, help="API endpoint URL", required=api_url == "", default=api_url)
+    parser.add_argument("--api-key", type=str, help="API key", required=api_key == "", default=api_key)
     parser.add_argument("-d", "--domain", type=str, help="Domain identifier")
     parser.add_argument("-r", "--repository", type=str, action="append", help="Rpository identifier")
     parser.add_argument("--refresh", action=argparse.BooleanOptionalAction, help="Set repositories to refresh")
