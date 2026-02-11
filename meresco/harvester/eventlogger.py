@@ -9,7 +9,7 @@
 # Copyright (C) 2007-2009 Stichting Kennisnet Ict op school. http://www.kennisnetictopschool.nl
 # Copyright (C) 2009, 2011 Tilburg University http://www.uvt.nl
 # Copyright (C) 2011, 2015, 2020-2021 Stichting Kennisnet https://www.kennisnet.nl
-# Copyright (C) 2015, 2020-2022, 2024 Seecr (Seek You Too B.V.) https://seecr.nl
+# Copyright (C) 2015, 2020-2022, 2024, 2026 Seecr (Seek You Too B.V.) https://seecr.nl
 # Copyright (C) 2020-2021 Data Archiving and Network Services https://dans.knaw.nl
 # Copyright (C) 2020-2021 SURF https://www.surf.nl
 # Copyright (C) 2020-2021 The Netherlands Institute for Sound and Vision https://beeldengeluid.nl
@@ -33,12 +33,13 @@
 ## end license ##
 
 from re import compile
-from datetime import datetime
+from datetime import datetime, timezone
 from os.path import dirname, isdir
 from os import makedirs, rename
 import pathlib
 
-LOGLINE_RE=compile(r'^\[([^\]]*)\]\t([\w ]+)\t\[([^\]]*)\]\t(.*)$')
+LOGLINE_RE = compile(r"^\[([^\]]*)\]\t([\w ]+)\t\[([^\]]*)\]\t(.*)$")
+
 
 class BasicEventLogger(object):
     def __init__(self, logfile, maxLogLines=20000):
@@ -52,7 +53,7 @@ class BasicEventLogger(object):
             self._logfile.close()
             self._logfile = None
 
-    def logLine(self, event, comments, id=''):
+    def logLine(self, event, comments, id=""):
         self._time()
         self._space()
         self._event(event)
@@ -64,33 +65,34 @@ class BasicEventLogger(object):
         self._clearExcessLogLines()
 
     def _time(self):
-        now = datetime.utcnow()
-        ms = ('%03i'%now.microsecond)[:3]
-        self._logfile.write('[' + now.strftime('%Y-%m-%d %H:%M:%S.') + ms + ']')
+        now = datetime.now(timezone.utc)
+        ms = ("%03i" % now.microsecond)[:3]
+        self._logfile.write("[" + now.strftime("%Y-%m-%d %H:%M:%S.") + ms + "]")
 
     def _id(self, id):
-        self._logfile.write('[')
+        self._logfile.write("[")
         self._writeStripped(id)
-        self._logfile.write(']')
+        self._logfile.write("]")
 
-    def _event(self,event):
+    def _event(self, event):
         self._writeStripped(event)
 
     def _comments(self, comments):
         self._writeStripped(comments)
-        self._logfile.write('\n')
+        self._logfile.write("\n")
 
     def _space(self):
-        self._logfile.write('\t')
+        self._logfile.write("\t")
 
     def _writeStripped(self, aString):
-        self._logfile.write(' '.join(str(aString).split()))
+        self._logfile.write(" ".join(str(aString).split()))
 
     def _flush(self):
         self._logfile.flush()
 
     def getEventLogger(self):
         return self
+
 
 class EventLogger(BasicEventLogger):
     def __init__(self, logfile, maxLogLines=20000):
@@ -99,7 +101,7 @@ class EventLogger(BasicEventLogger):
     def _openlogfile(self, logfile):
         self._numberOfLogLines = 0
         isdir(dirname(logfile)) or makedirs(dirname(logfile))
-        f = open(logfile, 'a+')
+        f = open(logfile, "a+")
         f.seek(0)
         for line in f:
             self._numberOfLogLines += 1
@@ -108,8 +110,8 @@ class EventLogger(BasicEventLogger):
     def _clearExcessLogLines(self):
         if self._numberOfLogLines >= self._maxLogLines:
             self._logfile.seek(0)
-            tmp = self._logfilePath.with_name(self._logfilePath.name + '.tmp')
-            with tmp.open('w') as tmpFile:
+            tmp = self._logfilePath.with_name(self._logfilePath.name + ".tmp")
+            with tmp.open("w") as tmpFile:
                 for i, line in enumerate(self._logfile):
                     if i >= self._maxLogLines // 2:
                         tmpFile.write(line)
@@ -121,21 +123,23 @@ class EventLogger(BasicEventLogger):
         self._numberOfLogLines += 1
         BasicEventLogger.logLine(self, *args, **kwargs)
 
-    def logSuccess(self,comments='', id=''):
-        self.logLine('SUCCES', comments=comments, id=id)
+    def logSuccess(self, comments="", id=""):
+        self.logLine("SUCCES", comments=comments, id=id)
 
-    def logFailure(self,comments='', id=''):
-        self.logLine('FAILURE', comments=comments, id=id)
-    #fail = failure
+    def logFailure(self, comments="", id=""):
+        self.logLine("FAILURE", comments=comments, id=id)
 
-    def logError(self,comments='', id=''):
-        self.logLine('ERROR', comments=comments, id=id)
+    # fail = failure
 
-    def logInfo(self, comments='', id=''):
-        self.logLine('INFO', comments=comments, id=id)
+    def logError(self, comments="", id=""):
+        self.logLine("ERROR", comments=comments, id=id)
 
-    def logWarning(self, comments='', id=''):
-        self.logLine('WARNING', comments=comments, id=id)
+    def logInfo(self, comments="", id=""):
+        self.logLine("INFO", comments=comments, id=id)
+
+    def logWarning(self, comments="", id=""):
+        self.logLine("WARNING", comments=comments, id=id)
+
 
 class StreamEventLogger(EventLogger):
     def __init__(self, stream):
@@ -148,6 +152,7 @@ class StreamEventLogger(EventLogger):
     def _clearExcessLogLines(self):
         pass
 
+
 class CompositeLogger(EventLogger):
     def __init__(self, loggers):
         EventLogger.__init__(self, None)
@@ -159,23 +164,24 @@ class CompositeLogger(EventLogger):
     def _clearExcessLogLines(self):
         pass
 
-    def logLine(self, event, comments, id=''):
+    def logLine(self, event, comments, id=""):
         for events, logger in self._loggers:
-            if events == ['*'] or event in events:
+            if events == ["*"] or event in events:
                 logger.logLine(event, comments, id)
 
+
 class NilEventLogger(EventLogger):
-        def __init__(self):
-            EventLogger.__init__(self, None)
+    def __init__(self):
+        EventLogger.__init__(self, None)
 
-        def _openlogfile(self, logfile):
-            pass
+    def _openlogfile(self, logfile):
+        pass
 
-        def _clearExcessLogLines(self):
-            pass
+    def _clearExcessLogLines(self):
+        pass
 
-        def logLine(self, event, comments, id=''):
-            pass
+    def logLine(self, event, comments, id=""):
+        pass
 
-        def close(self):
-            pass
+    def close(self):
+        pass
