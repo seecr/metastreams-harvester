@@ -9,7 +9,7 @@
 # Copyright (C) 2007-2009 Stichting Kennisnet Ict op school. http://www.kennisnetictopschool.nl
 # Copyright (C) 2009 Tilburg University http://www.uvt.nl
 # Copyright (C) 2011, 2015, 2020-2021 Stichting Kennisnet https://www.kennisnet.nl
-# Copyright (C) 2015-2016, 2020-2021, 2024 Seecr (Seek You Too B.V.) https://seecr.nl
+# Copyright (C) 2015-2016, 2020-2021, 2024, 2026 Seecr (Seek You Too B.V.) https://seecr.nl
 # Copyright (C) 2020-2021 Data Archiving and Network Services https://dans.knaw.nl
 # Copyright (C) 2020-2021 SURF https://www.surf.nl
 # Copyright (C) 2020-2021 The Netherlands Institute for Sound and Vision https://beeldengeluid.nl
@@ -46,7 +46,7 @@ from errno import EINTR, EAGAIN
 from meresco.components.json import JsonDict
 from meresco.harvester.internalserverproxy import InternalServerProxy
 
-from gustos.client import Client as GustosClient
+from gustos_client import Client as GustosClient
 
 AGAIN_EXITCODE = 42
 
