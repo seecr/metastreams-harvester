@@ -25,7 +25,7 @@ python3-metastreams-base (<< 1.1)
 libjs-jquery (>= 3.6.1+dfsg+~3.5.14)
 libjs-jquery (<< 3.7)
 libjs-jquery-tablesorter (>= 1:2.31.3+dfsg1)
-libjs-jquery-tablesorter (<< 12.32)
+libjs-jquery-tablesorter (<< 1:12.32)
 libjs-autosize (>= 4.0.4~dfsg1+~4.0.0)
 libjs-autosize (<< 4.1)
 libjs-bootstrap5
